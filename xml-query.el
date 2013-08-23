@@ -59,22 +59,15 @@ Atom feed:
                  (vector (xml-query--vector matcher xml)))))
           (cond
            ((null rest) matches)
-           ((keywordp (car rest)) (xml-query-all rest matches))
-           ((eq '* (car rest)) (xml-query-all rest matches))
-           (:else
-            (xml-query-all (cdr query) (xml-query--append matches))))))))))
+           ((and (symbolp (car rest))
+                 (not (keywordp (car rest)))
+                 (not (eq '* (car rest))))
+            (xml-query-all (cdr query) (xml-query--append matches)))
+           (:else (xml-query-all rest matches)))))))))
 
 (defun xml-query (query xml)
   "Like `xml-query-all' but only return the first result."
   (car (xml-query-all query xml)))
-
-(xml-query-all '(:xmlns) foo)
-
-(xml-query-all '(feed entry) foo)
-
-(xml-query-all '(feed entry title *) foo)
-
-(xml-query-all '(feed entry [rel "alternate"] :href) foo)
 
 (provide 'xml-query)
 
