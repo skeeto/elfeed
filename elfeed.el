@@ -99,7 +99,7 @@ NIL for unknown."
   (cadr (assoc (caar content) '((feed :atom) (rss :rss)))))
 
 (defun elfeed-entries-from-atom (xml)
-  "Turn parsed content into a list of elfeed-entry structs."
+  "Turn parsed Atom content into a list of elfeed-entry structs."
   (loop for entry in (xml-query-all '(feed entry) xml) collect
         (let* ((title (xml-query '(title *) entry))
                (anylink (xml-query '(link :href) entry))
@@ -108,6 +108,18 @@ NIL for unknown."
                (id (or (xml-query '(id *) entry) link))
                (date (or (xml-query '(updated *) entry)
                          (xml-query '(published *) entry))))
+          (make-elfeed-entry :title title :id id :link link
+                             :date date :content nil))))
+
+(defun elfeed-entries-from-rss (xml)
+  "Turn parsed RSS content into a list of elfeed-entry structs."
+  (loop for item in (xml-query-all '(rss channel item) xml) collect
+        (let* ((title (xml-query '(title *) item))
+               (link (xml-query '(link *) item))
+               (guid (xml-query '(guid *) item))
+               (id (or guid link))
+               (pubdate (xml-query '(pubDate *) item))
+               (date (elfeed-rfc3339 (date-to-time pubdate))))
           (make-elfeed-entry :title title :id id :link link
                              :date date :content nil))))
 
@@ -120,7 +132,9 @@ NIL for unknown."
       (search-forward "\n\n") ; skip HTTP headers
       (let* ((xml (xml-parse-region (point) (point-max)))
              (entries (case (elfeed-feed-type xml)
-                        (:atom (elfeed-entries-from-atom xml)))))
+                        (:atom (elfeed-entries-from-atom xml))
+                        (:rss (elfeed-entries-from-rss xml))
+                        (t (error "Unkown feed type.")))))
         (elfeed-db-put url entries)))))
 
 (defun elfeed-update ()
