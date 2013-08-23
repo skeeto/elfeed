@@ -151,6 +151,87 @@ NIL for unknown."
   "Update all the feeds in `elfeed-feeds'."
   (mapc #'elfeed-update-feed elfeed-feeds))
 
+;; Interface:
+
+(defvar elfeed-search-entries ()
+  "List of the entries currently on display.")
+
+(defvar elfeed-search-mode-map
+  (let ((map (make-sparse-keymap)))
+    (prog1 map
+      (define-key map "q" 'quit-window)
+      (define-key map "g" 'elfeed-search-update)
+      (define-key map "b" 'elfeed-search-browse-url)))
+  "Keymap for elfeed-search-mode.")
+
+(defun elfeed-search-mode ()
+  "Major mode for listing elfeed feed entries."
+  (interactive)
+  (kill-all-local-variables)
+  (use-local-map elfeed-search-mode-map)
+  (setq major-mode 'elfeed-search-mode
+        mode-name "elfeed-search"
+        truncate-lines t
+        buffer-read-only t)
+  (make-local-variable 'elfeed-search-entries)
+  (elfeed-search-update))
+
+(defun elfeed-buffer ()
+  (get-buffer-create "*elfeed-search*"))
+
+(defun elfeed ()
+  "Enter elfeed."
+  (interactive)
+  (switch-to-buffer (elfeed-buffer))
+  (unless (eq major-mode 'elfeed-search-mode) (elfeed-search-mode)))
+
+(defun elfeed-search-format-date (date)
+  "Format a date for printing in elfeed-search-mode."
+  (let ((string (format-time-string "%Y-%m-%d" (date-to-time date))))
+    (format "%-10.10s" string)))
+
+(defface elfeed-search-date-face
+  '((((class color) (background light)) (:foreground "#333"))
+    (((class color) (background dark))  (:foreground "#77a")))
+  "Face used in search mode for dates."
+  :group 'elfeed)
+
+(defface elfeed-search-title-face
+  '((((class color) (background light)) (:foreground "#000"))
+    (((class color) (background dark))  (:foreground "#fff")))
+  "Face used in search mode for dates."
+  :group 'elfeed)
+
+(defun elfeed-search-update ()
+  "Update the display to match the database."
+  (interactive)
+  (with-current-buffer (elfeed-buffer)
+    (let ((inhibit-read-only t)
+          (standard-output (current-buffer))
+          (line (line-number-at-pos)))
+      (erase-buffer)
+      (loop for entry in (setf elfeed-search-entries (elfeed-db-entries))
+            for date = (elfeed-search-format-date (elfeed-entry-date entry))
+            for title = (elfeed-entry-title entry)
+            do (insert (propertize date 'face 'elfeed-search-date-face) " ")
+            do (insert (propertize title 'face 'elfeed-search-title-face) "\n"))
+      (goto-line line))))
+
+(defun elfeed-search-selected ()
+  "Return a list of the currently selected feeds."
+  (let ((start (if (use-region-p) (region-beginning) (point)))
+        (end   (if (use-region-p) (region-end) (point))))
+    (loop for line from (line-number-at-pos start) to (line-number-at-pos end)
+          when (nth (1- line) elfeed-search-entries)
+          collect it)))
+
+(defun elfeed-search-browse-url ()
+  "Visit the current entry in your browser using `browse-url'."
+  (interactive)
+  (loop for entry in (elfeed-search-selected)
+        when (elfeed-entry-link entry)
+        do (browse-url it)))
+
 (provide 'elfeed)
 
 ;;; elfeed.el ends here
