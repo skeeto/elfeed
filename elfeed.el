@@ -98,6 +98,11 @@ from `url-retrieve'."
 NIL for unknown."
   (cadr (assoc (caar content) '((feed :atom) (rss :rss)))))
 
+(defun elfeed-rfc3339 (&optional time)
+  "Return an RFC 3339 formatted date string (Atom style)."
+  (format-time-string "%Y-%m-%dT%H:%M:%SZ"
+                      (if time (date-to-time time) nil) t))
+
 (defun elfeed-entries-from-atom (xml)
   "Turn parsed Atom content into a list of elfeed-entry structs."
   (loop for entry in (xml-query-all '(feed entry) xml) collect
@@ -109,7 +114,7 @@ NIL for unknown."
                (date (or (xml-query '(updated *) entry)
                          (xml-query '(published *) entry))))
           (make-elfeed-entry :title title :id id :link link
-                             :date date :content nil))))
+                             :date (elfeed-rfc3339 date) :content nil))))
 
 (defun elfeed-entries-from-rss (xml)
   "Turn parsed RSS content into a list of elfeed-entry structs."
@@ -118,10 +123,9 @@ NIL for unknown."
                (link (xml-query '(link *) item))
                (guid (xml-query '(guid *) item))
                (id (or guid link))
-               (pubdate (xml-query '(pubDate *) item))
-               (date (elfeed-rfc3339 (date-to-time pubdate))))
+               (pubdate (xml-query '(pubDate *) item)))
           (make-elfeed-entry :title title :id id :link link
-                             :date date :content nil))))
+                             :date (elfeed-rfc3339 pubdate) :content nil))))
 
 (defun elfeed-update-feed (url)
   "Update a specific feed."
