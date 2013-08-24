@@ -32,6 +32,10 @@ feeds to this list."
 (defvar elfeed-initial-tags '(unread)
   "Initial tags for new entries.")
 
+(defvar elfeed-new-entry-hook ()
+  "Functions in this list are called with the new entry as its
+argument. This is a chance to add cutoms tags to new entries.")
+
 (defstruct elfeed-feed
   "A web feed, contains elfeed-entry structs."
   title url entries)
@@ -73,6 +77,9 @@ feeds to this list."
           for old = (gethash id table)
           when old  ; merge old tags back in
           do (setf (elfeed-entry-tags entry) (elfeed-entry-tags old))
+          when (not old)
+          do (loop for hook in elfeed-new-entry-hook
+                   do (funcall hook entry))
           do (setf (gethash id table) entry))
     (setf (gethash :last-update elfeed-db) (float-time))))
 
@@ -248,7 +255,8 @@ NIL for unknown."
       (define-key map "y" 'elfeed-search-yank)
       (define-key map "u" (elfeed-expose #'elfeed-search-tag-all 'unread))
       (define-key map "r" (elfeed-expose #'elfeed-search-untag-all 'unread))
-      (define-key map "t" 'elfeed-search-tag-all)))
+      (define-key map "t" 'elfeed-search-tag-all)
+      (define-key map "v" 'elfeed-search-untag-all)))
   "Keymap for elfeed-search-mode.")
 
 (defun elfeed-search-mode ()
@@ -428,6 +436,16 @@ NIL for unknown."
     (loop for entry in entries do (elfeed-untag entry tag))
     (mapc #'elfeed-search-update-entry entries)
     (unless (use-region-p) (forward-line))))
+
+;; Helper functions
+
+(defun elfeed-regexp-tagger (regexp tag)
+  "Return a function suitable for `elfeed-new-entry-hook' that
+tags entries with title or link matching regexp."
+  (lambda (entry)
+    (when (or (string-match-p regexp (elfeed-entry-link entry))
+              (string-match-p regexp (elfeed-entry-title entry)))
+      (elfeed-tag entry tag))))
 
 (provide 'elfeed)
 
