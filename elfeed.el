@@ -51,7 +51,6 @@ feeds to this list."
   (let* ((feed (elfeed-db-get url))
          (table (elfeed-feed-entries feed)))
     (loop for entry in entries
-          do (setf (elfeed-entry-feed entry) feed)
           do (setf (gethash (elfeed-entry-id entry) table) entry))))
 
 (defun elfeed-string> (a b)
@@ -134,33 +133,39 @@ NIL for unknown."
   (let ((trim (replace-regexp-in-string "^ +\\| +$" "" name)))
     (replace-regexp-in-string "[\n\t]+" " " trim)))
 
-(defun elfeed-entries-from-atom (xml)
+(defun elfeed-entries-from-atom (url xml)
   "Turn parsed Atom content into a list of elfeed-entry structs."
-  (loop for entry in (xml-query-all '(feed entry) xml) collect
-        (let* ((title (or (xml-query '(title *) entry) ""))
-               (anylink (xml-query '(link :href) entry))
-               (altlink (xml-query '(link [rel "alternate"] :href) entry))
-               (link (or altlink anylink))
-               (id (or (xml-query '(id *) entry) link))
-               (date (or (xml-query '(published *) entry)
-                         (xml-query '(updated *) entry)
-                         (xml-query '(date *) entry))))
-          (make-elfeed-entry :title (elfeed-cleanup title)
-                             :id (elfeed-cleanup id) :link link
-                             :date (elfeed-rfc3339 date) :content nil))))
+  (let ((feed (elfeed-db-get url))
+        (title (xml-query '(feed title *) xml)))
+    (setf (elfeed-feed-title feed) title)
+    (loop for entry in (xml-query-all '(feed entry) xml) collect
+          (let* ((title (or (xml-query '(title *) entry) ""))
+                 (anylink (xml-query '(link :href) entry))
+                 (altlink (xml-query '(link [rel "alternate"] :href) entry))
+                 (link (or altlink anylink))
+                 (id (or (xml-query '(id *) entry) link))
+                 (date (or (xml-query '(published *) entry)
+                           (xml-query '(updated *) entry)
+                           (xml-query '(date *) entry))))
+            (make-elfeed-entry :title (elfeed-cleanup title) :feed feed
+                               :id (elfeed-cleanup id) :link link
+                               :date (elfeed-rfc3339 date) :content nil)))))
 
-(defun elfeed-entries-from-rss (xml)
+(defun elfeed-entries-from-rss (url xml)
   "Turn parsed RSS content into a list of elfeed-entry structs."
-  (loop for item in (xml-query-all '(rss channel item) xml) collect
-        (let* ((title (or (xml-query '(title *) item) ""))
-               (link (xml-query '(link *) item))
-               (guid (xml-query '(guid *) item))
-               (id (or guid link))
-               (date (or (xml-query '(pubDate *) item)
-                         (xml-query '(date *) item))))
-          (make-elfeed-entry :title (elfeed-cleanup title)
-                             :id (elfeed-cleanup id) :link link
-                             :date (elfeed-rfc3339 date) :content nil))))
+  (let ((feed (elfeed-db-get url))
+        (title (xml-query '(rss channel title *) xml)))
+    (setf (elfeed-feed-title feed) title)
+    (loop for item in (xml-query-all '(rss channel item) xml) collect
+          (let* ((title (or (xml-query '(title *) item) ""))
+                 (link (xml-query '(link *) item))
+                 (guid (xml-query '(guid *) item))
+                 (id (or guid link))
+                 (date (or (xml-query '(pubDate *) item)
+                           (xml-query '(date *) item))))
+            (make-elfeed-entry :title (elfeed-cleanup title)
+                               :id (elfeed-cleanup id) :link link
+                               :date (elfeed-rfc3339 date) :content nil)))))
 
 (defun elfeed-update-feed (url)
   "Update a specific feed."
@@ -172,8 +177,8 @@ NIL for unknown."
       (set-buffer-multibyte t)
       (let* ((xml (xml-parse-region (point) (point-max)))
              (entries (case (elfeed-feed-type xml)
-                        (:atom (elfeed-entries-from-atom xml))
-                        (:rss (elfeed-entries-from-rss xml))
+                        (:atom (elfeed-entries-from-atom url xml))
+                        (:rss (elfeed-entries-from-rss url xml))
                         (t (error "Unkown feed type.")))))
         (elfeed-db-put url entries)))))
 
