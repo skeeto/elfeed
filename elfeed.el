@@ -190,7 +190,8 @@ NIL for unknown."
   "Enter elfeed."
   (interactive)
   (switch-to-buffer (elfeed-buffer))
-  (unless (eq major-mode 'elfeed-search-mode) (elfeed-search-mode)))
+  (unless (eq major-mode 'elfeed-search-mode) (elfeed-search-mode))
+  (elfeed-search-update))
 
 (defun elfeed-search-format-date (date)
   "Format a date for printing in elfeed-search-mode."
