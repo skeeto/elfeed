@@ -29,13 +29,31 @@ feeds to this list."
 (defvar elfeed-db (make-hash-table :test 'equal)
   "The core database for elfeed.")
 
+(defvar elfeed-initial-tags '(unread)
+  "Initial tags for new entries.")
+
 (defstruct elfeed-feed
   "A web feed, contains elfeed-entry structs."
   title url entries)
 
 (defstruct elfeed-entry
-  "A single entry from a feed. Conceptually modeled after Atom."
+  "A single entry from a feed, normalized towards Atom."
   title id link date content tags feed)
+
+(defun elfeed-tag (entry &rest tags)
+  "Add a tag to an entry."
+  (let ((current (elfeed-entry-tags entry)))
+    (setf (elfeed-entry-tags entry) (append tags current))))
+
+(defun elfeed-untag (entry &rest tags)
+  "Remove tags from an entry."
+  (setf (elfeed-entry-tags entry)
+        (loop for tag in (elfeed-entry-tags entry)
+              unless (member tag tags) collect tag)))
+
+(defun elfeed-tagged-p (tag entry)
+  "Return true if ENTRY is tagged by TAG."
+  (member tag (elfeed-entry-tags entry)))
 
 (defun elfeed-db-get (url)
   "Get/create the table for URL."
@@ -51,7 +69,11 @@ feeds to this list."
   (let* ((feed (elfeed-db-get url))
          (table (elfeed-feed-entries feed)))
     (loop for entry in entries
-          do (setf (gethash (elfeed-entry-id entry) table) entry))))
+          for id = (elfeed-entry-id entry)
+          for old = (gethash id table)
+          when old  ; merge old tags back in
+          do (setf (elfeed-entry-tags entry) (elfeed-entry-tags old))
+          do (setf (gethash id table) entry))))
 
 (defun elfeed-string> (a b)
   (string< b a))
@@ -149,6 +171,7 @@ NIL for unknown."
                            (xml-query '(date *) entry))))
             (make-elfeed-entry :title (elfeed-cleanup title) :feed feed
                                :id (elfeed-cleanup id) :link link
+                               :tags (copy-seq elfeed-initial-tags)
                                :date (elfeed-rfc3339 date) :content nil)))))
 
 (defun elfeed-entries-from-rss (url xml)
@@ -165,6 +188,7 @@ NIL for unknown."
                            (xml-query '(date *) item))))
             (make-elfeed-entry :title (elfeed-cleanup title)
                                :id (elfeed-cleanup id) :link link
+                               :tags (copy-seq elfeed-initial-tags)
                                :date (elfeed-rfc3339 date) :content nil)))))
 
 (defun elfeed-update-feed (url)
