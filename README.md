@@ -7,6 +7,8 @@ is currently in beta. Elfeed requires Emacs 24 (lexical closures).
 The database is not yet persisted between Emacs instances, so don't
 spend too much time manually tagging entries.
 
+[![](http://i.imgur.com/G06bY42.png)](http://i.imgur.com/dCUdKwj.png)
+
 ## Getting Started
 
 It is recommended that you make a global binding for `elfeed`.
