@@ -350,8 +350,9 @@ NIL for unknown."
 (defun elfeed-search-filter-read (new-filter)
   "Query for a new filter from the user."
   (interactive (list (read-from-minibuffer "Filter: " elfeed-search-filter)))
-  (setf elfeed-search-filter new-filter)
-  (elfeed-search-update :force))
+  (with-current-buffer (elfeed-buffer)
+    (setf elfeed-search-filter new-filter)
+    (elfeed-search-update :force)))
 
 (defun elfeed-search-update (&optional force)
   "Update the display to match the database."
