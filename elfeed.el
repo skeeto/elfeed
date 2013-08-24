@@ -47,7 +47,7 @@ argument. This is a chance to add cutoms tags to new entries.")
 (defun elfeed-tag (entry &rest tags)
   "Add a tag to an entry."
   (let ((current (elfeed-entry-tags entry)))
-    (setf (elfeed-entry-tags entry) (append tags current))))
+    (setf (elfeed-entry-tags entry) (remove-duplicates (append tags current)))))
 
 (defun elfeed-untag (entry &rest tags)
   "Remove tags from an entry."
