@@ -313,6 +313,11 @@ NIL for unknown."
             (delete-region start (point)))
           (elfeed-search-print entry))))))
 
+(defun elfeed-search-update-entry (entry)
+  "Redraw a specific entry."
+  (let ((n (position entry elfeed-search-entries)))
+    (when n (elfeed-search-update-line (1+ n)))))
+
 (defun elfeed-search-selected (&optional ignore-region)
   "Return a list of the currently selected feeds."
   (let ((use-region (and (not ignore-region) (use-region-p))))
@@ -326,10 +331,13 @@ NIL for unknown."
 (defun elfeed-search-browse-url ()
   "Visit the current entry in your browser using `browse-url'."
   (interactive)
-  (loop for entry in (elfeed-search-selected)
-        do (elfeed-untag entry 'unread)
-        when (elfeed-entry-link entry)
-        do (browse-url it)))
+  (let ((entries (elfeed-search-selected)))
+    (loop for entry in entries
+          do (elfeed-untag entry 'unread)
+          when (elfeed-entry-link entry)
+          do (browse-url it))
+    (mapc #'elfeed-search-update-entry entries)
+    (unless (use-region-p) (forward-line))))
 
 (defun elfeed-search-yank ()
   "Copy the selected feed item to "
