@@ -2,20 +2,81 @@
 
 Elfeed is a web feed reader for Emacs, inspired by
 [notmuch](http://notmuchmail.org/). It supports both Atom and RSS and
-is currently in early development.
+is currently in beta.
 
-Requires Emacs 24 (lexical closures).
+Elfeed requires Emacs 24 (lexical closures).
+
+The database is not yet persisted between Emacs instances, so don't
+spend too much time manually tagging entries.
 
 ## Getting Started
 
-Add your feeds to the `elfeed-feeds` list and populate the database
-with entries using `M-x elfeed-update` and view the entries list with
-`M-x elfeed`.
+It is recommended that you make a global binding for `elfeed`.
 
-In the elfeed buffer use `b` to launch the item under the point in the
-browser. If the region is active, all entries in the region will be
-acted upon. Currently there is no way to view an entry within Emacs,
-but this is planned for the near future.
+```el
+(global-set-key (kbd "C-x w") 'elfeed)
+```
+
+Running the interactive function `elfeed` will pop up the
+`*elfeed-search*` buffer, which will display feed items.
+
+ * <kbd>g</kbd>: refresh view of the feed listing
+ * <kbd>G</kbd>: fetch feed updates from the servers
+ * <kbd>s</kbd>: update the search filter (see tags)
+
+This buffer will be empty until you add your feeds to the
+`elfeed-feeds` list and initiate an update with <kbd>M-x
+elfeed-update</kbd> (or <kbd>G</kbd> in the Elfeed buffer). This will
+populate the Elfeed database with entries.
+
+From this buffer there are a number of ways to interact with entries.
+Entries are selected by placing the point over an entry. Multiple
+entries are selected at once by using an active region.
+
+ * <kbd>b</kbd>: open selected entries in your browser (`browse-url`)
+ * <kbd>y</kbd>: copy selected entries URL to the clipboard
+ * <kbd>r</kbd>: mark selected entries as read
+ * <kbd>u</kbd>: mark selected entries as unread
+ * <kbd>t</kbd>: add a specific tag to selected entries
+ * <kbd>v</kbd>: remove a specific tag from selected entries
+
+Currently there is no way to view an entry within Emacs, but this is
+planned for the near future.
+
+## Tags
+
+Elfeed maintains a list of arbitrary tags -- symbols attached to an
+entry. The tag `unread` is treated specially by default, with unread
+entries appearing in bold.
+
+To make tags useful, the Elfeed entry listing buffer can be filtered
+by tags. Use `elfeed-search-filter-read` (or <kbd>s</kbd>) to update
+the filter. Tags beginning with a `+` are required and tags beginning
+with a `-` must not be present. Here are some examples:
+
+ * `+unread`: only show unread entries
+ * `-unread +youtube`: only show previously-read YouTube entries
+
+The latter assumes you've tagged posts with `youtube`. You probably
+want to do this sort of thing automatically, which can be done with
+the `elfeed-new-entry-hook`. Functions in this hook are called with
+new entries, allowing them to be manipulated, such as adding tags.
+
+```el
+;; Mark all YouTube entries
+(add-hook 'elfeed-new-entry-hook
+          (elfeed-regexp-tagger "youtube\\.com" 'youtube))
+```
+
+Or avoiding tagging old entries as `unread`:
+
+```el
+;; Entries older than 2 weeks are marked as read
+(add-hook 'elfeed-new-entry-hook
+          (elfeed-time-untagger "2 weeks ago" 'unread))
+```
+
+Further enhancement of the search filter is planned for the future.
 
 ## Status and Roadmap
 
@@ -29,7 +90,7 @@ Some things I want to add:
  * Reading entries within Emacs (like e-mail)
  * Persist the database between Emacs instances
  * Enclosure support
- * Searching (maybe)
+ * Database synchronization between computers (maybe)
  * Optional external database back-end (Xapian?, maybe)
 
 ## Motivation
