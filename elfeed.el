@@ -146,6 +146,7 @@ NIL for unknown."
     (unless status
       (goto-char (point-min))
       (search-forward "\n\n") ; skip HTTP headers
+      (set-buffer-multibyte t)
       (let* ((xml (xml-parse-region (point) (point-max)))
              (entries (case (elfeed-feed-type xml)
                         (:atom (elfeed-entries-from-atom xml))
