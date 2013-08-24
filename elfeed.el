@@ -118,7 +118,7 @@ NIL for unknown."
 (defun elfeed-rfc3339 (&optional time)
   "Return an RFC 3339 formatted date string (Atom style)."
   (format-time-string "%Y-%m-%dT%H:%M:%SZ"
-                      (if time (date-to-time time) nil) t))
+                      (if time (ignore-errors (date-to-time time)) nil) t))
 
 (defun elfeed-entries-from-atom (xml)
   "Turn parsed Atom content into a list of elfeed-entry structs."
