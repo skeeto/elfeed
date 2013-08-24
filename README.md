@@ -25,9 +25,16 @@ Running the interactive function `elfeed` will pop up the
  * <kbd>s</kbd>: update the search filter (see tags)
 
 This buffer will be empty until you add your feeds to the
-`elfeed-feeds` list and initiate an update with <kbd>M-x
-elfeed-update</kbd> (or <kbd>G</kbd> in the Elfeed buffer). This will
-populate the Elfeed database with entries.
+`elfeed-feeds` list and initiate an update with `M-x elfeed-update`
+(or <kbd>G</kbd> in the Elfeed buffer). This will populate the Elfeed
+database with entries.
+
+```el
+;; Somewhere in your .emacs file
+(setq elfeed-feeds
+      '("http://nullprogram.com/feeds/"
+        "http://www.terminally-incoherent.com/blog/feed/"))
+```
 
 From this buffer there are a number of ways to interact with entries.
 Entries are selected by placing the point over an entry. Multiple
