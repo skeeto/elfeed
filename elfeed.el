@@ -38,9 +38,13 @@ feeds to this list."
     (loop for entry in entries
           do (setf (gethash (elfeed-entry-id entry) table) entry))))
 
-(defun elfeed-sort (entries)
+(defun elfeed-string> (a b)
+  (string< b a))
+
+(defun elfeed-sort (entries &optional old-first)
   "Destructively sort the given entries by date."
-  (sort* entries #'string< :key #'elfeed-entry-date))
+  (sort* entries (if old-first #'string< #'elfeed-string>)
+         :key #'elfeed-entry-date))
 
 (defun elfeed-db-entries (&optional feed)
   "Get all the entries for a feed, sorted by date."
