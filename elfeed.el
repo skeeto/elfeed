@@ -26,23 +26,32 @@ feeds to this list."
 
 ;; Model and Database
 
-(defstruct elfeed-entry
-  title id link date content)
-
 (defvar elfeed-db (make-hash-table :test 'equal)
   "The core database for elfeed.")
 
-(defun elfeed-db-get (feed)
-  "Get/create the table for FEED."
-  (let ((table (gethash feed elfeed-db)))
-    (if (null table)
-        (setf (gethash feed elfeed-db) (make-hash-table :test 'equal))
-      table)))
+(defstruct elfeed-feed
+  "A web feed, contains elfeed-entry structs."
+  title url entries)
 
-(defun elfeed-db-put (feed entries)
-  "Add entries to the database."
-  (let ((table (elfeed-db-get feed)))
+(defstruct elfeed-entry
+  "A single entry from a feed. Conceptually modeled after Atom."
+  title id link date content tags feed)
+
+(defun elfeed-db-get (url)
+  "Get/create the table for URL."
+  (let ((feed (gethash url elfeed-db)))
+    (if feed
+        feed
+        (setf (gethash url elfeed-db)
+              (make-elfeed-feed
+               :url url :entries (make-hash-table :test 'equal))))))
+
+(defun elfeed-db-put (url entries)
+  "Add entries to the database under URL."
+  (let* ((feed (elfeed-db-get url))
+         (table (elfeed-feed-entries feed)))
     (loop for entry in entries
+          do (setf (elfeed-entry-feed entry) feed)
           do (setf (gethash (elfeed-entry-id entry) table) entry))))
 
 (defun elfeed-string> (a b)
@@ -53,13 +62,13 @@ feeds to this list."
   (sort* entries (if old-first #'string< #'elfeed-string>)
          :key #'elfeed-entry-date))
 
-(defun elfeed-db-entries (&optional feed)
+(defun elfeed-db-entries (&optional url)
   "Get all the entries for a feed, sorted by date."
   (elfeed-sort
-   (if (null feed)
-       (loop for feed being the hash-keys of elfeed-db
-             append (elfeed-db-entries feed))
-     (loop for entry being the hash-values of (elfeed-db-get feed)
+   (if (null url)
+       (loop for url in elfeed-feeds
+             append (elfeed-db-entries url))
+     (loop for entry hash-values of (elfeed-feed-entries (elfeed-db-get url))
            collect entry))))
 
 ;; Fetching:
@@ -120,6 +129,11 @@ NIL for unknown."
   (format-time-string "%Y-%m-%dT%H:%M:%SZ"
                       (if time (ignore-errors (date-to-time time)) nil) t))
 
+(defun elfeed-cleanup (name)
+  "Cleanup things that will be printed."
+  (let ((trim (replace-regexp-in-string "^ +\\| +$" "" name)))
+    (replace-regexp-in-string "[\n\t]+" " " trim)))
+
 (defun elfeed-entries-from-atom (xml)
   "Turn parsed Atom content into a list of elfeed-entry structs."
   (loop for entry in (xml-query-all '(feed entry) xml) collect
@@ -131,7 +145,8 @@ NIL for unknown."
                (date (or (xml-query '(published *) entry)
                          (xml-query '(updated *) entry)
                          (xml-query '(date *) entry))))
-          (make-elfeed-entry :title title :id id :link link
+          (make-elfeed-entry :title (elfeed-cleanup title)
+                             :id (elfeed-cleanup id) :link link
                              :date (elfeed-rfc3339 date) :content nil))))
 
 (defun elfeed-entries-from-rss (xml)
@@ -143,7 +158,8 @@ NIL for unknown."
                (id (or guid link))
                (date (or (xml-query '(pubDate *) item)
                          (xml-query '(date *) item))))
-          (make-elfeed-entry :title title :id id :link link
+          (make-elfeed-entry :title (elfeed-cleanup title)
+                             :id (elfeed-cleanup id) :link link
                              :date (elfeed-rfc3339 date) :content nil))))
 
 (defun elfeed-update-feed (url)
@@ -219,6 +235,12 @@ NIL for unknown."
   "Face used in search mode for titles."
   :group 'elfeed)
 
+(defface elfeed-search-feed-face
+  '((((class color) (background light)) (:foreground "#0f0"))
+    (((class color) (background dark))  (:foreground "#ff0")))
+  "Face used in search mode for feed titles."
+  :group 'elfeed)
+
 (defun elfeed-search-update ()
   "Update the display to match the database."
   (interactive)
@@ -229,9 +251,17 @@ NIL for unknown."
       (erase-buffer)
       (loop for entry in (setf elfeed-search-entries (elfeed-db-entries))
             for date = (elfeed-search-format-date (elfeed-entry-date entry))
-            for title = (remove ?\n (elfeed-entry-title entry))
-            do (insert (propertize date 'face 'elfeed-search-date-face) " ")
-            do (insert (propertize title 'face 'elfeed-search-title-face) "\n"))
+            for title = (elfeed-entry-title entry)
+            for feed = (elfeed-entry-feed entry)
+            for feedtitle = (elfeed-feed-title feed)
+            do (insert (propertize date 'face 'elfeed-search-date-face))
+            do (insert " ")
+            do (insert (propertize title 'face 'elfeed-search-title-face))
+            when feedtitle
+            do (insert " ("
+                       (propertize feedtitle 'face 'elfeed-search-feed-face)
+                       ")")
+            do (insert "\n"))
       (insert "End of entries.\n")
       (goto-line line))))
 
