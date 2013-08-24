@@ -27,9 +27,7 @@ parse my entire 136-entry feed list.
 Some things I want to add:
 
  * Reading entries within Emacs (like e-mail)
- * Track entry read/unread state
  * Persist the database between Emacs instances
- * More extensible API
  * Enclosure support
  * Searching (maybe)
  * Optional external database back-end (Xapian?, maybe)
