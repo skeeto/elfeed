@@ -187,7 +187,7 @@ NIL for unknown."
                  (date (or (xml-query '(pubDate *) item)
                            (xml-query '(date *) item))))
             (make-elfeed-entry :title (elfeed-cleanup title)
-                               :id (elfeed-cleanup id) :link link
+                               :id (elfeed-cleanup id) :feed feed :link link
                                :tags (copy-seq elfeed-initial-tags)
                                :date (elfeed-rfc3339 date) :content nil)))))
 
