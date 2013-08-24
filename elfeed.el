@@ -221,6 +221,7 @@ NIL for unknown."
             for title = (remove ?\n (elfeed-entry-title entry))
             do (insert (propertize date 'face 'elfeed-search-date-face) " ")
             do (insert (propertize title 'face 'elfeed-search-title-face) "\n"))
+      (insert "End of entries.\n")
       (goto-line line))))
 
 (defun elfeed-search-selected ()
