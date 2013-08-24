@@ -4,9 +4,15 @@
 
 (require 'cl)
 
+(defun xml-query-strip-ns (tag)
+  (let ((name (symbol-name tag)))
+    (if (find ?\: name)
+        (intern (replace-regexp-in-string "^.+:" "" name))
+      tag)))
+
 (defun xml-query--tag-all (match xml)
   (loop for (tag attribs . content) in (remove-if-not #'listp xml)
-        when (eq tag match)
+        when (or (eq tag match) (eq (xml-query-strip-ns tag) match))
         collect (cons tag (cons attribs content))))
 
 (defun xml-query--attrib-all (attrib value xml)
