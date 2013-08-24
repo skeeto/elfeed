@@ -116,26 +116,28 @@ NIL for unknown."
 (defun elfeed-entries-from-atom (xml)
   "Turn parsed Atom content into a list of elfeed-entry structs."
   (loop for entry in (xml-query-all '(feed entry) xml) collect
-        (let* ((title (xml-query '(title *) entry))
+        (let* ((title (or (xml-query '(title *) entry) ""))
                (anylink (xml-query '(link :href) entry))
                (altlink (xml-query '(link [rel "alternate"] :href) entry))
                (link (or altlink anylink))
                (id (or (xml-query '(id *) entry) link))
-               (date (or (xml-query '(updated *) entry)
-                         (xml-query '(published *) entry))))
+               (date (or (xml-query '(published *) entry)
+                         (xml-query '(updated *) entry)
+                         (xml-query '(date *) entry))))
           (make-elfeed-entry :title title :id id :link link
                              :date (elfeed-rfc3339 date) :content nil))))
 
 (defun elfeed-entries-from-rss (xml)
   "Turn parsed RSS content into a list of elfeed-entry structs."
   (loop for item in (xml-query-all '(rss channel item) xml) collect
-        (let* ((title (xml-query '(title *) item))
+        (let* ((title (or (xml-query '(title *) item) ""))
                (link (xml-query '(link *) item))
                (guid (xml-query '(guid *) item))
                (id (or guid link))
-               (pubdate (xml-query '(pubDate *) item)))
+               (date (or (xml-query '(pubDate *) item)
+                         (xml-query '(date *) item))))
           (make-elfeed-entry :title title :id id :link link
-                             :date (elfeed-rfc3339 pubdate) :content nil))))
+                             :date (elfeed-rfc3339 date) :content nil))))
 
 (defun elfeed-update-feed (url)
   "Update a specific feed."
