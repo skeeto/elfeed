@@ -4,6 +4,8 @@ Elfeed is a web feed reader for Emacs, inspired by
 [notmuch](http://notmuchmail.org/). It supports both Atom and RSS and
 is currently in early development.
 
+Requires Emacs 24 (lexical closures).
+
 ## Getting Started
 
 Add your feeds to the `elfeed-feeds` list and populate the database

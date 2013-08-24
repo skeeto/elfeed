@@ -1,5 +1,26 @@
 ;;; xml-query.el --- query engine complimenting the xml package
 
+;; This is free and unencumbered software released into the public domain.
+
+;;; Commentary:
+
+;; This provides a very rudimentary s-expression oriented, jQuery-like
+;; XML query language. It operates on the output of the xml package,
+;; such as `xml-parse-region' and `xml-parse-file'. It was written to
+;; support Elfeed.
+
+;; See the docstring for `xml-query-all'.
+
+;; Examples:
+
+;; This query grabs the top-level paragraph content from XHTML.
+
+;;  (xml-query-all '(html body p *) xhtml)
+
+;; This query extracts all the links from an Atom feed.
+
+;;  (xml-query-all '(feed entry link [rel "alternate"] :href) xml)
+
 ;;; Code:
 
 (require 'cl)
