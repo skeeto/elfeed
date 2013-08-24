@@ -26,10 +26,11 @@
 (require 'cl)
 
 (defun xml-query-strip-ns (tag)
-  (let ((name (symbol-name tag)))
-    (if (find ?\: name)
-        (intern (replace-regexp-in-string "^.+:" "" name))
-      tag)))
+  (when (symbolp tag)
+    (let ((name (symbol-name tag)))
+      (if (find ?\: name)
+          (intern (replace-regexp-in-string "^.+:" "" name))
+        tag))))
 
 (defun xml-query--tag-all (match xml)
   (loop for (tag attribs . content) in (remove-if-not #'listp xml)
