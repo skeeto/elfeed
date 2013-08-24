@@ -163,6 +163,7 @@ NIL for unknown."
 
 (defun elfeed-update ()
   "Update all the feeds in `elfeed-feeds'."
+  (interactive)
   (mapc #'elfeed-update-feed elfeed-feeds))
 
 ;; Interface:
