@@ -234,8 +234,10 @@ NIL for unknown."
         mode-name "elfeed-search"
         truncate-lines t
         buffer-read-only t)
+  (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)
-  (elfeed-search-update))
+  (elfeed-search-update)
+  (run-hooks 'elfeed-search-mode-hook))
 
 (defun elfeed-buffer ()
   (get-buffer-create "*elfeed-search*"))
