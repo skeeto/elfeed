@@ -272,6 +272,20 @@ NIL for unknown."
   "Face used in search mode for feed titles."
   :group 'elfeed)
 
+(defun elfeed-search-print (entry)
+  "Print a single entry to the buffer."
+  (let* ((date (elfeed-search-format-date (elfeed-entry-date entry)))
+         (title (elfeed-entry-title entry))
+         (title-faces '(elfeed-search-title-face))
+         (feed (elfeed-entry-feed entry))
+         (feedtitle (elfeed-feed-title feed)))
+    (when (elfeed-tagged-p 'unread entry)
+      (push 'bold title-faces))
+    (insert (propertize date 'face 'elfeed-search-date-face) " ")
+    (insert (propertize title 'face title-faces) " ")
+    (when feedtitle
+      (insert "(" (propertize feedtitle 'face 'elfeed-search-feed-face) ")"))))
+
 (defun elfeed-search-update ()
   "Update the display to match the database."
   (interactive)
@@ -281,20 +295,23 @@ NIL for unknown."
           (line (line-number-at-pos)))
       (erase-buffer)
       (loop for entry in (setf elfeed-search-entries (elfeed-db-entries))
-            for date = (elfeed-search-format-date (elfeed-entry-date entry))
-            for title = (elfeed-entry-title entry)
-            for feed = (elfeed-entry-feed entry)
-            for feedtitle = (elfeed-feed-title feed)
-            do (insert (propertize date 'face 'elfeed-search-date-face))
-            do (insert " ")
-            do (insert (propertize title 'face 'elfeed-search-title-face))
-            when feedtitle
-            do (insert " ("
-                       (propertize feedtitle 'face 'elfeed-search-feed-face)
-                       ")")
+            do (elfeed-search-print entry)
             do (insert "\n"))
       (insert "End of entries.\n")
       (goto-line line))))
+
+(defun elfeed-search-update-line (&optional n)
+  "Redraw the current line."
+  (let ((inhibit-read-only t))
+    (save-excursion
+      (when n (goto-line n))
+      (let ((entry (elfeed-search-selected :ignore-region)))
+        (when entry
+          (beginning-of-line)
+          (let ((start (point)))
+            (end-of-line)
+            (delete-region start (point)))
+          (elfeed-search-print entry))))))
 
 (defun elfeed-search-selected (&optional ignore-region)
   "Return a list of the currently selected feeds."
@@ -310,6 +327,7 @@ NIL for unknown."
   "Visit the current entry in your browser using `browse-url'."
   (interactive)
   (loop for entry in (elfeed-search-selected)
+        do (elfeed-untag entry 'unread)
         when (elfeed-entry-link entry)
         do (browse-url it)))
 
@@ -319,8 +337,11 @@ NIL for unknown."
   (let* ((entry (elfeed-search-selected :ignore-region))
          (link (and entry (elfeed-entry-link entry))))
     (when entry
+      (elfeed-untag entry 'unread)
+      (x-set-selection 'PRIMARY link)
       (message "Copied: %s" link)
-      (x-set-selection 'PRIMARY link))))
+      (elfeed-search-update-line)
+      (forward-line))))
 
 (provide 'elfeed)
 
