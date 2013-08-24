@@ -216,13 +216,19 @@ NIL for unknown."
 (defvar elfeed-search-entries ()
   "List of the entries currently on display.")
 
+(defun elfeed-expose (function &rest args)
+  "Return an interactive version of FUNCTION, 'exposing' it to the user."
+  (lambda () (interactive) (apply function args)))
+
 (defvar elfeed-search-mode-map
   (let ((map (make-sparse-keymap)))
     (prog1 map
       (define-key map "q" 'quit-window)
       (define-key map "g" 'elfeed-search-update)
       (define-key map "b" 'elfeed-search-browse-url)
-      (define-key map "y" 'elfeed-search-yank)))
+      (define-key map "y" 'elfeed-search-yank)
+      (define-key map "u" (elfeed-expose #'elfeed-search-tag-all 'unread))
+      (define-key map "r" (elfeed-expose #'elfeed-search-untag-all 'unread))))
   "Keymap for elfeed-search-mode.")
 
 (defun elfeed-search-mode ()
@@ -350,6 +356,22 @@ NIL for unknown."
       (message "Copied: %s" link)
       (elfeed-search-update-line)
       (forward-line))))
+
+(defun elfeed-search-tag-all (tag)
+  "Apply TAG to all selected entries."
+  (interactive (list (intern (read-from-minibuffer "Tag: "))))
+  (let ((entries (elfeed-search-selected)))
+    (loop for entry in entries do (elfeed-tag entry tag))
+    (mapc #'elfeed-search-update-entry entries)
+    (unless (use-region-p) (forward-line))))
+
+(defun elfeed-search-untag-all (tag)
+  "Remove TAG from all selected entries."
+  (interactive (list (intern (read-from-minibuffer "Tag: "))))
+  (let ((entries (elfeed-search-selected)))
+    (loop for entry in entries do (elfeed-untag entry tag))
+    (mapc #'elfeed-search-update-entry entries)
+    (unless (use-region-p) (forward-line))))
 
 (provide 'elfeed)
 
