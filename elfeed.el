@@ -448,6 +448,24 @@ tags entries with title or link matching regexp."
               (string-match-p regexp (elfeed-entry-title entry)))
       (elfeed-tag entry tag))))
 
+(defun elfeed-time-untagger (time tag)
+  "Return a function suitable for `elfeed-new-entry-hook' that
+untags entries older than TIME. Uses `timer-duration' to parse
+TIME, so relative strings are allowed. You probably want to use
+this to remove 'unread' from older entries (database
+initialization).
+
+ (add-hook 'elfeed-new-entry-hook
+           (elfeed-time-untagger \"2 weeks ago\" 'unread))"
+  (let ((secs (if (numberp time)
+                  time
+                (timer-duration (replace-regexp-in-string "ago" "" time)))))
+    (lambda (entry)
+      (let ((time (float-time (date-to-time (elfeed-entry-date entry)))))
+        (when (< time (- (float-time) secs))
+          (elfeed-untag entry tag)
+          :untag)))))
+
 (provide 'elfeed)
 
 ;;; elfeed.el ends here
