@@ -312,9 +312,15 @@ NIL for unknown."
   :group 'elfeed)
 
 (defface elfeed-search-feed-face
-  '((((class color) (background light)) (:foreground "#0f0"))
+  '((((class color) (background light)) (:foreground "#330"))
     (((class color) (background dark))  (:foreground "#ff0")))
   "Face used in search mode for feed titles."
+  :group 'elfeed)
+
+(defface elfeed-search-tag-face
+  '((((class color) (background light)) (:foreground "#070"))
+    (((class color) (background dark))  (:foreground "#0f0")))
+  "Face used in search mode for tags."
   :group 'elfeed)
 
 (defun elfeed-search-print (entry)
@@ -323,13 +329,19 @@ NIL for unknown."
          (title (elfeed-entry-title entry))
          (title-faces '(elfeed-search-title-face))
          (feed (elfeed-entry-feed entry))
-         (feedtitle (if feed (elfeed-feed-title feed))))
+         (feedtitle (if feed (elfeed-feed-title feed)))
+         (tags (mapcar #'symbol-name (elfeed-entry-tags entry)))
+         (tags-str (mapconcat
+                    (lambda (s) (propertize s 'face 'elfeed-search-tag-face))
+                    tags ",")))
     (when (elfeed-tagged-p 'unread entry)
       (push 'bold title-faces))
     (insert (propertize date 'face 'elfeed-search-date-face) " ")
     (insert (propertize title 'face title-faces) " ")
     (when feedtitle
-      (insert "(" (propertize feedtitle 'face 'elfeed-search-feed-face) ")"))))
+      (insert "(" (propertize feedtitle 'face 'elfeed-search-feed-face) ") "))
+    (when tags
+      (insert "(" tags-str ")"))))
 
 (defun elfeed-search-filter (entries)
   "Filter out only entries that match the filter."
