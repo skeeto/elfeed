@@ -221,6 +221,9 @@ NIL for unknown."
 (defvar elfeed-search-entries ()
   "List of the entries currently on display.")
 
+(defvar elfeed-search-filter "+unread"
+  "Query string filtering shown entires.")
+
 (defvar elfeed-search-last-update 0
   "The last time the buffer was redrawn.")
 
@@ -240,10 +243,12 @@ NIL for unknown."
       (define-key map "q" 'quit-window)
       (define-key map "g" (elfeed-expose #'elfeed-search-update :force))
       (define-key map "G" 'elfeed-update)
+      (define-key map "s" 'elfeed-search-filter-read)
       (define-key map "b" 'elfeed-search-browse-url)
       (define-key map "y" 'elfeed-search-yank)
       (define-key map "u" (elfeed-expose #'elfeed-search-tag-all 'unread))
-      (define-key map "r" (elfeed-expose #'elfeed-search-untag-all 'unread))))
+      (define-key map "r" (elfeed-expose #'elfeed-search-untag-all 'unread))
+      (define-key map "t" 'elfeed-search-tag-all)))
   "Keymap for elfeed-search-mode.")
 
 (defun elfeed-search-mode ()
@@ -257,6 +262,7 @@ NIL for unknown."
         buffer-read-only t)
   (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)
+  (make-local-variable 'elfeed-search-filter)
   (when (null elfeed-search-refresh-timer)
     (setf elfeed-search-refresh-timer
           (run-at-time elfeed-search-refresh-rate elfeed-search-refresh-rate
@@ -317,6 +323,28 @@ NIL for unknown."
     (when feedtitle
       (insert "(" (propertize feedtitle 'face 'elfeed-search-feed-face) ")"))))
 
+(defun elfeed-search-filter (entries)
+  "Filter out only entries that match the filter."
+  (let ((must-have ())
+        (must-not-have ()))
+    (loop for element in (split-string elfeed-search-filter)
+          for type = (aref element 0)
+          for tag = (intern (substring element 1))
+          do (case type
+               (?+ (push tag must-have))
+               (?- (push tag must-not-have))))
+    (loop for entry in entries
+          for tags = (elfeed-entry-tags entry)
+          when (and (every  (lambda (tag) (member tag tags)) must-have)
+                    (notany (lambda (tag) (member tag tags)) must-not-have))
+          collect entry)))
+
+(defun elfeed-search-filter-read (new-filter)
+  "Query for a new filter from the user."
+  (interactive (list (read-from-minibuffer "Filter: " elfeed-search-filter)))
+  (setf elfeed-search-filter new-filter)
+  (elfeed-search-update :force))
+
 (defun elfeed-search-update (&optional force)
   "Update the display to match the database."
   (interactive)
@@ -326,7 +354,8 @@ NIL for unknown."
             (standard-output (current-buffer))
             (line (line-number-at-pos)))
         (erase-buffer)
-        (loop for entry in (setf elfeed-search-entries (elfeed-db-entries))
+        (setf elfeed-search-entries (elfeed-search-filter (elfeed-db-entries)))
+        (loop for entry in elfeed-search-entries
               do (elfeed-search-print entry)
               do (insert "\n"))
         (insert "End of entries.\n")
