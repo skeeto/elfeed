@@ -205,7 +205,7 @@ NIL for unknown."
 (defface elfeed-search-title-face
   '((((class color) (background light)) (:foreground "#000"))
     (((class color) (background dark))  (:foreground "#fff")))
-  "Face used in search mode for dates."
+  "Face used in search mode for titles."
   :group 'elfeed)
 
 (defun elfeed-search-update ()
