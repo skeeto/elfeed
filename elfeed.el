@@ -216,7 +216,7 @@ NIL for unknown."
       (erase-buffer)
       (loop for entry in (setf elfeed-search-entries (elfeed-db-entries))
             for date = (elfeed-search-format-date (elfeed-entry-date entry))
-            for title = (elfeed-entry-title entry)
+            for title = (remove ?\n (elfeed-entry-title entry))
             do (insert (propertize date 'face 'elfeed-search-date-face) " ")
             do (insert (propertize title 'face 'elfeed-search-title-face) "\n"))
       (goto-line line))))
