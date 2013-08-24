@@ -176,7 +176,8 @@ NIL for unknown."
     (prog1 map
       (define-key map "q" 'quit-window)
       (define-key map "g" 'elfeed-search-update)
-      (define-key map "b" 'elfeed-search-browse-url)))
+      (define-key map "b" 'elfeed-search-browse-url)
+      (define-key map "y" 'elfeed-search-yank)))
   "Keymap for elfeed-search-mode.")
 
 (defun elfeed-search-mode ()
@@ -234,13 +235,15 @@ NIL for unknown."
       (insert "End of entries.\n")
       (goto-line line))))
 
-(defun elfeed-search-selected ()
+(defun elfeed-search-selected (&optional ignore-region)
   "Return a list of the currently selected feeds."
-  (let ((start (if (use-region-p) (region-beginning) (point)))
-        (end   (if (use-region-p) (region-end) (point))))
-    (loop for line from (line-number-at-pos start) to (line-number-at-pos end)
-          when (nth (1- line) elfeed-search-entries)
-          collect it)))
+  (let ((use-region (and (not ignore-region) (use-region-p))))
+    (let ((start (if use-region (region-beginning) (point)))
+          (end   (if use-region (region-end)       (point))))
+      (loop for line from (line-number-at-pos start) to (line-number-at-pos end)
+            when (nth (1- line) elfeed-search-entries)
+            collect it into selected
+            finally (return (if ignore-region (car selected) selected))))))
 
 (defun elfeed-search-browse-url ()
   "Visit the current entry in your browser using `browse-url'."
@@ -248,6 +251,15 @@ NIL for unknown."
   (loop for entry in (elfeed-search-selected)
         when (elfeed-entry-link entry)
         do (browse-url it)))
+
+(defun elfeed-search-yank ()
+  "Copy the selected feed item to "
+  (interactive)
+  (let* ((entry (elfeed-search-selected :ignore-region))
+         (link (and entry (elfeed-entry-link entry))))
+    (when entry
+      (message "Copied: %s" link)
+      (x-set-selection 'PRIMARY link))))
 
 (provide 'elfeed)
 
