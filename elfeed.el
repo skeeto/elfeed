@@ -300,7 +300,7 @@ NIL for unknown."
     (format "%-10.10s" string)))
 
 (defface elfeed-search-date-face
-  '((((class color) (background light)) (:foreground "#333"))
+  '((((class color) (background light)) (:foreground "#aaa"))
     (((class color) (background dark))  (:foreground "#77a")))
   "Face used in search mode for dates."
   :group 'elfeed)
@@ -312,7 +312,7 @@ NIL for unknown."
   :group 'elfeed)
 
 (defface elfeed-search-feed-face
-  '((((class color) (background light)) (:foreground "#330"))
+  '((((class color) (background light)) (:foreground "#aa0"))
     (((class color) (background dark))  (:foreground "#ff0")))
   "Face used in search mode for feed titles."
   :group 'elfeed)
