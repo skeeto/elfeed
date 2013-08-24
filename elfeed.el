@@ -73,7 +73,12 @@ feeds to this list."
           for old = (gethash id table)
           when old  ; merge old tags back in
           do (setf (elfeed-entry-tags entry) (elfeed-entry-tags old))
-          do (setf (gethash id table) entry))))
+          do (setf (gethash id table) entry))
+    (setf (gethash :last-update elfeed-db) (float-time))))
+
+(defun elfeed-db-last-update ()
+  "Return the last database update time in (`float-time') seconds."
+  (gethash :last-update elfeed-db 0))
 
 (defun elfeed-string> (a b)
   (string< b a))
@@ -216,6 +221,15 @@ NIL for unknown."
 (defvar elfeed-search-entries ()
   "List of the entries currently on display.")
 
+(defvar elfeed-search-last-update 0
+  "The last time the buffer was redrawn.")
+
+(defvar elfeed-search-refresh-timer nil
+  "The timer used to keep things updated as the database updates.")
+
+(defcustom elfeed-search-refresh-rate 5
+  "How often the buffer should update against the datebase in seconds.")
+
 (defun elfeed-expose (function &rest args)
   "Return an interactive version of FUNCTION, 'exposing' it to the user."
   (lambda () (interactive) (apply function args)))
@@ -224,7 +238,8 @@ NIL for unknown."
   (let ((map (make-sparse-keymap)))
     (prog1 map
       (define-key map "q" 'quit-window)
-      (define-key map "g" 'elfeed-search-update)
+      (define-key map "g" (elfeed-expose #'elfeed-search-update :force))
+      (define-key map "G" 'elfeed-update)
       (define-key map "b" 'elfeed-search-browse-url)
       (define-key map "y" 'elfeed-search-yank)
       (define-key map "u" (elfeed-expose #'elfeed-search-tag-all 'unread))
@@ -242,6 +257,16 @@ NIL for unknown."
         buffer-read-only t)
   (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)
+  (when (null elfeed-search-refresh-timer)
+    (setf elfeed-search-refresh-timer
+          (run-at-time elfeed-search-refresh-rate elfeed-search-refresh-rate
+                       (apply-partially #'elfeed-search-update))))
+  (add-hook 'kill-buffer-hook
+            (lambda ()
+              (message "killed timer?")
+              (ignore-errors (cancel-timer elfeed-search-refresh-timer))
+              (setf elfeed-search-refresh-timer nil))
+            t t)
   (elfeed-search-update)
   (run-hooks 'elfeed-search-mode-hook))
 
@@ -253,7 +278,7 @@ NIL for unknown."
   (interactive)
   (switch-to-buffer (elfeed-buffer))
   (unless (eq major-mode 'elfeed-search-mode) (elfeed-search-mode))
-  (elfeed-search-update))
+  (elfeed-search-update :force))
 
 (defun elfeed-search-format-date (date)
   "Format a date for printing in elfeed-search-mode."
@@ -284,7 +309,7 @@ NIL for unknown."
          (title (elfeed-entry-title entry))
          (title-faces '(elfeed-search-title-face))
          (feed (elfeed-entry-feed entry))
-         (feedtitle (elfeed-feed-title feed)))
+         (feedtitle (if feed (elfeed-feed-title feed))))
     (when (elfeed-tagged-p 'unread entry)
       (push 'bold title-faces))
     (insert (propertize date 'face 'elfeed-search-date-face) " ")
@@ -292,19 +317,21 @@ NIL for unknown."
     (when feedtitle
       (insert "(" (propertize feedtitle 'face 'elfeed-search-feed-face) ")"))))
 
-(defun elfeed-search-update ()
+(defun elfeed-search-update (&optional force)
   "Update the display to match the database."
   (interactive)
   (with-current-buffer (elfeed-buffer)
-    (let ((inhibit-read-only t)
-          (standard-output (current-buffer))
-          (line (line-number-at-pos)))
-      (erase-buffer)
-      (loop for entry in (setf elfeed-search-entries (elfeed-db-entries))
-            do (elfeed-search-print entry)
-            do (insert "\n"))
-      (insert "End of entries.\n")
-      (goto-line line))))
+    (when (or force (< elfeed-search-last-update (elfeed-db-last-update)))
+      (let ((inhibit-read-only t)
+            (standard-output (current-buffer))
+            (line (line-number-at-pos)))
+        (erase-buffer)
+        (loop for entry in (setf elfeed-search-entries (elfeed-db-entries))
+              do (elfeed-search-print entry)
+              do (insert "\n"))
+        (insert "End of entries.\n")
+        (goto-line line))
+      (setf elfeed-search-last-update (float-time)))))
 
 (defun elfeed-search-update-line (&optional n)
   "Redraw the current line."
