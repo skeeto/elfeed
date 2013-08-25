@@ -268,7 +268,8 @@ NIL for unknown."
   "Keymap for elfeed-search-mode.")
 
 (defun elfeed-search-mode ()
-  "Major mode for listing elfeed feed entries."
+  "Major mode for listing elfeed feed entries.
+\\{elfeed-search-mode-map}"
   (interactive)
   (kill-all-local-variables)
   (use-local-map elfeed-search-mode-map)
