@@ -225,6 +225,12 @@ NIL for unknown."
                         (t (error "Unkown feed type.")))))
         (elfeed-db-put url entries)))))
 
+(defun elfeed-add-feed (url)
+  "Manually add a feed to the database."
+  (interactive (list (read-from-minibuffer "URL: " (x-get-selection-value))))
+  (pushnew url elfeed-feeds :test #'string=)
+  (elfeed-update-feed url))
+
 (defun elfeed-update ()
   "Update all the feeds in `elfeed-feeds'."
   (interactive)
