@@ -12,6 +12,7 @@
 ;;; Code:
 
 (require 'cl)
+(require 'shr)
 (require 'xml)
 (require 'xml-query)
 
@@ -43,7 +44,7 @@ argument. This is a chance to add cutoms tags to new entries.")
 
 (defstruct elfeed-entry
   "A single entry from a feed, normalized towards Atom."
-  title id link date content tags feed)
+  title id link date content content-type tags feed)
 
 (defun elfeed-tag (entry &rest tags)
   "Add a tag to an entry."
@@ -181,11 +182,16 @@ NIL for unknown."
                  (id (or (xml-query '(id *) entry) link))
                  (date (or (xml-query '(published *) entry)
                            (xml-query '(updated *) entry)
-                           (xml-query '(date *) entry))))
+                           (xml-query '(date *) entry)))
+                 (content (xml-query '(content *) entry))
+                 (type (or (xml-query '(content :type) entry) "")))
             (make-elfeed-entry :title (elfeed-cleanup title) :feed feed
                                :id (elfeed-cleanup id) :link link
                                :tags (copy-seq elfeed-initial-tags)
-                               :date (elfeed-rfc3339 date) :content nil)))))
+                               :date (elfeed-rfc3339 date) :content content
+                               :content-type (if (string-match-p "html" type)
+                                                 'html
+                                               nil))))))
 
 (defun elfeed-entries-from-rss (url xml)
   "Turn parsed RSS content into a list of elfeed-entry structs."
@@ -251,6 +257,7 @@ NIL for unknown."
       (define-key map "q" 'quit-window)
       (define-key map "g" (elfeed-expose #'elfeed-search-update :force))
       (define-key map "G" 'elfeed-update)
+      (define-key map (kbd "RET") 'elfeed-search-show-entry)
       (define-key map "s" 'elfeed-search-filter-read)
       (define-key map "b" 'elfeed-search-browse-url)
       (define-key map "y" 'elfeed-search-yank)
@@ -456,7 +463,20 @@ NIL for unknown."
     (mapc #'elfeed-search-update-entry entries)
     (unless (use-region-p) (forward-line))))
 
+(defun elfeed-search-show-entry (entry)
+  "Display the currently selected item in a buffer."
+  (interactive (list (elfeed-search-selected :ignore-region)))
+  (elfeed-untag entry 'unread)
+  (elfeed-search-update-entry entry)
+  (forward-line)
+  (elfeed-show-entry entry))
+
 ;; Helper functions
+
+(defun elfeed-kill-buffer ()
+  "Kill the current buffer."
+  (interactive)
+  (kill-buffer (current-buffer)))
 
 (defun elfeed-regexp-tagger (regexp tag)
   "Return a function suitable for `elfeed-new-entry-hook' that
@@ -483,6 +503,62 @@ initialization).
         (when (< time (- (float-time) secs))
           (elfeed-untag entry tag)
           :untag)))))
+
+;; Entry display
+
+(defvar elfeed-show-entry nil
+  "The current entry being displayed.")
+
+(defvar elfeed-show-mode-map
+  (let ((map (make-sparse-keymap)))
+    (prog1 map
+      (define-key map "q" 'elfeed-kill-buffer)
+      (define-key map "g" 'elfeed-show-refresh)))
+  "Keymap for `elfeed-show-mode'.")
+
+(defun elfeed-show-mode ()
+  "Mode for displaying Elfeed feed entries.
+\\{elfeed-show-mode-map}"
+  (interactive)
+  (kill-all-local-variables)
+  (use-local-map elfeed-show-mode-map)
+  (setq major-mode 'elfeed-show-mode
+        mode-name "elfeed-show"
+        buffer-read-only t)
+  (make-local-variable 'elfeed-show-entry)
+  (run-hooks 'elfeed-show-mode-hook))
+
+(defun elfeed-insert-html (html)
+  "Converted HTML markup to a propertized string."
+  (shr-insert-document
+   (with-temp-buffer
+     (insert html)
+     (libxml-parse-html-region (point-min) (point-max)))))
+
+(defun elfeed-show-refresh ()
+  "Update the buffer to match the selected entry."
+  (interactive)
+  (let ((inhibit-read-only t)
+        (title (elfeed-entry-title elfeed-show-entry))
+        (date (elfeed-entry-date elfeed-show-entry))
+        (content (elfeed-entry-content elfeed-show-entry))
+        (type (elfeed-entry-content-type elfeed-show-entry)))
+    (erase-buffer)
+    (insert (format "Title: %s\n" title))
+    (insert (format "Date:  %s\n\n" date))
+    (if (eq type 'html)
+        (elfeed-insert-html content)
+      (insert content))
+    (goto-char (point-min))))
+
+(defun elfeed-show-entry (entry)
+  "Display a specific entry in the current window."
+  (let ((title (elfeed-entry-title entry)))
+    (switch-to-buffer (get-buffer-create (format "*elfeed %s*" title)))
+    (unless (eq major-mode 'elfeed-show-mode)
+      (elfeed-show-mode))
+    (setq elfeed-show-entry entry)
+    (elfeed-show-refresh)))
 
 (provide 'elfeed)
 
