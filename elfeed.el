@@ -13,6 +13,7 @@
 
 (require 'cl)
 (require 'xml)
+(require 'xml-query)
 
 (defgroup elfeed nil
   "An Emacs web feed reader."
@@ -125,7 +126,7 @@ argument. This is a chance to add cutoms tags to new entries.")
   (while (and elfeed-waiting
               (< (length elfeed-connections) elfeed-max-connections))
     (let ((request (pop elfeed-waiting)))
-      (destructuring-bind (id url cb) request
+      (destructuring-bind (_ url cb) request
         (push request elfeed-connections)
         (url-retrieve url cb)))))
 
@@ -366,6 +367,11 @@ NIL for unknown."
     (setf elfeed-search-filter new-filter)
     (elfeed-search-update :force)))
 
+(defun elfeed-goto-line (n)
+  "Like `goto-line' but for non-interactive use."
+  (goto-char (point-min))
+  (forward-line (1- n)))
+
 (defun elfeed-search-update (&optional force)
   "Update the display to match the database."
   (interactive)
@@ -380,14 +386,14 @@ NIL for unknown."
               do (elfeed-search-print entry)
               do (insert "\n"))
         (insert "End of entries.\n")
-        (goto-line line))
+        (elfeed-goto-line line))
       (setf elfeed-search-last-update (float-time)))))
 
 (defun elfeed-search-update-line (&optional n)
   "Redraw the current line."
   (let ((inhibit-read-only t))
     (save-excursion
-      (when n (goto-line n))
+      (when n (elfeed-goto-line n))
       (let ((entry (elfeed-search-selected :ignore-region)))
         (when entry
           (beginning-of-line)
