@@ -15,6 +15,7 @@
 (require 'shr)
 (require 'xml)
 (require 'xml-query)
+(require 'url-parse)
 
 (defgroup elfeed nil
   "An Emacs web feed reader."
@@ -535,26 +536,37 @@ initialization).
   (make-local-variable 'elfeed-show-entry)
   (run-hooks 'elfeed-show-mode-hook))
 
-(defun elfeed-insert-html (html)
+(defun elfeed-insert-html (html &optional base-url)
   "Converted HTML markup to a propertized string."
   (shr-insert-document
    (with-temp-buffer
+     ;; insert <base> to work around libxml-parse-html-region bug
+     (insert (format "<base href=\"%s\">" base-url))
      (insert html)
-     (libxml-parse-html-region (point-min) (point-max)))))
+     (libxml-parse-html-region (point-min) (point-max) base-url))))
+
+(defun elfeed-compute-base (url)
+  "Return the base URL for URL, useful for relative paths."
+  (let ((obj (url-generic-parse-url url)))
+    (setf (url-filename obj) nil)
+    (setf (url-target obj) nil)
+    (url-recreate-url obj)))
 
 (defun elfeed-show-refresh ()
   "Update the buffer to match the selected entry."
   (interactive)
-  (let ((inhibit-read-only t)
-        (title (elfeed-entry-title elfeed-show-entry))
-        (date (elfeed-entry-date elfeed-show-entry))
-        (content (elfeed-entry-content elfeed-show-entry))
-        (type (elfeed-entry-content-type elfeed-show-entry)))
+  (let* ((inhibit-read-only t)
+         (title (elfeed-entry-title elfeed-show-entry))
+         (date (elfeed-entry-date elfeed-show-entry))
+         (content (elfeed-entry-content elfeed-show-entry))
+         (type (elfeed-entry-content-type elfeed-show-entry))
+         (feed (elfeed-entry-feed elfeed-show-entry))
+         (base (and feed (elfeed-compute-base (elfeed-feed-url feed)))))
     (erase-buffer)
     (insert (format "Title: %s\n" title))
     (insert (format "Date:  %s\n\n" date))
     (if (eq type 'html)
-        (elfeed-insert-html content)
+        (elfeed-insert-html content base)
       (insert content))
     (goto-char (point-min))))
 
