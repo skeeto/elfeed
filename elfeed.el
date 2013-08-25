@@ -300,13 +300,13 @@ NIL for unknown."
   (elfeed-search-update)
   (run-hooks 'elfeed-search-mode-hook))
 
-(defun elfeed-buffer ()
+(defun elfeed-search-buffer ()
   (get-buffer-create "*elfeed-search*"))
 
 (defun elfeed ()
   "Enter elfeed."
   (interactive)
-  (switch-to-buffer (elfeed-buffer))
+  (switch-to-buffer (elfeed-search-buffer))
   (unless (eq major-mode 'elfeed-search-mode) (elfeed-search-mode))
   (elfeed-search-update :force))
 
@@ -378,7 +378,7 @@ NIL for unknown."
 (defun elfeed-search-filter-read (new-filter)
   "Query for a new filter from the user."
   (interactive (list (read-from-minibuffer "Filter: " elfeed-search-filter)))
-  (with-current-buffer (elfeed-buffer)
+  (with-current-buffer (elfeed-search-buffer)
     (setf elfeed-search-filter new-filter)
     (elfeed-search-update :force)))
 
@@ -390,7 +390,7 @@ NIL for unknown."
 (defun elfeed-search-update (&optional force)
   "Update the display to match the database."
   (interactive)
-  (with-current-buffer (elfeed-buffer)
+  (with-current-buffer (elfeed-search-buffer)
     (when (or force (< elfeed-search-last-update (elfeed-db-last-update)))
       (let ((inhibit-read-only t)
             (standard-output (current-buffer))
@@ -474,10 +474,11 @@ NIL for unknown."
 (defun elfeed-search-show-entry (entry)
   "Display the currently selected item in a buffer."
   (interactive (list (elfeed-search-selected :ignore-region)))
-  (elfeed-untag entry 'unread)
-  (elfeed-search-update-entry entry)
-  (forward-line)
-  (elfeed-show-entry entry))
+  (when (elfeed-entry-p entry)
+    (elfeed-untag entry 'unread)
+    (elfeed-search-update-entry entry)
+    (forward-line)
+    (elfeed-show-entry entry)))
 
 ;; Helper functions
 
@@ -521,7 +522,9 @@ initialization).
   (let ((map (make-sparse-keymap)))
     (prog1 map
       (define-key map "q" 'elfeed-kill-buffer)
-      (define-key map "g" 'elfeed-show-refresh)))
+      (define-key map "g" 'elfeed-show-refresh)
+      (define-key map "n" 'elfeed-show-next)
+      (define-key map "p" 'elfeed-show-prev)))
   "Keymap for `elfeed-show-mode'.")
 
 (defun elfeed-show-mode ()
@@ -575,13 +578,27 @@ initialization).
     (goto-char (point-min))))
 
 (defun elfeed-show-entry (entry)
-  "Display a specific entry in the current window."
+  "Display ENTRY in the current buffer."
   (let ((title (elfeed-entry-title entry)))
     (switch-to-buffer (get-buffer-create (format "*elfeed %s*" title)))
     (unless (eq major-mode 'elfeed-show-mode)
       (elfeed-show-mode))
     (setq elfeed-show-entry entry)
     (elfeed-show-refresh)))
+
+(defun elfeed-show-next ()
+  "Show the next item in the elfeed-search buffer."
+  (interactive)
+  (elfeed-kill-buffer)
+  (with-current-buffer (elfeed-search-buffer)
+    (call-interactively #'elfeed-search-show-entry)))
+
+(defun elfeed-show-prev ()
+  "Show the previous item in the elfeed-search buffer."
+  (interactive)
+  (with-current-buffer (elfeed-search-buffer)
+    (forward-line -2)
+    (call-interactively #'elfeed-search-show-entry)))
 
 (provide 'elfeed)
 
