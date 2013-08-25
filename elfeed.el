@@ -256,8 +256,8 @@ NIL for unknown."
       (define-key map "y" 'elfeed-search-yank)
       (define-key map "u" (elfeed-expose #'elfeed-search-tag-all 'unread))
       (define-key map "r" (elfeed-expose #'elfeed-search-untag-all 'unread))
-      (define-key map "t" 'elfeed-search-tag-all)
-      (define-key map "v" 'elfeed-search-untag-all)))
+      (define-key map "+" 'elfeed-search-tag-all)
+      (define-key map "-" 'elfeed-search-untag-all)))
   "Keymap for elfeed-search-mode.")
 
 (defun elfeed-search-mode ()

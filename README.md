@@ -44,8 +44,8 @@ entries are selected at once by using an active region.
  * <kbd>y</kbd>: copy selected entries URL to the clipboard
  * <kbd>r</kbd>: mark selected entries as read
  * <kbd>u</kbd>: mark selected entries as unread
- * <kbd>t</kbd>: add a specific tag to selected entries
- * <kbd>v</kbd>: remove a specific tag from selected entries
+ * <kbd>+</kbd>: add a specific tag to selected entries
+ * <kbd>-</kbd>: remove a specific tag from selected entries
 
 Currently there is no way to view an entry within Emacs, but this is
 planned for the near future.
