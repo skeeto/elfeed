@@ -79,7 +79,10 @@ Atom feed:
     (destructuring-bind (matcher . rest) query
       (cond
        ((keywordp matcher) (xml-query--keyword matcher xml))
-       ((eq matcher '*) (remove-if-not #'stringp (xml-query--append xml)))
+       ((eq matcher '*)
+        (let ((strings (remove-if-not #'stringp (xml-query--append xml))))
+          (when strings
+            (mapconcat #'identity strings " "))))
        (:else
         (let ((matches
                (typecase matcher
@@ -95,7 +98,10 @@ Atom feed:
 
 (defun xml-query (query xml)
   "Like `xml-query-all' but only return the first result."
-  (car (xml-query-all query xml)))
+  (let ((result (xml-query-all query xml)))
+    (if (stringp result)
+        result
+      (car (xml-query-all query xml)))))
 
 (provide 'xml-query)
 
