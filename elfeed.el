@@ -205,11 +205,13 @@ NIL for unknown."
                  (guid (xml-query '(guid *) item))
                  (id (or guid link))
                  (date (or (xml-query '(pubDate *) item)
-                           (xml-query '(date *) item))))
+                           (xml-query '(date *) item)))
+                 (description (xml-query '(description *) item)))
             (make-elfeed-entry :title (elfeed-cleanup title)
                                :id (elfeed-cleanup id) :feed feed :link link
                                :tags (copy-seq elfeed-initial-tags)
-                               :date (elfeed-rfc3339 date) :content nil)))))
+                               :date (elfeed-rfc3339 date)
+                               :content description :content-type 'html)))))
 
 (defun elfeed-update-feed (url)
   "Update a specific feed."
