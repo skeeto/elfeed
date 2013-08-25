@@ -574,9 +574,11 @@ initialization).
     (insert (format (propertize "Date: %s\n" 'face 'message-header-name)
                     (propertize nicedate 'face 'message-header-other)))
     (insert "\n")
-    (if (eq type 'html)
-        (elfeed-insert-html content base)
-      (insert content))
+    (if content
+        (if (eq type 'html)
+            (elfeed-insert-html content base)
+          (insert content))
+      (insert (propertize "(empty)\n" 'face 'italic)))
     (goto-char (point-min))))
 
 (defun elfeed-show-entry (entry)
