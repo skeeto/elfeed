@@ -575,7 +575,9 @@ initialization).
       (define-key map "p" 'elfeed-show-prev)
       (define-key map "b" 'elfeed-show-visit)
       (define-key map "y" 'elfeed-show-yank)
-      (define-key map "u" (expose #'elfeed-show-tag 'unread))))
+      (define-key map "u" (expose #'elfeed-show-tag 'unread))
+      (define-key map (kbd "SPC") 'scroll-up-command)
+      (define-key map (kbd "DEL") 'scroll-down-command)))
   "Keymap for `elfeed-show-mode'.")
 
 (defun elfeed-show-mode ()
