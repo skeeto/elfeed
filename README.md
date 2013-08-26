@@ -9,6 +9,8 @@ spend too much time manually tagging entries.
 
 [![](http://i.imgur.com/8eTghK8.png)](http://i.imgur.com/l5aVPDc.png)
 
+[![](http://i.imgur.com/3yHGITn.png)](http://i.imgur.com/EfdBKif.png)
+
 ## Getting Started
 
 It is recommended that you make a global binding for `elfeed`.
