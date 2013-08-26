@@ -56,16 +56,38 @@ Elfeed maintains a list of arbitrary tags -- symbols attached to an
 entry. The tag `unread` is treated specially by default, with unread
 entries appearing in bold.
 
+### Filter Syntax
+
 To make tags useful, the Elfeed entry listing buffer can be filtered
 by tags. Use `elfeed-search-filter-read` (or <kbd>s</kbd>) to update
-the filter. Any component of the search string beginning with a `+` or
-a`-` is treated like a tag. `+` means the tag is required, `-` means
-the tag must not be present. All other components are treated as a
-regular expression. Here are some examples:
+the filter.
 
- * `+unread`: only show unread entries
- * `linu[xs]`: only show entries about Linux or Linus
- * `-unread +youtube`: only show previously-read YouTube entries
+Any component of the search string beginning with a `+` or
+a `-` is treated like a tag. `+` means the tag is required, `-` means
+the tag must not be present.
+
+A component beginning with a `@` indicates an age. Entries older than
+this age are filtered out. The age description accepts plain English,
+but cannot have spaces, so use dashes. For example, `"@2-years-old"`
+or `"@3-days-ago"`.
+
+All other components are treated as a regular expression.
+
+Here are some example filters.
+
+ * `+unread`
+
+Only show unread entries. This is the default filter.
+
+ * `linu[xs] @1-year-old`
+
+Only show entries about Linux or Linus from the last year.
+
+ * `-unread +youtube`
+
+Only show previously-read entries tagged as `youtube`.
+
+### Tag Hooks
 
 The last example assumes you've tagged posts with `youtube`. You
 probably want to do this sort of thing automatically, which can be

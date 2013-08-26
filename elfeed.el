@@ -369,25 +369,31 @@ NIL for unknown."
       (insert "(" tags-str ")"))))
 
 (defun elfeed-search-filter (entries)
-  "Filter out only entries that match the filter."
+  "Filter out only entries that match the filter. See
+`elfeed-search-filter-read' for format/syntax documentation."
   (let ((must-have ())
         (must-not-have ())
+        (after nil)
         (matches ()))
     (loop for element in (split-string elfeed-search-filter)
           for type = (aref element 0)
-          for tag = (intern (substring element 1))
           do (case type
-               (?+ (push tag must-have))
-               (?- (push tag must-not-have))
+               (?+ (push (intern (substring element 1)) must-have))
+               (?- (push (intern (substring element 1)) must-not-have))
+               (?@ (setf after (elfeed-time-duration (substring element 1))))
                (t  (push element matches))))
     (loop for entry in entries
           for tags = (elfeed-entry-tags entry)
+          for date = (float-time (date-to-time (elfeed-entry-date entry)))
+          for age = (- (float-time) date)
           for title = (elfeed-entry-title entry)
           for link = (elfeed-entry-link entry)
           for feed = (elfeed-entry-feed entry)
           for feed-title = (or (elfeed-feed-title feed) "")
           when (and (every  (lambda (tag) (member tag tags)) must-have)
                     (notany (lambda (tag) (member tag tags)) must-not-have)
+                    (or (not after)
+                        (< age after))
                     (or (null matches)
                         (some (lambda (m) (or (string-match-p m title)
                                               (string-match-p m link)
@@ -398,9 +404,12 @@ NIL for unknown."
 (defun elfeed-search-filter-read (new-filter)
   "Query for a new filter from the user.
 
-Anything beginning with a + or - is treated as a tag. If + the
-tag must be present on the entry. If - the tag must *not* be
-present on the entry.
+Any component beginning with a + or - is treated as a tag. If +
+the tag must be present on the entry. If - the tag must *not* be
+present on the entry. Ex. \"+unread\" or \"+unread -comic\".
+
+Any component beginning with an @ is an age limit. No posts older
+than this are allowed. Ex. \"@3-days-ago\" or \"@1-year-old\".
 
 Every other space-seperated element is treated like a regular
 expression, matching against entry link, title, and feed title."
@@ -522,6 +531,13 @@ tags entries with title or link matching regexp."
               (string-match-p regexp (elfeed-entry-title entry)))
       (elfeed-tag entry tag))))
 
+(defun elfeed-time-duration (time)
+  "Turn a time expression into a number of seconds. Uses
+`timer-duration' but allows a bit more flair."
+  (if (numberp time)
+      time
+    (timer-duration (replace-regexp-in-string "\\(ago\\|old\\|-\\)" "" time))))
+
 (defun elfeed-time-untagger (time tag)
   "Return a function suitable for `elfeed-new-entry-hook' that
 untags entries older than TIME. Uses `timer-duration' to parse
@@ -531,9 +547,7 @@ initialization).
 
  (add-hook 'elfeed-new-entry-hook
            (elfeed-time-untagger \"2 weeks ago\" 'unread))"
-  (let ((secs (if (numberp time)
-                  time
-                (timer-duration (replace-regexp-in-string "ago" "" time)))))
+  (let ((secs (elfeed-time-duration time)))
     (lambda (entry)
       (let ((time (float-time (date-to-time (elfeed-entry-date entry)))))
         (when (< time (- (float-time) secs))
