@@ -560,6 +560,10 @@ initialization).
      (insert html)
      (libxml-parse-html-region (point-min) (point-max) base-url))))
 
+(defun* elfeed-insert-link (url &optional (content url))
+  "Insert a clickable hyperlink to URL titled CONTENT."
+  (elfeed-insert-html (format "<a href=\"%s\">%s</a>" url content)))
+
 (defun elfeed-compute-base (url)
   "Return the base URL for URL, useful for relative paths."
   (let ((obj (url-generic-parse-url url)))
@@ -573,6 +577,7 @@ initialization).
   (let* ((inhibit-read-only t)
          (title (elfeed-entry-title elfeed-show-entry))
          (date (date-to-time (elfeed-entry-date elfeed-show-entry)))
+         (link (elfeed-entry-link elfeed-show-entry))
          (nicedate (format-time-string "%a, %e %b %Y %T %Z" date))
          (content (elfeed-entry-content elfeed-show-entry))
          (type (elfeed-entry-content-type elfeed-show-entry))
@@ -583,7 +588,9 @@ initialization).
                     (propertize title 'face 'message-header-subject)))
     (insert (format (propertize "Date: %s\n" 'face 'message-header-name)
                     (propertize nicedate 'face 'message-header-other)))
-    (insert "\n")
+    (insert (propertize "Link: " 'face 'message-header-name))
+    (elfeed-insert-link link link)
+    (insert "\n\n")
     (if content
         (if (eq type 'html)
             (elfeed-insert-html content base)
