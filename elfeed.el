@@ -533,7 +533,10 @@ initialization).
       (define-key map "q" 'elfeed-kill-buffer)
       (define-key map "g" 'elfeed-show-refresh)
       (define-key map "n" 'elfeed-show-next)
-      (define-key map "p" 'elfeed-show-prev)))
+      (define-key map "p" 'elfeed-show-prev)
+      (define-key map "b" 'elfeed-show-visit)
+      (define-key map "y" 'elfeed-show-yank)
+      (define-key map "u" (expose #'elfeed-show-tag 'unread))))
   "Keymap for `elfeed-show-mode'.")
 
 (defun elfeed-show-mode ()
@@ -610,6 +613,27 @@ initialization).
   (with-current-buffer (elfeed-search-buffer)
     (forward-line -2)
     (call-interactively #'elfeed-search-show-entry)))
+
+(defun elfeed-show-visit ()
+  "Visit the current entry in the browser."
+  (interactive)
+  (let ((link (elfeed-entry-link elfeed-show-entry)))
+    (when link (browse-url link))))
+
+(defun elfeed-show-yank ()
+  "Visit the current entry in the browser."
+  (interactive)
+  (let ((link (elfeed-entry-link elfeed-show-entry)))
+    (when link
+      (x-set-selection 'PRIMARY link)
+      (message "Yanked: %s" link))))
+
+(defun elfeed-show-tag (&rest tags)
+  "Add TAGS to the displayed entry."
+  (let ((entry elfeed-show-entry))
+    (apply #'elfeed-tag entry tags)
+    (with-current-buffer (elfeed-search-buffer)
+      (elfeed-search-update-entry entry))))
 
 (provide 'elfeed)
 
