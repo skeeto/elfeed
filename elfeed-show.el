@@ -1,0 +1,138 @@
+;;; elfeed-show.el --- display feed entries -*- lexical-binding: t; -*-
+
+;; This is free and unencumbered software released into the public domain.
+
+;;; Code:
+
+(require 'message) ; faces
+(require 'elfeed-db)
+(require 'elfeed-lib)
+
+(defvar elfeed-show-entry nil
+  "The entry being displayed in this buffer.")
+
+(defvar elfeed-show-mode-map
+  (let ((map (make-sparse-keymap)))
+    (prog1 map
+      (define-key map "q" 'elfeed-kill-buffer)
+      (define-key map "g" 'elfeed-show-refresh)
+      (define-key map "n" 'elfeed-show-next)
+      (define-key map "p" 'elfeed-show-prev)
+      (define-key map "b" 'elfeed-show-visit)
+      (define-key map "y" 'elfeed-show-yank)
+      (define-key map "u" (elfeed-expose #'elfeed-show-tag 'unread))
+      (define-key map (kbd "SPC") 'scroll-up-command)
+      (define-key map (kbd "DEL") 'scroll-down-command)))
+  "Keymap for `elfeed-show-mode'.")
+
+(defun elfeed-show-mode ()
+  "Mode for displaying Elfeed feed entries.
+\\{elfeed-show-mode-map}"
+  (interactive)
+  (kill-all-local-variables)
+  (use-local-map elfeed-show-mode-map)
+  (setq major-mode 'elfeed-show-mode
+        mode-name "elfeed-show"
+        buffer-read-only t)
+  (make-local-variable 'elfeed-show-entry)
+  (run-hooks 'elfeed-show-mode-hook))
+
+(defun elfeed-insert-html (html &optional base-url)
+  "Converted HTML markup to a propertized string."
+  (shr-insert-document
+   (with-temp-buffer
+     ;; insert <base> to work around libxml-parse-html-region bug
+     (insert (format "<base href=\"%s\">" base-url))
+     (insert html)
+     (libxml-parse-html-region (point-min) (point-max) base-url))))
+
+(defun* elfeed-insert-link (url &optional (content url))
+  "Insert a clickable hyperlink to URL titled CONTENT."
+  (elfeed-insert-html (format "<a href=\"%s\">%s</a>" url content)))
+
+(defun elfeed-compute-base (url)
+  "Return the base URL for URL, useful for relative paths."
+  (let ((obj (url-generic-parse-url url)))
+    (setf (url-filename obj) nil)
+    (setf (url-target obj) nil)
+    (url-recreate-url obj)))
+
+(defun elfeed-show-refresh ()
+  "Update the buffer to match the selected entry."
+  (interactive)
+  (let* ((inhibit-read-only t)
+         (title (elfeed-entry-title elfeed-show-entry))
+         (date (date-to-time (elfeed-entry-date elfeed-show-entry)))
+         (link (elfeed-entry-link elfeed-show-entry))
+         (tags (elfeed-entry-tags elfeed-show-entry))
+         (tagsstr (mapconcat #'symbol-name tags ", "))
+         (nicedate (format-time-string "%a, %e %b %Y %T %Z" date))
+         (content (elfeed-entry-content elfeed-show-entry))
+         (type (elfeed-entry-content-type elfeed-show-entry))
+         (feed (elfeed-entry-feed elfeed-show-entry))
+         (base (and feed (elfeed-compute-base (elfeed-feed-url feed)))))
+    (erase-buffer)
+    (insert (format (propertize "Title: %s\n" 'face 'message-header-name)
+                    (propertize title 'face 'message-header-subject)))
+    (insert (format (propertize "Date: %s\n" 'face 'message-header-name)
+                    (propertize nicedate 'face 'message-header-other)))
+    (when tags
+      (insert (format (propertize "Tags: %s\n" 'face 'message-header-name)
+                      (propertize tagsstr 'face 'message-header-other))))
+    (insert (propertize "Link: " 'face 'message-header-name))
+    (elfeed-insert-link link link)
+    (insert "\n\n")
+    (if content
+        (if (eq type 'html)
+            (elfeed-insert-html content base)
+          (insert content))
+      (insert (propertize "(empty)\n" 'face 'italic)))
+    (goto-char (point-min))))
+
+(defun elfeed-show-entry (entry)
+  "Display ENTRY in the current buffer."
+  (let ((title (elfeed-entry-title entry)))
+    (switch-to-buffer (get-buffer-create (format "*elfeed %s*" title)))
+    (unless (eq major-mode 'elfeed-show-mode)
+      (elfeed-show-mode))
+    (setq elfeed-show-entry entry)
+    (elfeed-show-refresh)))
+
+(defun elfeed-show-next ()
+  "Show the next item in the elfeed-search buffer."
+  (interactive)
+  (elfeed-kill-buffer)
+  (with-current-buffer (elfeed-search-buffer)
+    (call-interactively #'elfeed-search-show-entry)))
+
+(defun elfeed-show-prev ()
+  "Show the previous item in the elfeed-search buffer."
+  (interactive)
+  (with-current-buffer (elfeed-search-buffer)
+    (forward-line -2)
+    (call-interactively #'elfeed-search-show-entry)))
+
+(defun elfeed-show-visit ()
+  "Visit the current entry in the browser."
+  (interactive)
+  (let ((link (elfeed-entry-link elfeed-show-entry)))
+    (when link (browse-url link))))
+
+(defun elfeed-show-yank ()
+  "Visit the current entry in the browser."
+  (interactive)
+  (let ((link (elfeed-entry-link elfeed-show-entry)))
+    (when link
+      (x-set-selection 'PRIMARY link)
+      (message "Yanked: %s" link))))
+
+(defun elfeed-show-tag (&rest tags)
+  "Add TAGS to the displayed entry."
+  (let ((entry elfeed-show-entry))
+    (apply #'elfeed-tag entry tags)
+    (with-current-buffer (elfeed-search-buffer)
+      (elfeed-search-update-entry entry))))
+
+(provide 'elfeed-show)
+
+;;; elfeed-show.el ends here
