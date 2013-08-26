@@ -116,7 +116,9 @@
   "Visit the current entry in the browser."
   (interactive)
   (let ((link (elfeed-entry-link elfeed-show-entry)))
-    (when link (browse-url link))))
+    (when link
+      (message "Sent to browser: %s" link)
+      (browse-url link))))
 
 (defun elfeed-show-yank ()
   "Visit the current entry in the browser."
