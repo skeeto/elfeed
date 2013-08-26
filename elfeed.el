@@ -306,7 +306,7 @@ NIL for unknown."
               (ignore-errors (cancel-timer elfeed-search-refresh-timer))
               (setf elfeed-search-refresh-timer nil))
             t t)
-  (elfeed-search-update)
+  (elfeed-search-update :force)
   (run-hooks 'elfeed-search-mode-hook))
 
 (defun elfeed-search-buffer ()
@@ -316,8 +316,9 @@ NIL for unknown."
   "Enter elfeed."
   (interactive)
   (switch-to-buffer (elfeed-search-buffer))
-  (unless (eq major-mode 'elfeed-search-mode) (elfeed-search-mode))
-  (elfeed-search-update :force))
+  (unless (eq major-mode 'elfeed-search-mode)
+    (elfeed-search-mode))
+  (elfeed-search-update))
 
 (defun elfeed-search-format-date (date)
   "Format a date for printing in elfeed-search-mode."
