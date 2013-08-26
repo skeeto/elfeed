@@ -107,6 +107,13 @@ argument. This is a chance to add cutoms tags to new entries.")
      (loop for entry hash-values of (elfeed-feed-entries (elfeed-db-get url))
            collect entry))))
 
+(defun elfeed-apply-hooks-now ()
+  "Apply `elfeed-new-entry-hook' to all entries in the database."
+  (interactive)
+  (loop with entries = (elfeed-db-entries)
+        for hook in elfeed-new-entry-hook
+        do (mapc hook entries)))
+
 ;; Fetching:
 
 (defcustom elfeed-max-connections 6
