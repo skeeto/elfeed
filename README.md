@@ -13,6 +13,10 @@ spend too much time manually tagging entries.
 
 ## Getting Started
 
+Elfeed is broken into a multiple source files, so if you manually
+install it you will need to add the Elfeed package directory to your
+`load-path`. If installed via ELPA, this will be done automatically.
+
 It is recommended that you make a global binding for `elfeed`.
 
 ```el
