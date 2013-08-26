@@ -58,16 +58,20 @@ entries appearing in bold.
 
 To make tags useful, the Elfeed entry listing buffer can be filtered
 by tags. Use `elfeed-search-filter-read` (or <kbd>s</kbd>) to update
-the filter. Tags beginning with a `+` are required and tags beginning
-with a `-` must not be present. Here are some examples:
+the filter. Any component of the search string beginning with a `+` or
+a`-` is treated like a tag. `+` means the tag is required, `-` means
+the tag must not be present. All other components are treated as a
+regular expression. Here are some examples:
 
  * `+unread`: only show unread entries
+ * `linu[xs]`: only show entries about Linux or Linus
  * `-unread +youtube`: only show previously-read YouTube entries
 
-The latter assumes you've tagged posts with `youtube`. You probably
-want to do this sort of thing automatically, which can be done with
-the `elfeed-new-entry-hook`. Functions in this hook are called with
-new entries, allowing them to be manipulated, such as adding tags.
+The last example assumes you've tagged posts with `youtube`. You
+probably want to do this sort of thing automatically, which can be
+done with the `elfeed-new-entry-hook`. Functions in this hook are
+called with new entries, allowing them to be manipulated, such as
+adding tags.
 
 ```el
 ;; Mark all YouTube entries

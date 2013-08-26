@@ -371,21 +371,39 @@ NIL for unknown."
 (defun elfeed-search-filter (entries)
   "Filter out only entries that match the filter."
   (let ((must-have ())
-        (must-not-have ()))
+        (must-not-have ())
+        (matches ()))
     (loop for element in (split-string elfeed-search-filter)
           for type = (aref element 0)
           for tag = (intern (substring element 1))
           do (case type
                (?+ (push tag must-have))
-               (?- (push tag must-not-have))))
+               (?- (push tag must-not-have))
+               (t  (push element matches))))
     (loop for entry in entries
           for tags = (elfeed-entry-tags entry)
+          for title = (elfeed-entry-title entry)
+          for link = (elfeed-entry-link entry)
+          for feed = (elfeed-entry-feed entry)
+          for feed-title = (or (elfeed-feed-title feed) "")
           when (and (every  (lambda (tag) (member tag tags)) must-have)
-                    (notany (lambda (tag) (member tag tags)) must-not-have))
+                    (notany (lambda (tag) (member tag tags)) must-not-have)
+                    (or (null matches)
+                        (some (lambda (m) (or (string-match-p m title)
+                                              (string-match-p m link)
+                                              (string-match-p m feed-title)))
+                              matches)))
           collect entry)))
 
 (defun elfeed-search-filter-read (new-filter)
-  "Query for a new filter from the user."
+  "Query for a new filter from the user.
+
+Anything beginning with a + or - is treated as a tag. If + the
+tag must be present on the entry. If - the tag must *not* be
+present on the entry.
+
+Every other space-seperated element is treated like a regular
+expression, matching against entry link, title, and feed title."
   (interactive (list (read-from-minibuffer "Filter: " elfeed-search-filter)))
   (with-current-buffer (elfeed-search-buffer)
     (setf elfeed-search-filter new-filter)
