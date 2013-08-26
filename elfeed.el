@@ -191,8 +191,11 @@ NIL for unknown."
                  (date (or (xml-query '(published *) entry)
                            (xml-query '(updated *) entry)
                            (xml-query '(date *) entry)))
-                 (content (xml-query '(content *) entry))
-                 (type (or (xml-query '(content :type) entry) "")))
+                 (content (or (xml-query '(content *) entry)
+                              (xml-query '(summary *) entry)))
+                 (type (or (xml-query '(content :type) entry)
+                           (xml-query '(summary :type) entry)
+                           "")))
             (make-elfeed-entry :title (elfeed-cleanup title) :feed feed
                                :id (elfeed-cleanup id) :link link
                                :tags (copy-seq elfeed-initial-tags)
