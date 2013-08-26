@@ -58,9 +58,10 @@
     (setf elfeed-search-refresh-timer
           (run-at-time elfeed-search-refresh-rate elfeed-search-refresh-rate
                        (apply-partially #'elfeed-search-update))))
+  (add-hook 'kill-emacs-hook #'elfeed-db-save)
+  (add-hook 'kill-buffer-hook #'elfeed-db-save t t)
   (add-hook 'kill-buffer-hook
             (lambda ()
-              (message "killed timer?")
               (ignore-errors (cancel-timer elfeed-search-refresh-timer))
               (setf elfeed-search-refresh-timer nil))
             t t)

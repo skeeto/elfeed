@@ -67,7 +67,7 @@
          (tags (elfeed-entry-tags elfeed-show-entry))
          (tagsstr (mapconcat #'symbol-name tags ", "))
          (nicedate (format-time-string "%a, %e %b %Y %T %Z" date))
-         (content (elfeed-entry-content elfeed-show-entry))
+         (content (elfeed-deref (elfeed-entry-content elfeed-show-entry)))
          (type (elfeed-entry-content-type elfeed-show-entry))
          (feed (elfeed-entry-feed elfeed-show-entry))
          (feed-title (elfeed-feed-title feed))
