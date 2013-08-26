@@ -402,7 +402,10 @@ NIL for unknown."
           collect entry)))
 
 (defun elfeed-search-filter-read (new-filter)
-  "Query for a new filter from the user.
+  "Set a new search filter for the elfeed-search buffer.
+
+When given a prefix argument, the current filter is not displayed
+in the minibuffer when prompting for a new filter.
 
 Any component beginning with a + or - is treated as a tag. If +
 the tag must be present on the entry. If - the tag must *not* be
@@ -413,7 +416,10 @@ than this are allowed. Ex. \"@3-days-ago\" or \"@1-year-old\".
 
 Every other space-seperated element is treated like a regular
 expression, matching against entry link, title, and feed title."
-  (interactive (list (read-from-minibuffer "Filter: " elfeed-search-filter)))
+  (interactive (list (read-from-minibuffer
+                      "Filter: " (if current-prefix-arg
+                                     ""
+                                   (concat elfeed-search-filter " ")))))
   (with-current-buffer (elfeed-search-buffer)
     (setf elfeed-search-filter new-filter)
     (elfeed-search-update :force)))
