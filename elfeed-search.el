@@ -22,7 +22,7 @@
 (defcustom elfeed-search-refresh-rate 5
   "How often the buffer should update against the datebase in seconds.")
 
-(defvar elfeed-search--offset 1
+(defvar elfeed-search--offset 2
   "Offset between line numbers and entry list position.")
 
 (defvar elfeed-search-mode-map
@@ -175,6 +175,18 @@ expression, matching against entry link, title, and feed title."
     (setf elfeed-search-filter new-filter)
     (elfeed-search-update :force)))
 
+(defun elfeed-search-insert-header ()
+  "Insert a one-line status header."
+  (insert
+   (propertize
+    (if elfeed-waiting
+        (format "%d feeds pending, %d in process ...\n"
+                (length elfeed-waiting) (length elfeed-connections))
+      (let ((time (seconds-to-time (elfeed-db-last-update))))
+        (format "Database last updated %s\n"
+                (format-time-string "%A, %B %d %H:%M:%S %Z" time))))
+    'face '(widget-inactive italic))))
+
 (defun elfeed-search-update (&optional force)
   "Update the display to match the database."
   (interactive)
@@ -184,6 +196,7 @@ expression, matching against entry link, title, and feed title."
             (standard-output (current-buffer))
             (line (line-number-at-pos)))
         (erase-buffer)
+        (elfeed-search-insert-header)
         (setf elfeed-search-entries (elfeed-search-filter (elfeed-db-entries)))
         (loop for entry in elfeed-search-entries
               do (elfeed-search-print entry)
@@ -216,7 +229,8 @@ expression, matching against entry link, title, and feed title."
     (let ((start (if use-region (region-beginning) (point)))
           (end   (if use-region (region-end)       (point))))
       (loop for line from (line-number-at-pos start) to (line-number-at-pos end)
-            when (nth (- line elfeed-search--offset) elfeed-search-entries)
+            for offset = (- line elfeed-search--offset)
+            when (and (>= offset 0) (nth offset elfeed-search-entries))
             collect it into selected
             finally (return (if ignore-region (car selected) selected))))))
 
