@@ -63,7 +63,7 @@ entries appearing in bold.
 ### Filter Syntax
 
 To make tags useful, the Elfeed entry listing buffer can be filtered
-by tags. Use `elfeed-search-filter-read` (or <kbd>s</kbd>) to update
+by tags. Use `elfeed-search-set-filter` (or <kbd>s</kbd>) to update
 the filter.
 
 Any component of the search string beginning with a `+` or

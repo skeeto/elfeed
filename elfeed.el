@@ -274,7 +274,7 @@ NIL for unknown."
       (define-key map "g" (elfeed-expose #'elfeed-search-update :force))
       (define-key map "G" 'elfeed-update)
       (define-key map (kbd "RET") 'elfeed-search-show-entry)
-      (define-key map "s" 'elfeed-search-filter-read)
+      (define-key map "s" 'elfeed-search-set-filter)
       (define-key map "b" 'elfeed-search-browse-url)
       (define-key map "y" 'elfeed-search-yank)
       (define-key map "u" (elfeed-expose #'elfeed-search-tag-all 'unread))
@@ -370,7 +370,7 @@ NIL for unknown."
 
 (defun elfeed-search-filter (entries)
   "Filter out only entries that match the filter. See
-`elfeed-search-filter-read' for format/syntax documentation."
+`elfeed-search-set-filter' for format/syntax documentation."
   (let ((must-have ())
         (must-not-have ())
         (after nil)
@@ -401,7 +401,7 @@ NIL for unknown."
                               matches)))
           collect entry)))
 
-(defun elfeed-search-filter-read (new-filter)
+(defun elfeed-search-set-filter (new-filter)
   "Set a new search filter for the elfeed-search buffer.
 
 When given a prefix argument, the current filter is not displayed
