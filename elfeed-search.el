@@ -183,8 +183,10 @@ expression, matching against entry link, title, and feed title."
         (format "%d feeds pending, %d in process ...\n"
                 (length elfeed-waiting) (length elfeed-connections))
       (let ((time (seconds-to-time (elfeed-db-last-update))))
-        (format "Database last updated %s\n"
-                (format-time-string "%A, %B %d %H:%M:%S %Z" time))))
+        (if (zerop (float-time time))
+            "Database empty. Use `elfeed-update' or `elfeed-add-feed'.\n"
+          (format "Database last updated %s\n"
+                  (format-time-string "%A, %B %d %Y %H:%M:%S %Z" time)))))
     'face '(widget-inactive italic))))
 
 (defun elfeed-search-update (&optional force)
