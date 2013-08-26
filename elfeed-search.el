@@ -22,6 +22,9 @@
 (defcustom elfeed-search-refresh-rate 5
   "How often the buffer should update against the datebase in seconds.")
 
+(defvar elfeed-search--offset 1
+  "Offset between line numbers and entry list position.")
+
 (defvar elfeed-search-mode-map
   (let ((map (make-sparse-keymap)))
     (prog1 map
@@ -205,7 +208,7 @@ expression, matching against entry link, title, and feed title."
 (defun elfeed-search-update-entry (entry)
   "Redraw a specific entry."
   (let ((n (position entry elfeed-search-entries)))
-    (when n (elfeed-search-update-line (1+ n)))))
+    (when n (elfeed-search-update-line (+ elfeed-search--offset n)))))
 
 (defun elfeed-search-selected (&optional ignore-region)
   "Return a list of the currently selected feeds."
@@ -213,7 +216,7 @@ expression, matching against entry link, title, and feed title."
     (let ((start (if use-region (region-beginning) (point)))
           (end   (if use-region (region-end)       (point))))
       (loop for line from (line-number-at-pos start) to (line-number-at-pos end)
-            when (nth (1- line) elfeed-search-entries)
+            when (nth (- line elfeed-search--offset) elfeed-search-entries)
             collect it into selected
             finally (return (if ignore-region (car selected) selected))))))
 
