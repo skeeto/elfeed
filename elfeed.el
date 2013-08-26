@@ -578,6 +578,8 @@ initialization).
          (title (elfeed-entry-title elfeed-show-entry))
          (date (date-to-time (elfeed-entry-date elfeed-show-entry)))
          (link (elfeed-entry-link elfeed-show-entry))
+         (tags (elfeed-entry-tags elfeed-show-entry))
+         (tagsstr (mapconcat #'symbol-name tags ", "))
          (nicedate (format-time-string "%a, %e %b %Y %T %Z" date))
          (content (elfeed-entry-content elfeed-show-entry))
          (type (elfeed-entry-content-type elfeed-show-entry))
@@ -588,6 +590,9 @@ initialization).
                     (propertize title 'face 'message-header-subject)))
     (insert (format (propertize "Date: %s\n" 'face 'message-header-name)
                     (propertize nicedate 'face 'message-header-other)))
+    (when tags
+      (insert (format (propertize "Tags: %s\n" 'face 'message-header-name)
+                      (propertize tagsstr 'face 'message-header-other))))
     (insert (propertize "Link: " 'face 'message-header-name))
     (elfeed-insert-link link link)
     (insert "\n\n")
