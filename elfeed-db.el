@@ -2,6 +2,18 @@
 
 ;; This is free and unencumbered software released into the public domain.
 
+;;; Commentary:
+
+;; Elfeed is aware of two type of things: feeds and entries.
+
+;; Feeds are keyed by their user-provided feed URL, which acts as the
+;; feed identity regardless of any other stated identity. Feeds have a
+;; list of entries.
+
+;; Entries are keyed in order of preference by id (Atom), guid (RSS),
+;; or link. To avoid circular references, entries refer to their
+;; parent feeds by URL.
+
 ;;; Code:
 
 (require 'cl)
@@ -10,14 +22,11 @@
 (defvar elfeed-db (make-hash-table :test 'equal)
   "The core database for elfeed.")
 
-(defcustom elfeed-initial-tags '(unread)
-  "Initial tags for new entries."
-  :group 'elfeed
-  :type 'list)
-
 (defvar elfeed-new-entry-hook ()
   "Functions in this list are called with the new entry as its
 argument. This is a chance to add cutoms tags to new entries.")
+
+;; Data model:
 
 (defstruct elfeed-feed
   "A web feed, contains elfeed-entry structs."
@@ -25,28 +34,12 @@ argument. This is a chance to add cutoms tags to new entries.")
 
 (defstruct elfeed-entry
   "A single entry from a feed, normalized towards Atom."
-  title id link date content content-type tags feed)
-
-(defun elfeed-tag (entry &rest tags)
-  "Add a tag to an entry."
-  (let ((current (elfeed-entry-tags entry)))
-    (setf (elfeed-entry-tags entry) (remove-duplicates (append tags current)))))
-
-(defun elfeed-untag (entry &rest tags)
-  "Remove tags from an entry."
-  (setf (elfeed-entry-tags entry)
-        (loop for tag in (elfeed-entry-tags entry)
-              unless (member tag tags) collect tag)))
-
-(defun elfeed-tagged-p (tag entry)
-  "Return true if ENTRY is tagged by TAG."
-  (member tag (elfeed-entry-tags entry)))
+  title id link date content content-type tags feed-url)
 
 (defun elfeed-db-get (url)
-  "Get/create the table for URL."
+  "Get/create the FEED for URL."
   (let ((feed (gethash url elfeed-db)))
-    (if feed
-        feed
+    (or feed
         (setf (gethash url elfeed-db)
               (make-elfeed-feed
                :url url :entries (make-hash-table :test 'equal))))))
@@ -66,6 +59,25 @@ argument. This is a chance to add cutoms tags to new entries.")
           do (setf (gethash id table) entry))
     (setf (gethash :last-update elfeed-db) (float-time))))
 
+(defun elfeed-entry-feed (entry)
+  "Get the feed struct for ENTRY."
+  (elfeed-db-get (elfeed-entry-feed-url entry)))
+
+(defun elfeed-tag (entry &rest tags)
+  "Add TAGS to ENTRY."
+  (let ((current (elfeed-entry-tags entry)))
+    (setf (elfeed-entry-tags entry) (remove-duplicates (append tags current)))))
+
+(defun elfeed-untag (entry &rest tags)
+  "Remove TAGS from ENTRY."
+  (setf (elfeed-entry-tags entry)
+        (loop for tag in (elfeed-entry-tags entry)
+              unless (member tag tags) collect tag)))
+
+(defun elfeed-tagged-p (tag entry)
+  "Return true if ENTRY is tagged by TAG."
+  (member tag (elfeed-entry-tags entry)))
+
 (defun elfeed-db-last-update ()
   "Return the last database update time in (`float-time') seconds."
   (gethash :last-update elfeed-db 0))
@@ -76,7 +88,7 @@ argument. This is a chance to add cutoms tags to new entries.")
          :key #'elfeed-entry-date))
 
 (defun elfeed-db-entries (&optional url)
-  "Get all the entries for a feed, sorted by date."
+  "Get all the entries, optionally just for URL, sorted by date."
   (elfeed-sort
    (if (null url)
        (loop for url in elfeed-feeds

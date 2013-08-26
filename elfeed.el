@@ -36,6 +36,11 @@ feeds to this list."
 (require 'elfeed-search)
 (require 'elfeed-show)
 
+(defcustom elfeed-initial-tags '(unread)
+  "Initial tags for new entries."
+  :group 'elfeed
+  :type 'list)
+
 ;; Fetching:
 
 (defcustom elfeed-max-connections 6
@@ -118,7 +123,7 @@ NIL for unknown."
                  (type (or (xml-query '(content :type) entry)
                            (xml-query '(summary :type) entry)
                            "")))
-            (make-elfeed-entry :title (elfeed-cleanup title) :feed feed
+            (make-elfeed-entry :title (elfeed-cleanup title) :feed-url url
                                :id (elfeed-cleanup id) :link link
                                :tags (copy-seq elfeed-initial-tags)
                                :date (elfeed-rfc3339 date) :content content
@@ -140,7 +145,7 @@ NIL for unknown."
                            (xml-query '(date *) item)))
                  (description (xml-query '(description *) item)))
             (make-elfeed-entry :title (elfeed-cleanup title)
-                               :id (elfeed-cleanup id) :feed feed :link link
+                               :id (elfeed-cleanup id) :feed-url url :link link
                                :tags (copy-seq elfeed-initial-tags)
                                :date (elfeed-rfc3339 date)
                                :content description :content-type 'html)))))
