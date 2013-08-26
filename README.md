@@ -40,15 +40,13 @@ From this buffer there are a number of ways to interact with entries.
 Entries are selected by placing the point over an entry. Multiple
 entries are selected at once by using an active region.
 
+ * <kbd>RET</kbd>: view selected entry in a buffer
  * <kbd>b</kbd>: open selected entries in your browser (`browse-url`)
  * <kbd>y</kbd>: copy selected entries URL to the clipboard
  * <kbd>r</kbd>: mark selected entries as read
  * <kbd>u</kbd>: mark selected entries as unread
  * <kbd>+</kbd>: add a specific tag to selected entries
  * <kbd>-</kbd>: remove a specific tag from selected entries
-
-Currently there is no way to view an entry within Emacs, but this is
-planned for the near future.
 
 ## Tags
 
@@ -94,7 +92,6 @@ parse my entire 136-entry feed list.
 
 Some things I want to add:
 
- * Reading entries within Emacs (like e-mail)
  * Persist the database between Emacs instances
  * Enclosure support
  * Database synchronization between computers (maybe)
