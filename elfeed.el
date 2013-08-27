@@ -154,7 +154,7 @@ NIL for unknown."
   "Update a specific feed."
   (interactive (list (completing-read "Feed: " elfeed-feeds)))
   (with-elfeed-fetch url
-    (unless status
+    (unless (and status (eq (car status) :error))
       (goto-char (point-min))
       (search-forward "\n\n") ; skip HTTP headers
       (set-buffer-multibyte t)
