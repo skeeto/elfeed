@@ -11,7 +11,10 @@
   "List of the entries currently on display.")
 
 (defvar elfeed-search-filter "+unread"
-  "Query string filtering shown entires.")
+  "Query string filtering shown entries.")
+
+(defvar elfeed-search-filter-history nil
+  "Filter history for `completing-read'.")
 
 (defvar elfeed-search-last-update 0
   "The last time the buffer was redrawn in epoch seconds.")
@@ -171,7 +174,8 @@ expression, matching against entry link, title, and feed title."
   (interactive (list (read-from-minibuffer
                       "Filter: " (if current-prefix-arg
                                      ""
-                                   (concat elfeed-search-filter " ")))))
+                                   (concat elfeed-search-filter " "))
+                      nil nil 'elfeed-search-filter-history)))
   (with-current-buffer (elfeed-search-buffer)
     (setf elfeed-search-filter new-filter)
     (elfeed-search-update :force)))
