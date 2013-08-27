@@ -2,10 +2,7 @@
 
 Elfeed is a web feed reader for Emacs, inspired by
 [notmuch](http://notmuchmail.org/). It supports both Atom and RSS and
-is currently in beta. Elfeed requires Emacs 24 (lexical closures).
-
-The database is not yet persisted between Emacs instances, so don't
-spend too much time manually tagging entries.
+is currently in beta. Requires Emacs 24 (lexical closures).
 
 [![](http://i.imgur.com/8eTghK8.png)](http://i.imgur.com/l5aVPDc.png)
 
@@ -113,8 +110,6 @@ Or avoiding tagging old entries as `unread`:
           (elfeed-time-untagger "2 weeks ago" 'unread))
 ```
 
-Further enhancement of the search filter is planned for the future.
-
 ## Status and Roadmap
 
 I've already got it to a point where it can serve about 90% of my web
@@ -124,7 +119,6 @@ parse my entire 136-entry feed list.
 
 Some things I want to add:
 
- * Persist the database between Emacs instances
  * Enclosure support
  * Database synchronization between computers (maybe)
  * Optional external database back-end (Xapian?, maybe)
@@ -132,6 +126,6 @@ Some things I want to add:
 ## Motivation
 
 As far as I know, outside of Elfeed there does not currently exist an
-extensible, text-file configured, power use web feed client that can
+extensible, text-file configured, power-user web feed client that can
 handle large numbers of feeds. The existing clients I've tried are
 missing some important capability that limits its usefulness to me.
