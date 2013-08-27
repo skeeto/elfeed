@@ -4,6 +4,7 @@
 
 ;;; Code:
 
+(require 'cl)
 (require 'elfeed-db)
 (require 'elfeed-lib)
 
@@ -23,7 +24,8 @@
   "The timer used to keep things updated as the database updates.")
 
 (defcustom elfeed-search-refresh-rate 5
-  "How often the buffer should update against the datebase in seconds.")
+  "How often the buffer should update against the datebase in seconds."
+  :group 'elfeed)
 
 (defvar elfeed-search--offset 2
   "Offset between line numbers and entry list position.")
