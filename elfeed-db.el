@@ -4,7 +4,8 @@
 
 ;;; Commentary:
 
-;; Elfeed is aware of two type of things: feeds and entries.
+;; Elfeed is aware of two type of things: feeds and entries. All dates
+;; are stored as floating point epoch seconds.
 
 ;; Feeds are keyed by their user-provided feed URL, which acts as the
 ;; feed identity regardless of any other stated identity. Feeds have a
@@ -13,6 +14,26 @@
 ;; Entries are keyed in order of preference by id (Atom), guid (RSS),
 ;; or link. To avoid circular references, entries refer to their
 ;; parent feeds by URL.
+
+;; Feed content is stored in a content-addressable loose-file
+;; database, very similar to an unpacked Git object database. Entries
+;; have references to items in this database (elfeed-ref), keeping the
+;; actual entry struct memory footprint small. Most importantly, this
+;; keeps the core index small so that it can quickly be written as a
+;; whole to the filesystem. The wire format is just the s-expression
+;; print form of the top-level hash table.
+
+;; Possible items to do:
+;;  * database garbage collection and fsck
+;;  * maintain multiple forms of the index for fast search filters
+;;    * requires better validation checks, more centralized mutation
+;;  * content compression
+
+;; Unfortunately there's a nasty bug (bug#15190) in the reader that
+;; makes hash tables and `print-circle' incompatible. It's been fixed
+;; in trunk, but many users will likely be stuck with this bug for the
+;; next few years. This means the database format can't exploit
+;; circular references.
 
 ;;; Code:
 
