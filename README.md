@@ -121,7 +121,6 @@ Some things I want to add:
 
  * Enclosure support
  * Database synchronization between computers (maybe)
- * Optional external database back-end (Xapian?, maybe)
 
 ## Motivation
 
