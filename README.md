@@ -39,9 +39,14 @@ database with entries.
         "http://www.terminally-incoherent.com/blog/feed/"))
 ```
 
-From this buffer there are a number of ways to interact with entries.
-Entries are selected by placing the point over an entry. Multiple
-entries are selected at once by using an active region.
+If there are a lot of feeds, the initial update will take noticeably
+longer than normal operation because of the large amount of
+information being written the database. Future updates will only need
+to write new or changed data.
+
+From the search buffer there are a number of ways to interact with
+entries. Entries are selected by placing the point over an entry.
+Multiple entries are selected at once by using an active region.
 
  * <kbd>RET</kbd>: view selected entry in a buffer
  * <kbd>b</kbd>: open selected entries in your browser (`browse-url`)
@@ -119,7 +124,6 @@ parse my entire 136-entry feed list.
 
 Some things I want to add:
 
- * Enclosure support
  * Database synchronization between computers (maybe)
 
 ## Motivation
