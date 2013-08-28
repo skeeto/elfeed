@@ -35,11 +35,11 @@ argument. This is a chance to add cutoms tags to new entries.")
 
 (defstruct elfeed-feed
   "A web feed, contains elfeed-entry structs."
-  title url entries)
+  url title entries)
 
 (defstruct elfeed-entry
   "A single entry from a feed, normalized towards Atom."
-  title id link date content content-type tags feed-url)
+  id title link date content content-type enclosures tags feed-url)
 
 (defun elfeed-db-get (url)
   "Get/create the FEED for URL."

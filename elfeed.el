@@ -129,11 +129,19 @@ defaulting to the current time if DATE could not be parsed."
                               (xml-query '(summary *) entry)))
                  (type (or (xml-query '(content :type) entry)
                            (xml-query '(summary :type) entry)
-                           "")))
+                           ""))
+                 (etags (xml-query-all '(link [rel "enclosure"]) entry))
+                 (enclosures (loop for enclosure in etags
+                                   for wrap = (list enclosure)
+                                   for href = (xml-query '(:href) wrap)
+                                   for type = (xml-query '(:type) wrap)
+                                   for length = (xml-query '(:length) wrap)
+                                   collect (list href type length))))
             (make-elfeed-entry :title (elfeed-cleanup title) :feed-url url
                                :id (elfeed-cleanup id) :link link
                                :tags (copy-seq elfeed-initial-tags)
                                :date (elfeed-float-time date) :content content
+                               :enclosures enclosures
                                :content-type (if (string-match-p "html" type)
                                                  'html
                                                nil))))))
@@ -150,11 +158,19 @@ defaulting to the current time if DATE could not be parsed."
                  (id (or guid link))
                  (date (or (xml-query '(pubDate *) item)
                            (xml-query '(date *) item)))
-                 (description (xml-query '(description *) item)))
+                 (description (xml-query '(description *) item))
+                 (etags (xml-query-all '(enclosure) item))
+                 (enclosures (loop for enclosure in etags
+                                   for wrap = (list enclosure)
+                                   for url = (xml-query '(:url) wrap)
+                                   for type = (xml-query '(:type) wrap)
+                                   for length = (xml-query '(:length) wrap)
+                                   collect (list url type length))))
             (make-elfeed-entry :title (elfeed-cleanup title)
                                :id (elfeed-cleanup id) :feed-url url :link link
                                :tags (copy-seq elfeed-initial-tags)
                                :date (elfeed-float-time date)
+                               :enclosures enclosures
                                :content description :content-type 'html)))))
 
 (defun elfeed-update-feed (url)
