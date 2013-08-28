@@ -48,6 +48,11 @@
 
 (defun* elfeed-insert-link (url &optional (content url))
   "Insert a clickable hyperlink to URL titled CONTENT."
+  (when (> (length content) (- shr-width 8))
+    (let ((len (- (/ shr-width 2) 10)))
+      (setq content (format "%s[...]%s"
+                            (substring content 0 len)
+                            (substring content (- len))))))
   (elfeed-insert-html (format "<a href=\"%s\">%s</a>" url content)))
 
 (defun elfeed-compute-base (url)
