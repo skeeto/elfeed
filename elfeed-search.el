@@ -27,6 +27,9 @@
   "How often the buffer should update against the datebase in seconds."
   :group 'elfeed)
 
+(defvar elfeed-search-cache (make-hash-table :test 'equal)
+  "Cache the generated entry buffer lines and such.")
+
 (defvar elfeed-search--offset 2
   "Offset between line numbers and entry list position.")
 
@@ -106,7 +109,7 @@
   :group 'elfeed)
 
 (defun elfeed-search-print (entry)
-  "Print a single entry to the buffer."
+  "Print ENTRY to the buffer."
   (let* ((date (elfeed-search-format-date (elfeed-entry-date entry)))
          (title (elfeed-entry-title entry))
          (title-faces '(elfeed-search-title-face))
@@ -208,7 +211,13 @@ expression, matching against entry link, title, and feed title."
         (elfeed-search-insert-header)
         (setf elfeed-search-entries (elfeed-search-filter (elfeed-db-entries)))
         (loop for entry in elfeed-search-entries
-              do (elfeed-search-print entry)
+              when (gethash entry elfeed-search-cache)
+              do (insert it)
+              else
+              do (insert
+                  (with-temp-buffer
+                    (elfeed-search-print entry)
+                    (setf (gethash (copy-seq entry) elfeed-search-cache) (buffer-string))))
               do (insert "\n"))
         (insert "End of entries.\n")
         (elfeed-goto-line line))
