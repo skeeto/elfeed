@@ -94,10 +94,17 @@ from `url-retrieve'."
 NIL for unknown."
   (cadr (assoc (caar content) '((feed :atom) (rss :rss)))))
 
-(defun elfeed-rfc3339 (&optional time)
-  "Return an RFC 3339 formatted date string (Atom style)."
-  (format-time-string "%Y-%m-%dT%H:%M:%SZ"
-                      (if time (ignore-errors (date-to-time time)) nil) t))
+(defun elfeed-float-time (&optional date)
+  "Like `float-time' but accept anything reasonable for DATE,
+defaulting to the current time if DATE could not be parsed."
+  (typecase date
+    (string (let ((time (ignore-errors (date-to-time date))))
+              (if (equal time '(14445 17280)) ; date-to-time silently failed
+                  (float-time)
+                (float-time time))))
+    (integer date)
+    (list (float-time date))
+    (t (float-time))))
 
 (defun elfeed-cleanup (name)
   "Cleanup things that will be printed."
@@ -126,7 +133,7 @@ NIL for unknown."
             (make-elfeed-entry :title (elfeed-cleanup title) :feed-url url
                                :id (elfeed-cleanup id) :link link
                                :tags (copy-seq elfeed-initial-tags)
-                               :date (elfeed-rfc3339 date) :content content
+                               :date (elfeed-float-time date) :content content
                                :content-type (if (string-match-p "html" type)
                                                  'html
                                                nil))))))
@@ -147,7 +154,7 @@ NIL for unknown."
             (make-elfeed-entry :title (elfeed-cleanup title)
                                :id (elfeed-cleanup id) :feed-url url :link link
                                :tags (copy-seq elfeed-initial-tags)
-                               :date (elfeed-rfc3339 date)
+                               :date (elfeed-float-time date)
                                :content description :content-type 'html)))))
 
 (defun elfeed-update-feed (url)
@@ -212,7 +219,7 @@ initialization).
            (elfeed-time-untagger \"2 weeks ago\" 'unread))"
   (let ((secs (elfeed-time-duration time)))
     (lambda (entry)
-      (let ((time (float-time (date-to-time (elfeed-entry-date entry)))))
+      (let ((time (float-time (seconds-to-time (elfeed-entry-date entry)))))
         (when (< time (- (float-time) secs))
           (elfeed-untag entry tag)
           :untag)))))

@@ -8,9 +8,6 @@
   "Return an interactive version of FUNCTION, 'exposing' it to the user."
   (lambda () (interactive) (apply function args)))
 
-(defun elfeed-string> (a b)
-  (string< b a))
-
 (defun elfeed-goto-line (n)
   "Like `goto-line' but for non-interactive use."
   (goto-char (point-min))

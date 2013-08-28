@@ -78,7 +78,7 @@
 
 (defun elfeed-search-format-date (date)
   "Format a date for printing in elfeed-search-mode."
-  (let ((string (format-time-string "%Y-%m-%d" (date-to-time date))))
+  (let ((string (format-time-string "%Y-%m-%d" (seconds-to-time date))))
     (format "%-10.10s" string)))
 
 (defface elfeed-search-date-face
@@ -141,7 +141,7 @@
                (t  (push element matches))))
     (loop for entry in entries
           for tags = (elfeed-entry-tags entry)
-          for date = (float-time (date-to-time (elfeed-entry-date entry)))
+          for date = (float-time (seconds-to-time (elfeed-entry-date entry)))
           for age = (- (float-time) date)
           for title = (elfeed-entry-title entry)
           for link = (elfeed-entry-link entry)

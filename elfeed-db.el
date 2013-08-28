@@ -94,7 +94,7 @@ argument. This is a chance to add cutoms tags to new entries.")
 
 (defun elfeed-sort (entries &optional old-first)
   "Destructively sort the given entries by date."
-  (sort* entries (if old-first #'string< #'elfeed-string>)
+  (sort* entries (if old-first #'< #'>)
          :key #'elfeed-entry-date))
 
 (defun elfeed-db-entries (&optional url)

@@ -62,7 +62,7 @@
   (interactive)
   (let* ((inhibit-read-only t)
          (title (elfeed-entry-title elfeed-show-entry))
-         (date (date-to-time (elfeed-entry-date elfeed-show-entry)))
+         (date (seconds-to-time (elfeed-entry-date elfeed-show-entry)))
          (link (elfeed-entry-link elfeed-show-entry))
          (tags (elfeed-entry-tags elfeed-show-entry))
          (tagsstr (mapconcat #'symbol-name tags ", "))
