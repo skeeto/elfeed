@@ -27,6 +27,9 @@
 (defvar elfeed-db nil
   "The core database for elfeed.")
 
+(defvar elfeed-db-version "0.0.1"
+  "The database version this version of Elfeed expects to use.")
+
 (defvar elfeed-new-entry-hook ()
   "Functions in this list are called with the new entry as its
 argument. This is a chance to add cutoms tags to new entries.")
@@ -173,7 +176,9 @@ argument. This is a chance to add cutoms tags to new entries.")
   "Load the database index from the filesystem."
   (let ((index (expand-file-name "index" elfeed-db-directory)))
     (if (not (file-exists-p index))
-        (setq elfeed-db (make-hash-table :test 'equal))
+        (let ((db (make-hash-table :test 'equal)))
+          (setf (gethash :version db) elfeed-db-version)
+          (setf elfeed-db db))
       (with-current-buffer (find-file-noselect index)
         (goto-char (point-min))
         (setq elfeed-db (read (current-buffer)))
