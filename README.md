@@ -8,6 +8,12 @@ is currently in beta. Requires Emacs 24 (lexical closures).
 
 [![](http://i.imgur.com/3yHGITn.png)](http://i.imgur.com/EfdBKif.png)
 
+The database format should now be fairly stable, but for the moment I
+can make no guarantees. An update may force you to initialize a new
+database from scratch. After spending some time to lock down the
+performance and data structures, I will be able to make promises about
+database compatibility.
+
 ## Getting Started
 
 Elfeed is broken into a multiple source files, so if you manually
@@ -117,18 +123,19 @@ Or avoiding tagging old entries as `unread`:
 
 ## Status and Roadmap
 
-I've already got it to a point where it can serve about 90% of my web
-feed needs. Of course, I'd like to flesh out a lot more so that it's
-more generally useful. Except for a single RDF feed, it can properly
-parse my entire 136-entry feed list.
+Elfeed is to the point where it can serve 100% of my own web feed
+needs. My personal selection of about 140 feeds has been acting as my
+test case as I optimize and add features.
 
-Some things I want to add:
+Some things I still might want to add:
 
- * Database synchronization between computers (maybe)
+ * Database synchronization between computers
+ * Single-user web front end using simple-httpd
 
 ## Motivation
 
-As far as I know, outside of Elfeed there does not currently exist an
+As far as I know, outside of Elfeed there does not exist an
 extensible, text-file configured, power-user web feed client that can
-handle large numbers of feeds. The existing clients I've tried are
-missing some important capability that limits its usefulness to me.
+handle a reasonable number of feeds. The existing clients I've tried
+are missing some important capability that limits its usefulness to
+me.
