@@ -89,7 +89,12 @@
                       (propertize tagsstr 'face 'message-header-other))))
     (insert (propertize "Link: " 'face 'message-header-name))
     (elfeed-insert-link link link)
-    (insert "\n\n")
+    (insert "\n")
+    (loop for enclosure in (elfeed-entry-enclosures elfeed-show-entry)
+          do (insert (propertize "Enclosure: " 'face 'message-header-name))
+          do (elfeed-insert-link (car enclosure))
+          do (insert "\n"))
+    (insert "\n")
     (if content
         (if (eq type 'html)
             (elfeed-insert-html content base)
