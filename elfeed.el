@@ -155,7 +155,6 @@ defaulting to the current time if DATE could not be parsed."
          (title (xml-query '(rss channel title *) xml)))
     (setf (elfeed-feed-url feed) url
           (elfeed-feed-title feed) title)
-    (setf foo feed)
     (loop for item in (xml-query-all '(rss channel item) xml) collect
           (let* ((title (or (xml-query '(title *) item) ""))
                  (link (xml-query '(link *) item))
