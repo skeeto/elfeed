@@ -113,9 +113,11 @@ defaulting to the current time if DATE could not be parsed."
 
 (defun elfeed-entries-from-atom (url xml)
   "Turn parsed Atom content into a list of elfeed-entry structs."
-  (let ((feed (elfeed-db-get url))
-        (title (xml-query '(feed title *) xml)))
-    (setf (elfeed-feed-title feed) title)
+  (let* ((feed-id url)
+         (feed (elfeed-db-get-feed feed-id))
+         (title (xml-query '(feed title *) xml)))
+    (setf (elfeed-feed-url feed) url
+          (elfeed-feed-title feed) title)
     (loop for entry in (xml-query-all '(feed entry) xml) collect
           (let* ((title (or (xml-query '(title *) entry) ""))
                  (anylink (xml-query '(link :href) entry))
@@ -137,9 +139,9 @@ defaulting to the current time if DATE could not be parsed."
                                    for type = (xml-query '(:type) wrap)
                                    for length = (xml-query '(:length) wrap)
                                    collect (list href type length))))
-            (make-elfeed-entry :title (elfeed-cleanup title) :feed-url url
-                               :id (elfeed-cleanup id) :link link
-                               :tags (copy-seq elfeed-initial-tags)
+            (make-elfeed-entry :title (elfeed-cleanup title) :feed-id feed-id
+                               :id (cons feed-id (elfeed-cleanup id))
+                               :link link :tags (copy-seq elfeed-initial-tags)
                                :date (elfeed-float-time date) :content content
                                :enclosures enclosures
                                :content-type (if (string-match-p "html" type)
@@ -148,9 +150,12 @@ defaulting to the current time if DATE could not be parsed."
 
 (defun elfeed-entries-from-rss (url xml)
   "Turn parsed RSS content into a list of elfeed-entry structs."
-  (let ((feed (elfeed-db-get url))
-        (title (xml-query '(rss channel title *) xml)))
-    (setf (elfeed-feed-title feed) title)
+  (let* ((feed-id url)
+         (feed (elfeed-db-get-feed feed-id))
+         (title (xml-query '(rss channel title *) xml)))
+    (setf (elfeed-feed-url feed) url
+          (elfeed-feed-title feed) title)
+    (setf foo feed)
     (loop for item in (xml-query-all '(rss channel item) xml) collect
           (let* ((title (or (xml-query '(title *) item) ""))
                  (link (xml-query '(link *) item))
@@ -167,7 +172,8 @@ defaulting to the current time if DATE could not be parsed."
                                    for length = (xml-query '(:length) wrap)
                                    collect (list url type length))))
             (make-elfeed-entry :title (elfeed-cleanup title)
-                               :id (elfeed-cleanup id) :feed-url url :link link
+                               :id (cons feed-id (elfeed-cleanup id))
+                               :feed-id feed-id :link link
                                :tags (copy-seq elfeed-initial-tags)
                                :date (elfeed-float-time date)
                                :enclosures enclosures
@@ -186,7 +192,7 @@ defaulting to the current time if DATE could not be parsed."
                         (:atom (elfeed-entries-from-atom url xml))
                         (:rss (elfeed-entries-from-rss url xml))
                         (t (error "Unkown feed type.")))))
-        (elfeed-db-put url entries)))))
+        (elfeed-db-add entries)))))
 
 (defun elfeed-add-feed (url)
   "Manually add a feed to the database."
@@ -197,7 +203,8 @@ defaulting to the current time if DATE could not be parsed."
 (defun elfeed-update ()
   "Update all the feeds in `elfeed-feeds'."
   (interactive)
-  (mapc #'elfeed-update-feed elfeed-feeds))
+  (mapc #'elfeed-update-feed elfeed-feeds)
+  (elfeed-db-save))
 
 (defun elfeed ()
   "Enter elfeed."

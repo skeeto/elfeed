@@ -128,38 +128,40 @@
     (when tags
       (insert "(" tags-str ")"))))
 
-(defun elfeed-search-filter (entries)
-  "Filter out only entries that match the filter. See
-`elfeed-search-set-filter' for format/syntax documentation."
+(defun elfeed-search-parse-filter (filter)
+  "Parse the elements of a search filter."
   (let ((must-have ())
         (must-not-have ())
         (after nil)
         (matches ()))
-    (loop for element in (split-string elfeed-search-filter)
+    (loop for element in (split-string filter)
           for type = (aref element 0)
           do (case type
                (?+ (push (intern (substring element 1)) must-have))
                (?- (push (intern (substring element 1)) must-not-have))
                (?@ (setf after (elfeed-time-duration (substring element 1))))
                (t  (push element matches))))
-    (loop for entry in entries
-          for tags = (elfeed-entry-tags entry)
-          for date = (float-time (seconds-to-time (elfeed-entry-date entry)))
-          for age = (- (float-time) date)
-          for title = (elfeed-entry-title entry)
-          for link = (elfeed-entry-link entry)
-          for feed = (elfeed-entry-feed entry)
-          for feed-title = (or (elfeed-feed-title feed) "")
-          when (and (every  (lambda (tag) (member tag tags)) must-have)
-                    (notany (lambda (tag) (member tag tags)) must-not-have)
-                    (or (not after)
-                        (< age after))
-                    (or (null matches)
-                        (some (lambda (m) (or (string-match-p m title)
-                                              (string-match-p m link)
-                                              (string-match-p m feed-title)))
-                              matches)))
-          collect entry)))
+    (list after must-have must-not-have matches)))
+
+(defun elfeed-search-filter (filter entry feed)
+  "Filter out only entries that match the filter. See
+`elfeed-search-set-filter' for format/syntax documentation."
+  (destructuring-bind (after must-have must-not-have matches) filter
+    (let* ((tags (elfeed-entry-tags entry))
+           (date (elfeed-entry-date entry))
+           (age (- (float-time) date))
+           (title (elfeed-entry-title entry))
+           (link (elfeed-entry-link entry))
+           (feed-title (or (elfeed-feed-title feed) "")))
+      (when (and after (> age after))
+        (elfeed-db-return))
+      (and (every  (lambda (tag) (member tag tags)) must-have)
+           (notany (lambda (tag) (member tag tags)) must-not-have)
+           (or (null matches)
+               (some (lambda (m) (or (string-match-p m title)
+                                     (string-match-p m link)
+                                     (string-match-p m feed-title)))
+                     matches))))))
 
 (defun elfeed-search-set-filter (new-filter)
   "Set a new search filter for the elfeed-search buffer.
@@ -199,6 +201,17 @@ expression, matching against entry link, title, and feed title."
                   (format-time-string "%A, %B %d %Y %H:%M:%S %Z" time)))))
     'face '(widget-inactive italic))))
 
+(defun elfeed-search--update-list ()
+  "Update `elfeed-search-filter' list."
+  (let* ((filter (elfeed-search-parse-filter elfeed-search-filter))
+         (head (list nil))
+         (tail head))
+    (with-elfeed-db-visit (entry feed)
+      (when (elfeed-search-filter filter entry feed)
+        (setf (cdr tail) (list entry)
+              tail (cdr tail))))
+    (setf elfeed-search-entries (cdr head))))
+
 (defun elfeed-search-update (&optional force)
   "Update the display to match the database."
   (interactive)
@@ -209,7 +222,7 @@ expression, matching against entry link, title, and feed title."
             (line (line-number-at-pos)))
         (erase-buffer)
         (elfeed-search-insert-header)
-        (setf elfeed-search-entries (elfeed-search-filter (elfeed-db-entries)))
+        (elfeed-search--update-list)
         (loop for entry in elfeed-search-entries
               when (gethash entry elfeed-search-cache)
               do (insert it)
@@ -217,7 +230,8 @@ expression, matching against entry link, title, and feed title."
               do (insert
                   (with-temp-buffer
                     (elfeed-search-print entry)
-                    (setf (gethash (copy-seq entry) elfeed-search-cache) (buffer-string))))
+                    (setf (gethash (copy-sequence entry) elfeed-search-cache)
+                          (buffer-string))))
               do (insert "\n"))
         (insert "End of entries.\n")
         (elfeed-goto-line line))

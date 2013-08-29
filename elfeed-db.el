@@ -38,6 +38,7 @@
 ;;; Code:
 
 (require 'cl)
+(require 'avl-tree)
 (require 'elfeed-lib)
 
 (defcustom elfeed-db-directory "~/.elfeed"
@@ -47,6 +48,15 @@
 
 (defvar elfeed-db nil
   "The core database for elfeed.")
+
+(defvar elfeed-db-feeds nil
+  "Feeds hash table, part of `elfeed-db'.")
+
+(defvar elfeed-db-entries nil
+  "Entries hash table, part of `elfeed-db'.")
+
+(defvar elfeed-db-index nil
+  "Collection of all entries sorted by date, part of `elfeed-db'.")
 
 (defvar elfeed-db-version "0.0.1"
   "The database version this version of Elfeed expects to use.")
@@ -59,42 +69,58 @@ argument. This is a chance to add cutoms tags to new entries.")
 
 (defstruct elfeed-feed
   "A web feed, contains elfeed-entry structs."
-  url title entries)
+  id url title author)
 
 (defstruct elfeed-entry
   "A single entry from a feed, normalized towards Atom."
-  id title link date content content-type enclosures tags feed-url)
+  id title link date content content-type enclosures tags feed-id)
 
-(defun elfeed-db-get (url)
-  "Get/create the FEED for URL."
+(defun elfeed-entry-merge (a b)
+  "Merge B into A, preserving A's tags."
+  (let ((tags (elfeed-entry-tags a)))
+    (loop for i from 0 below (length a)
+          do (setf (aref a i) (aref b i)))
+    (setf (elfeed-entry-tags a) tags)))
+
+(defun elfeed-db-get-feed (id)
+  "Get/create the feed for ID."
   (elfeed-db-ensure)
-  (let ((feed (gethash url elfeed-db)))
+  (let ((feed (gethash id elfeed-db-feeds)))
     (or feed
-        (setf (gethash url elfeed-db)
-              (make-elfeed-feed
-               :url url :entries (make-hash-table :test 'equal))))))
+        (setf (gethash id elfeed-db-feeds)
+              (make-elfeed-feed :id id)))))
 
-(defun elfeed-db-put (url entries)
-  "Add entries to the database under URL."
+(defun elfeed-db-get-entry (id)
+  "Get the entry for ID."
   (elfeed-db-ensure)
-  (let* ((feed (elfeed-db-get url))
-         (table (elfeed-feed-entries feed)))
-    (loop for entry in entries
-          for id = (elfeed-entry-id entry)
-          for old = (gethash id table)
-          do (elfeed-deref-entry entry)
-          when old  ; merge old tags back in
-          do (setf (elfeed-entry-tags entry) (elfeed-entry-tags old))
-          when (not old)
-          do (loop for hook in elfeed-new-entry-hook
-                   do (funcall hook entry))
-          do (setf (gethash id table) entry))
-    (prog1 (setf (gethash :last-update elfeed-db) (float-time))
-      (elfeed-db-save))))
+  (gethash id elfeed-db-entries))
+
+(defun elfeed-db-compare (a b)
+  "Return true if entry A is newer than entry B."
+  (let ((entry-a (elfeed-db-get-entry a))
+        (entry-b (elfeed-db-get-entry b)))
+    (> (elfeed-entry-date entry-a)
+       (elfeed-entry-date entry-b))))
+
+(defun elfeed-db-add (entries)
+  "Add ENTRIES to the database."
+  (elfeed-db-ensure)
+  (loop for entry in entries
+        for id = (elfeed-entry-id entry)
+        for original = (gethash id elfeed-db-entries)
+        do (elfeed-deref-entry entry)
+        when original do (elfeed-entry-merge original entry)
+        else do (setf (gethash id elfeed-db-entries) entry)
+        when (null original)
+        do (progn
+             (avl-tree-enter elfeed-db-index id)
+             (loop for hook in elfeed-new-entry-hook
+                   do (funcall hook entry))))
+  (plist-put elfeed-db :last-update (float-time)))
 
 (defun elfeed-entry-feed (entry)
   "Get the feed struct for ENTRY."
-  (elfeed-db-get (elfeed-entry-feed-url entry)))
+  (elfeed-db-get-feed (elfeed-entry-feed-id entry)))
 
 (defun elfeed-tag (entry &rest tags)
   "Add TAGS to ENTRY."
@@ -114,28 +140,60 @@ argument. This is a chance to add cutoms tags to new entries.")
 (defun elfeed-db-last-update ()
   "Return the last database update time in (`float-time') seconds."
   (elfeed-db-ensure)
-  (gethash :last-update elfeed-db 0))
-
-(defun elfeed-sort (entries &optional old-first)
-  "Destructively sort the given entries by date."
-  (sort* entries (if old-first #'< #'>)
-         :key #'elfeed-entry-date))
-
-(defun elfeed-db-entries (&optional url)
-  "Get all the entries, optionally just for URL, sorted by date."
-  (elfeed-sort
-   (if (null url)
-       (loop for url in elfeed-feeds
-             append (elfeed-db-entries url))
-     (loop for entry hash-values of (elfeed-feed-entries (elfeed-db-get url))
-           collect entry))))
+  (plist-get elfeed-db :last-update))
 
 (defun elfeed-apply-hooks-now ()
   "Apply `elfeed-new-entry-hook' to all entries in the database."
   (interactive)
-  (loop with entries = (elfeed-db-entries)
+  (loop with entries hash-values of elfeed-db-entries
         for hook in elfeed-new-entry-hook
         do (mapc hook entries)))
+
+(defmacro with-elfeed-db-visit (entry-and-feed &rest body)
+  (declare (indent defun))
+  `(catch 'elfeed-db-done
+     (prog1 nil
+       (avl-tree-mapc
+        (lambda (id)
+          (let* ((,(first entry-and-feed) (elfeed-db-get-entry id))
+                 (,(second entry-and-feed)
+                  (elfeed-entry-feed ,(first entry-and-feed))))
+            ,@body))
+        elfeed-db-index))))
+
+(defmacro elfeed-db-return (&optional value)
+  `(throw 'elfeed-db-done ,value))
+
+;; Saving and Loading:
+
+(defun elfeed-db-save ()
+  "Write the database index to the filesystem."
+  (mkdir elfeed-db-directory t)
+  (with-temp-file (expand-file-name "index" elfeed-db-directory)
+    (set-buffer-multibyte nil)
+    (let ((standard-output (current-buffer)))
+      (prin1 elfeed-db)
+      :success)))
+
+(defun elfeed-db-load ()
+  "Load the database index from the filesystem."
+  (let ((index (expand-file-name "index" elfeed-db-directory)))
+    (if (not (file-exists-p index))
+        (let ((db (setf elfeed-db (list :version elfeed-db-version))))
+          (plist-put db :feeds (make-hash-table :test 'equal))
+          (plist-put db :entries (make-hash-table :test 'equal))
+          (plist-put db :index (avl-tree-create #'elfeed-db-compare)))
+      (with-current-buffer (find-file-noselect index)
+        (goto-char (point-min))
+        (setf elfeed-db (read (current-buffer)))
+        (kill-buffer)))
+    (setf elfeed-db-feeds (plist-get elfeed-db :feeds))
+    (setf elfeed-db-entries (plist-get elfeed-db :entries))
+    (setf elfeed-db-index (plist-get elfeed-db :index))))
+
+(defun elfeed-db-ensure ()
+  "Ensure that the database has been loaded."
+  (when (null elfeed-db) (elfeed-db-load)))
 
 ;; Filesystem storage:
 
@@ -184,31 +242,6 @@ argument. This is a chance to add cutoms tags to new entries.")
     (prog1 entry
       (when (stringp content)
         (setf (elfeed-entry-content entry) (elfeed-ref content))))))
-
-(defun elfeed-db-save ()
-  "Write the database index to the filesystem."
-  (mkdir elfeed-db-directory t)
-  (with-temp-file (expand-file-name "index" elfeed-db-directory)
-    (set-buffer-multibyte nil)
-    (let ((standard-output (current-buffer)))
-      (prin1 elfeed-db)
-      :success)))
-
-(defun elfeed-db-load ()
-  "Load the database index from the filesystem."
-  (let ((index (expand-file-name "index" elfeed-db-directory)))
-    (if (not (file-exists-p index))
-        (let ((db (make-hash-table :test 'equal)))
-          (setf (gethash :version db) elfeed-db-version)
-          (setf elfeed-db db))
-      (with-current-buffer (find-file-noselect index)
-        (goto-char (point-min))
-        (setq elfeed-db (read (current-buffer)))
-        (kill-buffer)))))
-
-(defun elfeed-db-ensure ()
-  "Ensure that the database has been loaded."
-  (when (null elfeed-db) (elfeed-db-load)))
 
 (provide 'elfeed-db)
 
