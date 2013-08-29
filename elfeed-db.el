@@ -97,10 +97,13 @@ argument. This is a chance to add cutoms tags to new entries.")
 
 (defun elfeed-db-compare (a b)
   "Return true if entry A is newer than entry B."
-  (let ((entry-a (elfeed-db-get-entry a))
-        (entry-b (elfeed-db-get-entry b)))
-    (> (elfeed-entry-date entry-a)
-       (elfeed-entry-date entry-b))))
+  (let* ((entry-a (elfeed-db-get-entry a))
+         (entry-b (elfeed-db-get-entry b))
+         (date-a (elfeed-entry-date entry-a))
+         (date-b (elfeed-entry-date entry-b)))
+    (if (= date-a date-b)
+        (string< (prin1-to-string b) (prin1-to-string a))
+      (> date-a date-b))))
 
 (defun elfeed-db-add (entries)
   "Add ENTRIES to the database."
