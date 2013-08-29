@@ -189,6 +189,7 @@ argument. This is a chance to add cutoms tags to new entries.")
   "Write the database index to the filesystem."
   (mkdir elfeed-db-directory t)
   (with-temp-file (expand-file-name "index" elfeed-db-directory)
+    (set-buffer-multibyte nil)
     (let ((standard-output (current-buffer)))
       (prin1 elfeed-db)
       :success)))
