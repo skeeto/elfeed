@@ -119,7 +119,8 @@ argument. This is a chance to add cutoms tags to new entries.")
              (avl-tree-enter elfeed-db-index id)
              (loop for hook in elfeed-new-entry-hook
                    do (funcall hook entry))))
-  (plist-put elfeed-db :last-update (float-time)))
+  (plist-put elfeed-db :last-update (float-time))
+  :success)
 
 (defun elfeed-entry-feed (entry)
   "Get the feed struct for ENTRY."
