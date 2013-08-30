@@ -260,10 +260,7 @@ expression, matching against entry link, title, and feed title."
       (when n (elfeed-goto-line n))
       (let ((entry (elfeed-search-selected :ignore-region)))
         (when entry
-          (beginning-of-line)
-          (let ((start (point)))
-            (end-of-line)
-            (delete-region start (point)))
+          (elfeed-kill-line)
           (elfeed-search-print entry))))))
 
 (defun elfeed-search-update-entry (entry)
