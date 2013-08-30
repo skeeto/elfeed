@@ -65,6 +65,10 @@
   "Functions in this list are called with the new entry as its
 argument. This is a chance to add cutoms tags to new entries.")
 
+(defvar elfeed-db-update-hook ()
+  "Functions in this list are called with no arguments any time
+the :last-update time is updated.")
+
 ;; Data model:
 
 (defstruct elfeed-feed
@@ -120,6 +124,7 @@ argument. This is a chance to add cutoms tags to new entries.")
              (loop for hook in elfeed-new-entry-hook
                    do (funcall hook entry))))
   (plist-put elfeed-db :last-update (float-time))
+  (run-hooks 'elfeed-db-update-hook)
   :success)
 
 (defun elfeed-entry-feed (entry)
