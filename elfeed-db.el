@@ -81,8 +81,9 @@ the :last-update time is updated.")
 
 (defun elfeed-entry-merge (a b)
   "Merge B into A, preserving A's tags. Return true if an actual
-update occurred."
-  (setf (elfeed-entry-tags b) (elfeed-entry-tags a))
+update occurred, not counting content."
+  (setf (elfeed-entry-tags b) (elfeed-entry-tags a)
+        (elfeed-entry-content a) (elfeed-entry-content b))
   (not
    (zerop
     (loop for i from 0 below (length a)
