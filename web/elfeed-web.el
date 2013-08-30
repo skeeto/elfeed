@@ -124,6 +124,38 @@
      (princ (json-encode
              (coerce (mapcar #'elfeed-web-for-json (cdr results)) 'vector))))))
 
+(defvar elfeed-web-waiting ()
+  "Clients waiting for an update.")
+
+(defservlet* elfeed/update application/json (time)
+  "Return the current :last-update time for the database. If a
+time parameter is provided don't respond until the time has
+advanced past it (long poll)."
+  (let ((update-time (floor (elfeed-db-last-update))))
+    (if (= update-time (floor (string-to-number (or time ""))))
+        (push (httpd-discard-buffer) elfeed-web-waiting)
+      (princ (json-encode update-time)))))
+
+(defservlet elfeed text/plain (uri-path _ request)
+  "Serve static files from `elfeed-web-data-root'."
+  (if (not elfeed-web-enabled)
+      (insert "Elfeed web interface is disabled.\n"
+              "Set `elfeed-web-enabled' to true to enable it.")
+    (let ((base "/elfeed/"))
+      (if (< (length uri-path) (length base))
+          (httpd-redirect t base)
+        (let ((path (substring uri-path (1- (length base)))))
+          (httpd-serve-root t elfeed-web-data-root path request))))))
+
+(defun elfeed-web-update ()
+  "Update waiting clients about database changes."
+  (dolist (proc elfeed-web-waiting)
+    (ignore-errors
+      (with-httpd-buffer proc "application/json"
+        (princ (json-encode (floor (elfeed-db-last-update))))))))
+
+(add-hook 'elfeed-db-update-hook 'elfeed-web-update)
+
 (provide 'elfeed-web)
 
 ;;; elfeed-web.el ends here
