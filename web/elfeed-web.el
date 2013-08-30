@@ -44,8 +44,8 @@
            :content      (let ((content (elfeed-entry-content thing)))
                            (and content (elfeed-ref-id content)))
            :content-type (elfeed-entry-content-type thing)
-           :enclosures   (mapcar #'car (elfeed-entry-enclosures thing))
-           :tags         (elfeed-entry-tags thing)
+           :enclosures   (or (mapcar #'car (elfeed-entry-enclosures thing)) [])
+           :tags         (or (elfeed-entry-tags thing) [])
            :feed-id      (elfeed-web-make-webid (elfeed-entry-feed thing))))
     (elfeed-feed
      (list :webid  (elfeed-web-make-webid thing)
