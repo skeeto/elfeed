@@ -114,27 +114,32 @@ update occurred."
         (string< (prin1-to-string b) (prin1-to-string a))
       (> date-a date-b))))
 
+(defun elfeed-db-set-update-time ()
+  "Update the database last-update time."
+  (plist-put elfeed-db :last-update (float-time))
+  (run-hooks 'elfeed-db-update-hook))
+
 (defun elfeed-db-add (entries)
   "Add ENTRIES to the database."
   (elfeed-db-ensure)
-  (let ((change-count nil))
-    (setf change-count
-          (loop for entry in entries
-                for id = (elfeed-entry-id entry)
-                for original = (gethash id elfeed-db-entries)
-                do (elfeed-deref-entry entry)
-                when original count
-                  (elfeed-entry-merge original entry)
-                else count
-                  (setf (gethash id elfeed-db-entries) entry)
-                and do
-                  (progn
-                    (avl-tree-enter elfeed-db-index id)
-                    (loop for hook in elfeed-new-entry-hook
-                          do (funcall hook entry)))))
-    (unless (zerop change-count)
-      (plist-put elfeed-db :last-update (float-time))
-      (run-hooks 'elfeed-db-update-hook)))
+  (loop for entry in entries
+        for id = (elfeed-entry-id entry)
+        for original = (gethash id elfeed-db-entries)
+        do (elfeed-deref-entry entry)
+        when original count
+          (elfeed-entry-merge original entry)
+          into change-count
+        else count
+          (setf (gethash id elfeed-db-entries) entry)
+          into change-count
+        and do
+          (progn
+            (avl-tree-enter elfeed-db-index id)
+            (loop for hook in elfeed-new-entry-hook
+                  do (funcall hook entry)))
+        finally
+          (unless (zerop change-count)
+            (elfeed-db-set-update-time)))
   :success)
 
 (defun elfeed-entry-feed (entry)
