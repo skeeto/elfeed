@@ -67,7 +67,7 @@
   (when (null elfeed-search-refresh-timer)
     (setf elfeed-search-refresh-timer
           (run-at-time elfeed-search-refresh-rate elfeed-search-refresh-rate
-                       (apply-partially #'elfeed-search-update))))
+                       #'elfeed-search-update)))
   (add-hook 'kill-emacs-hook #'elfeed-db-save)
   (add-hook 'kill-buffer-hook #'elfeed-db-save t t)
   (add-hook 'kill-buffer-hook
@@ -201,12 +201,12 @@ expression, matching against entry link, title, and feed title."
   (insert
    (propertize
     (if elfeed-waiting
-        (format "%d feeds pending, %d in process ...\n"
+        (format "%d feeds pending, %d in process ..."
                 (length elfeed-waiting) (length elfeed-connections))
       (let ((time (seconds-to-time (elfeed-db-last-update))))
         (if (zerop (float-time time))
-            "Database empty. Use `elfeed-update' or `elfeed-add-feed'.\n"
-          (format "Database last updated %s\n"
+            "Database empty. Use `elfeed-update' or `elfeed-add-feed'."
+          (format "Database last updated %s"
                   (format-time-string "%A, %B %d %Y %H:%M:%S %Z" time)))))
     'face '(widget-inactive italic))))
 
@@ -225,26 +225,32 @@ expression, matching against entry link, title, and feed title."
   "Update the display to match the database."
   (interactive)
   (with-current-buffer (elfeed-search-buffer)
-    (when (or force (< elfeed-search-last-update (elfeed-db-last-update)))
-      (let ((inhibit-read-only t)
-            (standard-output (current-buffer))
-            (line (line-number-at-pos)))
-        (erase-buffer)
-        (elfeed-search-insert-header)
-        (elfeed-search--update-list)
-        (loop for entry in elfeed-search-entries
-              when (gethash entry elfeed-search-cache)
-              do (insert it)
-              else
-              do (insert
-                  (with-temp-buffer
-                    (elfeed-search-print entry)
-                    (setf (gethash (copy-sequence entry) elfeed-search-cache)
-                          (buffer-string))))
-              do (insert "\n"))
-        (insert "End of entries.\n")
-        (elfeed-goto-line line))
-      (setf elfeed-search-last-update (float-time)))))
+    (if (or force (< elfeed-search-last-update (elfeed-db-last-update)))
+        (elfeed-save-excursion
+          (let ((inhibit-read-only t)
+                (standard-output (current-buffer)))
+            (erase-buffer)
+            (elfeed-search-insert-header)
+            (insert "\n")
+            (elfeed-search--update-list)
+            (loop for entry in elfeed-search-entries
+                  when (gethash entry elfeed-search-cache)
+                  do (insert it)
+                  else
+                  do (insert
+                      (with-temp-buffer
+                        (elfeed-search-print entry)
+                        (setf (gethash (copy-sequence entry)
+                                       elfeed-search-cache)
+                              (buffer-string))))
+                  do (insert "\n"))
+            (insert "End of entries.\n")
+            (setf elfeed-search-last-update (float-time))))
+      (let ((inhibit-read-only t))
+        (elfeed-save-excursion
+          (goto-char (point-min))
+          (elfeed-kill-line)
+          (elfeed-search-insert-header))))))
 
 (defun elfeed-search-update-line (&optional n)
   "Redraw the current line."
