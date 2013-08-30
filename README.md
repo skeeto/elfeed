@@ -130,7 +130,6 @@ test case as I optimize and add features.
 Some things I still might want to add:
 
  * Database synchronization between computers
- * Single-user web front end using simple-httpd
 
 ## Motivation
 

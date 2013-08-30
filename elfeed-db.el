@@ -23,11 +23,11 @@
 ;; whole to the filesystem. The wire format is just the s-expression
 ;; print form of the top-level hash table.
 
-;; Possible items to do:
-;;  * database garbage collection and fsck
-;;  * maintain multiple forms of the index for fast search filters
-;;    * requires better validation checks, more centralized mutation
-;;  * content compression
+;; An AVL tree containing all database entries ordered by date is
+;; maintained as part of the database. We almost always want to look
+;; at entries ordered by date and this step accomplished that very
+;; efficiently with the AVL tree. This is the reasoning behind the
+;; `with-elfeed-db-visit' interface.
 
 ;; Unfortunately there's a nasty bug (bug#15190) in the reader that
 ;; makes hash tables and `print-circle' incompatible. It's been fixed
