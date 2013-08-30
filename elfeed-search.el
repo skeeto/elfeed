@@ -164,6 +164,16 @@
                                      (string-match-p m feed-title)))
                      matches))))))
 
+(defun elfeed-search--prompt (current)
+  "Prompt for a new filter, starting with CURRENT."
+   (read-from-minibuffer
+    "Filter: "
+    (if (or (string= "" current)
+            (string-match-p " $" current))
+        current
+      (concat current " "))
+    nil nil 'elfeed-search-filter-history))
+
 (defun elfeed-search-set-filter (new-filter)
   "Set a new search filter for the elfeed-search buffer.
 
@@ -179,11 +189,8 @@ than this are allowed. Ex. \"@3-days-ago\" or \"@1-year-old\".
 
 Every other space-seperated element is treated like a regular
 expression, matching against entry link, title, and feed title."
-  (interactive (list (read-from-minibuffer
-                      "Filter: " (if current-prefix-arg
-                                     ""
-                                   (concat elfeed-search-filter " "))
-                      nil nil 'elfeed-search-filter-history)))
+  (interactive (list (elfeed-search--prompt
+                      (if current-prefix-arg "" elfeed-search-filter))))
   (with-current-buffer (elfeed-search-buffer)
     (setf elfeed-search-filter new-filter)
     (elfeed-search-update :force)))
