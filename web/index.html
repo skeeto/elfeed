@@ -11,8 +11,8 @@
     <form ng-submit="update()">
       <input type="text" ng-model="query" ng-change="update()"/>
     </form>
-    <ul>
-      <li ng-repeat="entry in entries">
+    <ul class="entries">
+      <li class="entry" ng-repeat="entry in entries">
         <img src="{{entry.favicon}}" class="favicon" width="16" height="16"/>
         <time>{{entry.dateString}}</time>
         <a href="{{entry.link}}">
