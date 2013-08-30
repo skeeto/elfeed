@@ -190,7 +190,7 @@ defaulting to the current time if DATE could not be parsed."
              (entries (case (elfeed-feed-type xml)
                         (:atom (elfeed-entries-from-atom url xml))
                         (:rss (elfeed-entries-from-rss url xml))
-                        (t (error "Unkown feed type.")))))
+                        (t (error "Unknown feed type.")))))
         (elfeed-db-add entries)))))
 
 (defun elfeed-add-feed (url)
