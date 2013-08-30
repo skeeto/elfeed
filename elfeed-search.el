@@ -11,7 +11,7 @@
 (defvar elfeed-search-entries ()
   "List of the entries currently on display.")
 
-(defvar elfeed-search-filter "+unread"
+(defvar elfeed-search-filter "@6-months-ago +unread"
   "Query string filtering shown entries.")
 
 (defvar elfeed-search-filter-history nil
