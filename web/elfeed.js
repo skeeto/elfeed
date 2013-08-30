@@ -19,6 +19,9 @@ function SearchCtrl($scope, $http) {
                     1 + date.getMonth(),
                     date.getDate()
                 ].join('-');
+                entry.classes = entry.tags.map(function(tag) {
+                    return 'tag-' + tag;
+                }).join(' ');
             });
             $scope.entries = data;
         });

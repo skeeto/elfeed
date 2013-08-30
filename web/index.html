@@ -15,7 +15,9 @@
       <li ng-repeat="entry in entries">
         <img src="{{entry.favicon}}" class="favicon" width="16" height="16"/>
         <time>{{entry.dateString}}</time>
-        <a href="{{entry.link}}">{{entry.title}}</a>
+        <a href="{{entry.link}}">
+          <span class="{{entry.classes}}">{{entry.title}}</span>
+        </a>
       </li>
     </ul>
   </body>

@@ -11,3 +11,7 @@ time {
     font: 11pt monospace;
     color: gray;
 }
+
+.tag-unread {
+    font-weight: bold;
+}
