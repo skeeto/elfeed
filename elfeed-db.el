@@ -209,6 +209,14 @@ Use `elfeed-db-return' to exit early and optionally return data.
   "Ensure that the database has been loaded."
   (when (null elfeed-db) (elfeed-db-load)))
 
+(defun elfeed-db-size ()
+  "Return a count of the number of entries in the database."
+  (let ((count-table (hash-table-count elfeed-db-entries))
+        (count-tree (avl-tree-size elfeed-db-index)))
+    (if (= count-table count-tree)
+        count-table
+      (error "Elfeed database error: entry count mismatch."))))
+
 ;; Filesystem storage:
 
 (defstruct elfeed-ref
