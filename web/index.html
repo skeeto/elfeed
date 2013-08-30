@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html ng-app>
+  <head>
+    <title>Elfeed Web</title>
+    <link rel="stylesheet" href="elfeed.css"/>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/URI.js/1.7.2/URI.min.js"></script>
+    <script src="elfeed.js"></script>
+  </head>
+  <body ng-controller="SearchCtrl">
+    <form ng-submit="update()">
+      <input type="text" ng-model="query"/>
+    </form>
+    <ul>
+      <li ng-repeat="entry in entries">
+        <img src="{{entry.favicon}}" class="favicon" width="16" height="16"/>
+        <time>{{entry.dateString}}</time>
+        <a href="{{entry.link}}">{{entry.title}}</a>
+      </li>
+    </ul>
+  </body>
+</html>
