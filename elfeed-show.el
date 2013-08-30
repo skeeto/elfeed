@@ -22,7 +22,8 @@
       (define-key map "y" 'elfeed-show-yank)
       (define-key map "u" (elfeed-expose #'elfeed-show-tag 'unread))
       (define-key map (kbd "SPC") 'scroll-up-command)
-      (define-key map (kbd "DEL") 'scroll-down-command)))
+      (define-key map (kbd "DEL") 'scroll-down-command)
+      (define-key map [mouse-2] 'shr-browse-url)))
   "Keymap for `elfeed-show-mode'.")
 
 (defun elfeed-show-mode ()
