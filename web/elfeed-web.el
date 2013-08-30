@@ -92,7 +92,9 @@
 (defmacro with-elfeed-web (&rest body)
   "Only execute BODY if `elfeed-web-enabled' is true."
   `(if (not elfeed-web-enabled)
-       (httpd-error t 403 "Elfeed web interface is disabled.")
+       (progn
+         (princ (json-encode '(:error 403)))
+         (httpd-send-header t "application/json" 403))
      ,@body))
 
 (defservlet* elfeed/things/:webid application/json ()
@@ -106,7 +108,8 @@
    (let ((content (elfeed-deref (make-elfeed-ref :id ref))))
      (if content
          (princ content)
-       (httpd-error t 404 "Content not found.")))))
+       (princ (json-encode '(:error 404)))
+       (httpd-send-header t "application/json" 404)))))
 
 (defservlet* elfeed/search application/json (q)
   "Perform a search operation with Q and return the results."
