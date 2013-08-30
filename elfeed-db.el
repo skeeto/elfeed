@@ -286,6 +286,26 @@ Use `elfeed-db-return' to exit early and optionally return data.
       (when (stringp content)
         (setf (elfeed-entry-content entry) (elfeed-ref content))))))
 
+(defun elfeed-ref-delete (ref)
+  "Remove the content behind REF from the database."
+  (delete-file (elfeed-ref--file ref)))
+
+(defun elfeed-db-gc ()
+  "Clean up unused content from the content database."
+  (let* ((data (expand-file-name "data" elfeed-db-directory))
+         (dirs (cddr (directory-files data t)))
+         (ids (mapcan (lambda (d) (directory-files d nil nil t)) dirs))
+         (table (make-hash-table :test 'equal)))
+    (dolist (id ids)
+      (setf (gethash id table) nil))
+    (with-elfeed-db-visit (entry feed)
+      (let ((content (elfeed-entry-content entry)))
+        (when (elfeed-ref-p content)
+          (setf (gethash (elfeed-ref-id content) table) t))))
+    (loop for id hash-keys of table using (hash-value used)
+          unless (or used (member id '("." "..")))
+          do (elfeed-ref-delete (make-elfeed-ref :id id)))))
+
 (provide 'elfeed-db)
 
 ;;; elfeed-db.el ends here
