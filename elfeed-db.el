@@ -154,6 +154,13 @@ argument. This is a chance to add cutoms tags to new entries.")
         do (mapc hook entries)))
 
 (defmacro with-elfeed-db-visit (entry-and-feed &rest body)
+  "Visit each entry in the database from newest to oldest.
+Use `elfeed-db-return' to exit early and optionally return data.
+
+  (with-elfeed-db-visit (entry feed)
+    (do-something entry)
+    (when (some-date-criteria-p entry)
+      (elfeed-db-return)))"
   (declare (indent defun))
   `(catch 'elfeed-db-done
      (prog1 nil
@@ -166,6 +173,7 @@ argument. This is a chance to add cutoms tags to new entries.")
         elfeed-db-index))))
 
 (defmacro elfeed-db-return (&optional value)
+  "Use this to exit early and return VALUE from `with-elfeed-db-visit'."
   `(throw 'elfeed-db-done ,value))
 
 ;; Saving and Loading:
