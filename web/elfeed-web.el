@@ -2,6 +2,11 @@
 
 ;; This is free and unencumbered software released into the public domain.
 
+;; Author: Christopher Wellons <wellons@nullprogram.com>
+;; URL: https://github.com/skeeto/elfeed
+;; Version: 0.0.1
+;; Package-Requires: ((simple-httpd "1.4.3"))
+
 ;;; Commentary:
 
 ;; This is a very early work in progress. The long-term goal is to
