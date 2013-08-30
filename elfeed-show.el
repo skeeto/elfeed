@@ -16,6 +16,7 @@
 (defvar elfeed-show-mode-map
   (let ((map (make-sparse-keymap)))
     (prog1 map
+      (suppress-keymap map)
       (define-key map "q" 'elfeed-kill-buffer)
       (define-key map "g" 'elfeed-show-refresh)
       (define-key map "n" 'elfeed-show-next)

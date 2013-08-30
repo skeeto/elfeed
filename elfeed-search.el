@@ -38,6 +38,7 @@
 (defvar elfeed-search-mode-map
   (let ((map (make-sparse-keymap)))
     (prog1 map
+      (suppress-keymap map)
       (define-key map "q" 'quit-window)
       (define-key map "g" (elfeed-expose #'elfeed-search-update :force))
       (define-key map "G" 'elfeed-update)
