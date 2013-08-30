@@ -9,7 +9,7 @@
   </head>
   <body ng-controller="SearchCtrl">
     <form ng-submit="update()">
-      <input type="text" ng-model="query"/>
+      <input type="text" ng-model="query" ng-change="update()"/>
     </form>
     <ul>
       <li ng-repeat="entry in entries">
