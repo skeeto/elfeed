@@ -4,6 +4,8 @@
 
 ;;; Code:
 
+(require 'cl)
+(require 'browse-url)
 (require 'message) ; faces
 (require 'elfeed-db)
 (require 'elfeed-lib)

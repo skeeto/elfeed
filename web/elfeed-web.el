@@ -4,6 +4,7 @@
 
 ;;; Code:
 
+(require 'cl)
 (require 'json)
 (require 'simple-httpd)
 (require 'elfeed-db)
