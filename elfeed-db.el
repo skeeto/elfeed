@@ -80,11 +80,16 @@ the :last-update time is updated.")
   id title link date content content-type enclosures tags feed-id)
 
 (defun elfeed-entry-merge (a b)
-  "Merge B into A, preserving A's tags."
-  (let ((tags (elfeed-entry-tags a)))
+  "Merge B into A, preserving A's tags. Return true if an actual
+update occurred."
+  (setf (elfeed-entry-tags b) (elfeed-entry-tags a))
+  (not
+   (zerop
     (loop for i from 0 below (length a)
-          do (setf (aref a i) (aref b i)))
-    (setf (elfeed-entry-tags a) tags)))
+          for part-a = (aref a i)
+          for part-b = (aref b i)
+          count (not (equal part-a part-b))
+          do (setf (aref a i) part-b)))))
 
 (defun elfeed-db-get-feed (id)
   "Get/create the feed for ID."
@@ -112,19 +117,24 @@ the :last-update time is updated.")
 (defun elfeed-db-add (entries)
   "Add ENTRIES to the database."
   (elfeed-db-ensure)
-  (loop for entry in entries
-        for id = (elfeed-entry-id entry)
-        for original = (gethash id elfeed-db-entries)
-        do (elfeed-deref-entry entry)
-        when original do (elfeed-entry-merge original entry)
-        else do (setf (gethash id elfeed-db-entries) entry)
-        when (null original)
-        do (progn
-             (avl-tree-enter elfeed-db-index id)
-             (loop for hook in elfeed-new-entry-hook
-                   do (funcall hook entry))))
-  (plist-put elfeed-db :last-update (float-time))
-  (run-hooks 'elfeed-db-update-hook)
+  (let ((change-count nil))
+    (setf change-count
+          (loop for entry in entries
+                for id = (elfeed-entry-id entry)
+                for original = (gethash id elfeed-db-entries)
+                do (elfeed-deref-entry entry)
+                when original count
+                  (elfeed-entry-merge original entry)
+                else count
+                  (setf (gethash id elfeed-db-entries) entry)
+                and do
+                  (progn
+                    (avl-tree-enter elfeed-db-index id)
+                    (loop for hook in elfeed-new-entry-hook
+                          do (funcall hook entry)))))
+    (unless (zerop change-count)
+      (plist-put elfeed-db :last-update (float-time))
+      (run-hooks 'elfeed-db-update-hook)))
   :success)
 
 (defun elfeed-entry-feed (entry)
