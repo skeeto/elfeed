@@ -5,6 +5,7 @@
 ;;; Code:
 
 (require 'cl)
+(require 'wid-edit) ; widget-inactive face
 (require 'elfeed-db)
 (require 'elfeed-lib)
 
