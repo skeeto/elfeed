@@ -39,5 +39,17 @@ function SearchCtrl($scope, $http) {
             $scope.dirty = true;
         }
     };
-    $scope.update();
+
+    $scope.time = 0;
+    function poll() {
+        $http.get(URI('/elfeed/update').search({
+            time: $scope.time
+        }).toString()).success(function(data) {
+            $scope.time = data;
+            $scope.update();
+            poll();
+        });
+    }
+
+    poll();
 }
