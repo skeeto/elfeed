@@ -42,6 +42,9 @@
   :group 'elfeed
   :type 'boolean)
 
+(defvar elfeed-web-limit 512
+  "Maximum number of entries to serve at once.")
+
 (defvar elfeed-web-data-root (file-name-directory load-file-name)
   "Location of the static Elfeed web data files.")
 
@@ -116,8 +119,11 @@
   (with-elfeed-web
    (let* ((results (list nil))
           (tail results)
-          (filter (elfeed-search-parse-filter q)))
+          (filter (elfeed-search-parse-filter q))
+          (count elfeed-web-limit))
      (with-elfeed-db-visit (entry feed)
+       (when (< (decf count) 0)
+         (elfeed-db-return))
        (when (elfeed-search-filter filter entry feed)
          (setf (cdr tail) (list entry)
                tail (cdr tail))))
