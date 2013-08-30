@@ -144,7 +144,7 @@ argument. This is a chance to add cutoms tags to new entries.")
 (defun elfeed-db-last-update ()
   "Return the last database update time in (`float-time') seconds."
   (elfeed-db-ensure)
-  (plist-get elfeed-db :last-update))
+  (or (plist-get elfeed-db :last-update) 0))
 
 (defun elfeed-apply-hooks-now ()
   "Apply `elfeed-new-entry-hook' to all entries in the database."
