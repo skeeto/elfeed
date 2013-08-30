@@ -9,6 +9,14 @@
 (require 'elfeed-db)
 (require 'elfeed-search)
 
+(defcustom elfeed-web-enabled nil
+  "If true, serve a web interface Elfeed with simple-httpd."
+  :group 'elfeed
+  :type 'boolean)
+
+(defvar elfeed-web-data-root (file-name-directory load-file-name)
+  "Location of the static Elfeed web data files.")
+
 (defvar elfeed-web-webid-map (make-hash-table :test 'equal)
   "Track the mapping between entries and IDs.")
 
@@ -53,28 +61,37 @@
            :title  (elfeed-feed-title thing)
            :author (elfeed-feed-author thing)))))
 
+(defmacro with-elfeed-web (&rest body)
+  "Only execute BODY if `elfeed-web-enabled' is true."
+  `(if (not elfeed-web-enabled)
+       (httpd-error t 403 "Elfeed web interface is disabled.")
+     ,@body))
+
 (defservlet* elfeed/things/:webid application/json ()
   "Return a requested thing (entry or feed)."
-  (princ (json-encode (elfeed-web-for-json (elfeed-web-lookup webid)))))
+  (with-elfeed-web
+   (princ (json-encode (elfeed-web-for-json (elfeed-web-lookup webid))))))
 
-(defservlet* elfeed/content/:ref text/plain ()
+(defservlet* elfeed/content/:ref text/html ()
   "Serve content-addressable content at REF."
-  (let ((content (elfeed-deref (make-elfeed-ref :id ref))))
-    (if content
-        (princ content)
-      (httpd-error t 404 "Content not found."))))
+  (with-elfeed-web
+   (let ((content (elfeed-deref (make-elfeed-ref :id ref))))
+     (if content
+         (princ content)
+       (httpd-error t 404 "Content not found.")))))
 
 (defservlet* elfeed/search application/json (q)
   "Perform a search operation with Q and return the results."
-  (let* ((results (list nil))
-         (tail results)
-         (filter (elfeed-search-parse-filter q)))
-    (with-elfeed-db-visit (entry feed)
-      (when (elfeed-search-filter filter entry feed)
-        (setf (cdr tail) (list entry)
-              tail (cdr tail))))
-    (princ (json-encode
-            (coerce (mapcar #'elfeed-web-for-json (cdr results)) 'vector)))))
+  (with-elfeed-web
+   (let* ((results (list nil))
+          (tail results)
+          (filter (elfeed-search-parse-filter q)))
+     (with-elfeed-db-visit (entry feed)
+       (when (elfeed-search-filter filter entry feed)
+         (setf (cdr tail) (list entry)
+               tail (cdr tail))))
+     (princ (json-encode
+             (coerce (mapcar #'elfeed-web-for-json (cdr results)) 'vector))))))
 
 (provide 'elfeed-web)
 
