@@ -185,6 +185,7 @@ Use `elfeed-db-return' to exit early and optionally return data.
   (declare (indent defun))
   `(catch 'elfeed-db-done
      (prog1 nil
+       (elfeed-db-ensure)
        (avl-tree-mapc
         (lambda (id)
           (let* ((,(first entry-and-feed) (elfeed-db-get-entry id))
