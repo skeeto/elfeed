@@ -15,3 +15,7 @@ time {
 .tag-unread {
     font-weight: bold;
 }
+
+.no-results {
+    font-style: italic;
+}

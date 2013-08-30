@@ -7,18 +7,23 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/URI.js/1.7.2/URI.min.js"></script>
     <script src="elfeed.js"></script>
   </head>
-  <body ng-controller="SearchCtrl">
-    <form ng-submit="update()">
-      <input type="text" ng-model="query" ng-change="update()"/>
-    </form>
-    <ul class="entries">
-      <li class="entry" ng-repeat="entry in entries">
-        <img src="{{entry.favicon}}" class="favicon" width="16" height="16"/>
-        <time>{{entry.dateString}}</time>
-        <a href="{{entry.link}}">
-          <span class="{{entry.classes}}">{{entry.title}}</span>
-        </a>
-      </li>
-    </ul>
+  <body>
+    <div ng-controller="SearchCtrl">
+      <form ng-submit="update()">
+        <input type="text" ng-model="query" ng-change="update()"/>
+      </form>
+      <ul class="entries">
+        <li class="entry" ng-repeat="entry in entries">
+          <img src="{{entry.favicon}}" class="favicon" width="16" height="16"/>
+          <time>{{entry.dateString}}</time>
+          <a href="{{entry.link}}">
+            <span class="{{entry.classes}}">{{entry.title}}</span>
+          </a>
+        </li>
+        <span class="no-results" ng-show="!entries.length">
+          No results.
+        </span>
+      </ul>
+    </div>
   </body>
 </html>
