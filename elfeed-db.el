@@ -199,9 +199,11 @@ Use `elfeed-db-return' to exit early and optionally return data.
         (goto-char (point-min))
         (setf elfeed-db (read (current-buffer)))
         (kill-buffer)))
-    (setf elfeed-db-feeds (plist-get elfeed-db :feeds))
-    (setf elfeed-db-entries (plist-get elfeed-db :entries))
-    (setf elfeed-db-index (plist-get elfeed-db :index))))
+    (setf elfeed-db-feeds (plist-get elfeed-db :feeds)
+          elfeed-db-entries (plist-get elfeed-db :entries)
+          elfeed-db-index (plist-get elfeed-db :index)
+          ;; Internal function use required for security!
+          (avl-tree--cmpfun elfeed-db-index) #'elfeed-db-compare)))
 
 (defun elfeed-db-ensure ()
   "Ensure that the database has been loaded."
