@@ -2,6 +2,33 @@
 
 ;; This is free and unencumbered software released into the public domain.
 
+;;; Commentary:
+
+;; Endpoints:
+
+;; /elfeed/<path>
+
+;; Serves the static HTML, JS, and CSS content.
+
+;; /elfeed/content/<ref-id>
+
+;;   Serves content from the content database (`elfeed-deref').
+
+;; /elfeed/thing/<webid>
+
+;;   Serve up an elfeed-feed or elfeed-entry in JSON format.
+
+;; /elfeed/search
+
+;;   Accepts a q parameter which is an filter string to be parsed and
+;;   handled by `elfeed-search-parse-filter'.
+
+;; /elfeed/update
+
+;;   Accepts a time parameter. If time < `elfeed-db-last-update',
+;;   respond with time. Otherwise don't respond until database
+;;   updates (long poll).
+
 ;;; Code:
 
 (require 'cl)
