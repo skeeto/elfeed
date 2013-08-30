@@ -24,7 +24,7 @@
 (defvar elfeed-search-refresh-timer nil
   "The timer used to keep things updated as the database updates.")
 
-(defcustom elfeed-search-refresh-rate 5
+(defcustom elfeed-search-refresh-rate 3
   "How often the buffer should update against the datebase in seconds."
   :group 'elfeed)
 
