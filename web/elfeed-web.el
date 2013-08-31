@@ -132,11 +132,11 @@
           (filter (elfeed-search-parse-filter q))
           (count elfeed-web-limit))
      (with-elfeed-db-visit (entry feed)
-       (when (< (decf count) 0)
-         (elfeed-db-return))
        (when (elfeed-search-filter filter entry feed)
          (setf (cdr tail) (list entry)
-               tail (cdr tail))))
+               tail (cdr tail))
+         (when (< (decf count) 0)
+           (elfeed-db-return))))
      (princ (json-encode
              (coerce (mapcar #'elfeed-web-for-json (cdr results)) 'vector))))))
 
