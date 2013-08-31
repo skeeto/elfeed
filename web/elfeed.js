@@ -23,7 +23,7 @@ function SearchCtrl($scope, $http) {
     $scope.busy = false;
     $scope.dirty = true;
 
-    $scope.update = function() {
+    $scope.update = function(blur) {
         if (!$scope.busy) {
             $scope.busy = true;
             $scope.dirty = false;
@@ -37,6 +37,11 @@ function SearchCtrl($scope, $http) {
             });
         } else {
             $scope.dirty = true;
+        }
+
+        if (blur) {
+            // Is there a "right" way to do this? I don't think there is.
+            document.getElementById('query').blur();
         }
     };
 
@@ -52,4 +57,9 @@ function SearchCtrl($scope, $http) {
     }
 
     poll();
+}
+
+function ViewCtrl($scope) {
+    $scope.ref = null;
+    //$scope.ref = "77a01f799ef6ac4a1aa4bfc218050a95eeb0875a";
 }
