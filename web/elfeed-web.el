@@ -165,10 +165,11 @@ advanced past it (long poll)."
 
 (defun elfeed-web-update ()
   "Update waiting clients about database changes."
-  (dolist (proc elfeed-web-waiting)
-    (ignore-errors
-      (with-httpd-buffer proc "application/json"
-        (princ (json-encode (ffloor (elfeed-db-last-update))))))))
+  (while elfeed-web-waiting
+    (let ((proc (pop elfeed-web-waiting)))
+      (ignore-errors
+        (with-httpd-buffer proc "application/json"
+          (princ (json-encode (ffloor (elfeed-db-last-update)))))))))
 
 (add-hook 'elfeed-db-update-hook 'elfeed-web-update)
 
