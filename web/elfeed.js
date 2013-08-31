@@ -1,4 +1,4 @@
-var INITIAL_QUERY = '@2days';
+var INITIAL_QUERY = '@3-days-old';
 
 function favicon(url) {
     return URI(url).path('favicon.ico').search('')
