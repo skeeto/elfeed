@@ -2,28 +2,61 @@
 <html ng-app>
   <head>
     <title>Elfeed Web</title>
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/foundation/4.3.1/css/foundation.min.css"/>
     <link rel="stylesheet" href="elfeed.css"/>
     <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/URI.js/1.7.2/URI.min.js"></script>
     <script src="elfeed.js"></script>
   </head>
   <body>
-    <div ng-controller="SearchCtrl">
-      <form ng-submit="update()">
-        <input type="text" ng-model="query" ng-change="update()"/>
-      </form>
-      <ul class="entries">
-        <li class="entry" ng-repeat="entry in entries">
-          <img src="{{entry.favicon}}" class="favicon" width="16" height="16"/>
-          <time>{{entry.dateString}}</time>
-          <a href="{{entry.link}}">
-            <span class="{{entry.classes}}">{{entry.title}}</span>
-          </a>
-        </li>
-        <span class="no-results" ng-show="!entries.length">
-          No results.
-        </span>
-      </ul>
+
+    <div class="row">
+      <div class="twelve columns centered panel radius">
+        <h4>Emacs Elfeed</h4>
+      </div>
     </div>
+
+    <div class="row panel">
+
+      <div class="large-6 columns">
+        <div ng-controller="SearchCtrl">
+
+          <form ng-submit="update(true)">
+            <input id="query" type="text"
+                   ng-model="query" ng-change="update()"/>
+          </form>
+
+          <ul class="no-bullet">
+            <li class="entry" ng-repeat="entry in entries">
+              <img class="favicon" src="{{entry.favicon}}">
+              <span class="feed-title">
+                {{entry.feed.title}}
+              </a>
+              <time class="secondary label">
+                {{entry.dateString}}
+              </time>
+              <a class="title" href="{{entry.link}}">
+                <span class="{{entry.classes}}">{{entry.title}}</span>
+              </a>
+            </li>
+            <span class="no-results" ng-show="!entries.length">
+              No results.
+            </span>
+          </ul>
+        </div>
+      </div>
+
+      <div class="large-6 columns">
+        <div ng-controller="ViewCtrl">
+          <div class="row" ng-show="ref">
+              <iframe class="twelve columns"
+                      sandbox src="/elfeed/content/{{ref}}">
+              </iframe>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
   </body>
 </html>

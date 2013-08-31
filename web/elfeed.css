@@ -1,21 +1,25 @@
-body {
-    background: lightblue;
-    font-family: sans-serif;
-}
-
-img.favicon {
-    display: inline-block;
-}
-
-time {
-    font: 11pt monospace;
-    color: gray;
-}
-
 .tag-unread {
     font-weight: bold;
 }
 
 .no-results {
     font-style: italic;
+}
+
+img.favicon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+}
+
+.entry .title {
+    display: block;
+}
+
+iframe {
+    border: 0;
+}
+
+.entry {
+    margin-bottom: 10px;
 }
