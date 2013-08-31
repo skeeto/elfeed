@@ -57,9 +57,9 @@ function SearchCtrl($scope, $http) {
     }
 
     poll();
-}
+    $scope.selected = null;
 
-function ViewCtrl($scope) {
-    $scope.ref = null;
-    //$scope.ref = "77a01f799ef6ac4a1aa4bfc218050a95eeb0875a";
+    $scope.show = function(entry) {
+        $scope.selected = entry;
+    };
 }
