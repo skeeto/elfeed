@@ -92,10 +92,10 @@
            :date         (* 1000 (elfeed-entry-date thing))
            :content      (let ((content (elfeed-entry-content thing)))
                            (and content (elfeed-ref-id content)))
-           :content-type (elfeed-entry-content-type thing)
+           :contentType  (elfeed-entry-content-type thing)
            :enclosures   (or (mapcar #'car (elfeed-entry-enclosures thing)) [])
            :tags         (or (elfeed-entry-tags thing) [])
-           :feed-id      (elfeed-web-make-webid (elfeed-entry-feed thing))))
+           :feed         (elfeed-web-for-json (elfeed-entry-feed thing))))
     (elfeed-feed
      (list :webid  (elfeed-web-make-webid thing)
            :url    (elfeed-feed-url thing)
