@@ -182,16 +182,20 @@ defaulting to the current time if DATE could not be parsed."
   "Update a specific feed."
   (interactive (list (completing-read "Feed: " elfeed-feeds)))
   (with-elfeed-fetch url
-    (unless (and status (eq (car status) :error))
-      (goto-char (point-min))
-      (search-forward "\n\n") ; skip HTTP headers
-      (set-buffer-multibyte t)
-      (let* ((xml (xml-parse-region (point) (point-max)))
-             (entries (case (elfeed-feed-type xml)
-                        (:atom (elfeed-entries-from-atom url xml))
-                        (:rss (elfeed-entries-from-rss url xml))
-                        (t (error "Unknown feed type.")))))
-        (elfeed-db-add entries)))))
+    (if (and status (eq (car status) :error))
+        (message "Elfeed update failed for %s: %s" url status)
+      (condition-case error
+          (progn
+            (goto-char (point-min))
+            (search-forward "\n\n") ; skip HTTP headers
+            (set-buffer-multibyte t)
+            (let* ((xml (xml-parse-region (point) (point-max)))
+                   (entries (case (elfeed-feed-type xml)
+                              (:atom (elfeed-entries-from-atom url xml))
+                              (:rss (elfeed-entries-from-rss url xml))
+                              (t (error "Unknown feed type.")))))
+              (elfeed-db-add entries)))
+        (error (message "Elfeed update failed for %s: %s" url error))))))
 
 (defun elfeed-add-feed (url)
   "Manually add a feed to the database."
