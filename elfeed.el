@@ -71,9 +71,10 @@ feeds to this list."
 (defun elfeed--wrap-callback (id cb)
   "Return a function that manages the elfeed queue."
   (lambda (status)
-    (setf elfeed-connections (delete* id elfeed-connections :key #'car))
-    (elfeed--check-queue)
-    (funcall cb status)))
+    (unwind-protect
+        (funcall cb status)
+      (setf elfeed-connections (delete* id elfeed-connections :key #'car))
+      (elfeed--check-queue))))
 
 (defun elfeed-fetch (url callback)
   "Basically wraps `url-retrieve' but uses the connection limiter."
