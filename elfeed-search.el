@@ -201,7 +201,7 @@ expression, matching against entry link, title, and feed title."
   "Insert a one-line status header."
   (insert
    (propertize
-    (if elfeed-waiting
+    (if (or elfeed-waiting elfeed-connections)
         (format "%d feeds pending, %d in process ..."
                 (length elfeed-waiting) (length elfeed-connections))
       (let ((time (seconds-to-time (elfeed-db-last-update))))
