@@ -170,9 +170,9 @@ update occurred, not counting content."
 (defun elfeed-apply-hooks-now ()
   "Apply `elfeed-new-entry-hook' to all entries in the database."
   (interactive)
-  (loop for entries hash-values of elfeed-db-entries
-        for hook in elfeed-new-entry-hook
-        do (mapc hook entries)))
+  (with-elfeed-db-visit (entry feed)
+    (loop for hook in elfeed-new-entry-hook
+          do (funcall hook entry))))
 
 (defmacro with-elfeed-db-visit (entry-and-feed &rest body)
   "Visit each entry in the database from newest to oldest.
