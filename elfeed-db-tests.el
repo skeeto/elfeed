@@ -1,4 +1,4 @@
-;;; elfeed-db-tests.el  -*- lexical-binding: t; -*-
+;;; elfeed-db-tests.el --- database tests -*- lexical-binding: t; -*-
 
 (require 'cl)
 (require 'ert)
@@ -124,3 +124,14 @@
       ;; All entries should have appeared in date order
       (should (equal (sort (copy-seq entries) #'<) entries))
       entries)))
+
+(ert-deftest elfeed-ref ()
+  (with-elfeed-test
+    (let* ((content (loop repeat 25 collect (elfeed-test-generate-title)))
+           (refs (mapcar #'elfeed-ref content))
+           (derefs (mapcar #'elfeed-deref refs)))
+      (should (equal content derefs)))))
+
+(provide 'elfeed-db-tests)
+
+;;; elfeed-db-tests.el ends here

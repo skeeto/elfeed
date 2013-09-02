@@ -1,3 +1,5 @@
+;;; elfeed-lib-tests.el --- library tests -*- lexical-binding: t; -*-
+
 (require 'ert)
 (require 'elfeed-lib)
 
@@ -21,3 +23,7 @@
   (should (= (elfeed-time-duration "3 years old") (* 3.0 365.25 24 60 60)))
   (should (= (elfeed-time-duration "1-day")       (* 1.0 24 60 60)))
   (should (= (elfeed-time-duration "1hour")       (* 1.0 60 60))))
+
+(provide 'elfeed-lib-tests)
+
+;;; elfeed-lib-tests.el ends here
