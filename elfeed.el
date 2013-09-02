@@ -220,38 +220,60 @@ defaulting to the current time if DATE could not be parsed."
     (elfeed-search-mode))
   (elfeed-search-update))
 
-;; Helper functions
+;; New entry filtering
 
-(defun elfeed-regexp-tagger (regexp tag)
-  "Return a function suitable for `elfeed-new-entry-hook' that
-tags entries with title or link matching regexp."
-  (lambda (entry)
-    (when (or (string-match-p regexp (elfeed-entry-link entry))
-              (string-match-p regexp (elfeed-entry-title entry)))
-      (elfeed-tag entry tag))))
+(defun* elfeed-make-tagger
+    (&key feed-title feed-url entry-title entry-link after before
+          add remove callback)
+  "Create a function that adds or removes tags on matching entries.
 
-(defun elfeed-time-duration (time)
-  "Turn a time expression into a number of seconds. Uses
-`timer-duration' but allows a bit more flair."
-  (if (numberp time)
-      time
-    (timer-duration (replace-regexp-in-string "\\(ago\\|old\\|-\\)" "" time))))
+FEED-TITLE, FEED-URL, ENTRY-TITLE, and ENTRY-LINK are regular
+expressions or a list (not <regex>), which indicates a negative
+match. AFTER and BEFORE are relative times (see
+`elfeed-time-duration'). Entries must match all provided
+expressions. If an entry matches, add tags ADD and remove tags
+REMOVE.
 
-(defun elfeed-time-untagger (time tag)
-  "Return a function suitable for `elfeed-new-entry-hook' that
-untags entries older than TIME. Uses `timer-duration' to parse
-TIME, so relative strings are allowed. You probably want to use
-this to remove 'unread' from older entries (database
-initialization).
+Examples,
 
- (add-hook 'elfeed-new-entry-hook
-           (elfeed-time-untagger \"2 weeks ago\" 'unread))"
-  (let ((secs (elfeed-time-duration time)))
+  (elfeed-make-tagger :feed-url \"youtube\\\\.com\"
+                      :add '(video youtube))
+
+  (elfeed-make-tagger :before \"1 week ago\"
+                      :remove 'unread)
+
+  (elfeed-make-tagger :feed-url \"example\\\\.com\"
+                      :entry-title '(not \"something interesting\")
+                      :add 'junk)
+
+The returned function should be added to `elfeed-new-entry-hook'."
+  (let ((after-time  (and after  (elfeed-time-duration after)))
+        (before-time (and before (elfeed-time-duration before))))
+    (when (and add (symbolp add)) (setf add (list add)))
+    (when (and remove (symbolp remove)) (setf remove (list remove)))
     (lambda (entry)
-      (let ((time (float-time (seconds-to-time (elfeed-entry-date entry)))))
-        (when (< time (- (float-time) secs))
-          (elfeed-untag entry tag)
-          :untag)))))
+      (let ((feed (elfeed-entry-feed entry))
+            (date (elfeed-entry-date entry))
+            (case-fold-search t))
+        (cl-flet ((match (r s)
+                         (or (null r)
+                             (if (listp r)
+                                 (not (string-match-p (second r) s))
+                               (string-match-p r s)))))
+          (when (and
+                 (match feed-title  (elfeed-feed-title  feed))
+                 (match feed-url    (elfeed-feed-url    feed))
+                 (match entry-title (elfeed-entry-title entry))
+                 (match entry-link  (elfeed-entry-link  entry))
+                 (or (not after-time)  (> date (- (float-time) after-time)))
+                 (or (not before-time) (< date (- (float-time) before-time))))
+            (when add
+              (apply #'elfeed-tag entry add))
+            (when remove
+              (apply #'elfeed-untag entry remove))
+            (when callback
+              (funcall callback entry))
+            entry))))))
 
 (provide 'elfeed)
 

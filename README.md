@@ -110,15 +110,27 @@ adding tags.
 ```el
 ;; Mark all YouTube entries
 (add-hook 'elfeed-new-entry-hook
-          (elfeed-regexp-tagger "youtube\\.com" 'youtube))
+          (elfeed-make-tagger :feed-url "youtube\\.com"
+                              :add '(video youtube)))
 ```
 
-Or avoiding tagging old entries as `unread`:
+Avoiding tagging old entries as `unread`:
 
 ```el
 ;; Entries older than 2 weeks are marked as read
 (add-hook 'elfeed-new-entry-hook
-          (elfeed-time-untagger "2 weeks ago" 'unread))
+          (elfeed-make-tagger :before "2 weeks ago"
+                              :remove 'unread))
+```
+
+Or building your own subset feeds:
+
+```el
+(add-hook 'elfeed-new-entry-hook
+          (elfeed-make-tagger :feed-url "example\\.com"
+                              :entry-title '(not "something interesting")
+                              :add 'junk
+                              :remove 'unread))
 ```
 
 ## Status and Roadmap

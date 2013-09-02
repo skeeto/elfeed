@@ -35,6 +35,13 @@
     (end-of-line)
     (delete-region start (point))))
 
+(defun elfeed-time-duration (time)
+  "Turn a time expression into a number of seconds. Uses
+`timer-duration' but allows a bit more flair."
+  (if (numberp time)
+      time
+    (timer-duration (replace-regexp-in-string "\\(ago\\|old\\|-\\)" "" time))))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here
