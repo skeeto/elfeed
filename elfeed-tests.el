@@ -138,6 +138,36 @@
                   (cons url
                         "urn:uuid:1b91e3d7-2dac-3916-27a3-8d31566f2d09"))))))))
 
+(ert-deftest elfeed-tagger ()
+  (with-elfeed-test
+    (let* ((feed (elfeed-test-generate-feed))
+           (tagger (elfeed-make-tagger :after "1 year ago"
+                                       :entry-title "foobar"
+                                       :feed-title '(not "exclude"))))
+      (setf (elfeed-feed-title feed) "exclude this")
+      (should-not
+       (funcall tagger (make-elfeed-entry
+                        :title "welcome to foobar: enjoy your stay"
+                        :date (elfeed-float-time "6 months ago")
+                        :feed-id (elfeed-feed-id feed))))
+      (setf (elfeed-feed-title feed) "now include this")
+      (should
+       (funcall tagger (make-elfeed-entry
+                        :title "welcome to foobar: enjoy your stay"
+                        :date (elfeed-float-time "6 months ago")
+                        :feed-id (elfeed-feed-id feed))))
+      ;; May fail if this test takes more than 2 months to run!
+      (should-not
+       (funcall tagger (make-elfeed-entry
+                        :title "welcome to foobar: enjoy your stay"
+                        :date (elfeed-float-time "14 months ago")
+                        :feed-id (elfeed-feed-id feed))))
+      (should-not
+       (funcall tagger (make-elfeed-entry
+                        :title "welcome to barfoo: enjoy your stay"
+                        :date (elfeed-float-time "1 month ago")
+                        :feed-id (elfeed-feed-id feed)))))))
+
 (provide 'elfeed-tests)
 
 ;;; elfeed-tests.el ends here
