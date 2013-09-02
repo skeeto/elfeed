@@ -1,18 +1,16 @@
 # Elfeed Emacs Web Feed Reader
 
-Elfeed is a web feed reader for Emacs, inspired by
-[notmuch](http://notmuchmail.org/). It supports both Atom and RSS and
-is currently in beta. Requires Emacs 24 (lexical closures).
+Elfeed is an extensible web feed reader for Emacs, supporting both
+Atom and RSS. It requires Emacs 24. Elfeed was inspired by
+[notmuch](http://notmuchmail.org/).
 
 [![](http://i.imgur.com/8eTghK8.png)](http://i.imgur.com/l5aVPDc.png)
 
 [![](http://i.imgur.com/3yHGITn.png)](http://i.imgur.com/EfdBKif.png)
 
-The database format should now be fairly stable, but for the moment I
-can make no guarantees. An update may force you to initialize a new
-database from scratch. After spending some time to lock down the
-performance and data structures, I will be able to make promises about
-database compatibility.
+The database format should now be reasonably stable, but there *may*
+still be updates that require you to initialize a new database from
+scratch.
 
 ## Getting Started
 
