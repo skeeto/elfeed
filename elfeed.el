@@ -99,12 +99,17 @@ NIL for unknown."
 
 (defun elfeed-float-time (&optional date)
   "Like `float-time' but accept anything reasonable for DATE,
-defaulting to the current time if DATE could not be parsed."
+defaulting to the current time if DATE could not be parsed. Date
+is allowed to be relative to now (`elfeed-time-duration')."
   (typecase date
-    (string (let ((time (ignore-errors (date-to-time date))))
-              (if (equal time '(14445 17280)) ; date-to-time silently failed
-                  (float-time)
-                (float-time time))))
+    (string
+     (let ((duration (elfeed-time-duration date)))
+       (if duration
+           (- (float-time) duration)
+         (let ((time (ignore-errors (date-to-time date))))
+           (if (equal time '(14445 17280)) ; date-to-time silently failed
+               (float-time)
+             (float-time time))))))
     (integer date)
     (list (float-time date))
     (t (float-time))))
