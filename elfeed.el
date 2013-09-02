@@ -213,12 +213,14 @@ is allowed to be relative to now (`elfeed-time-duration')."
   (pushnew url elfeed-feeds :test #'string=)
   (elfeed-update-feed url))
 
+;;;###autoload
 (defun elfeed-update ()
   "Update all the feeds in `elfeed-feeds'."
   (interactive)
   (mapc #'elfeed-update-feed elfeed-feeds)
   (elfeed-db-save))
 
+;;;###autoload
 (defun elfeed ()
   "Enter elfeed."
   (interactive)
