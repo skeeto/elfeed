@@ -42,6 +42,11 @@
       time
     (timer-duration (replace-regexp-in-string "\\(ago\\|old\\|-\\)" "" time))))
 
+(defun elfeed-looks-like-url-p (string)
+  "Return true if STRING looks like it could be a URL."
+  (and (not (string-match-p "[ \n\t\r]" string))
+       (not (null (url-type (url-generic-parse-url string))))))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here

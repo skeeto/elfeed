@@ -209,7 +209,11 @@ is allowed to be relative to now (`elfeed-time-duration')."
 
 (defun elfeed-add-feed (url)
   "Manually add a feed to the database."
-  (interactive (list (read-from-minibuffer "URL: " (x-get-selection-value))))
+  (interactive (list
+                (let ((clipboard (x-get-selection-value)))
+                  (read-from-minibuffer
+                   "URL: " (if (elfeed-looks-like-url-p clipboard)
+                               clipboard)))))
   (pushnew url elfeed-feeds :test #'string=)
   (elfeed-update-feed url))
 
