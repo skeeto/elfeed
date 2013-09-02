@@ -66,7 +66,9 @@ feeds to this list."
     (let ((request (pop elfeed-waiting)))
       (destructuring-bind (_ url cb) request
         (push request elfeed-connections)
-        (url-retrieve url cb)))))
+        (condition-case error
+            (url-retrieve url cb)
+          (error (with-temp-buffer (funcall cb (list :error error)))))))))
 
 (defun elfeed--wrap-callback (id cb)
   "Return a function that manages the elfeed queue."
