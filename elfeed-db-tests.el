@@ -47,7 +47,8 @@
           (elfeed-db-index nil)
           (elfeed-feeds nil)
           (temp-dir (make-temp-file "elfeed-test-" t))
-          (elfeed-db-directory temp-dir))
+          (elfeed-db-directory temp-dir)
+          (elfeed-initial-tags '(unread)))
      (unwind-protect
          (progn ,@body)
        (delete-directory temp-dir :recursive))))
@@ -92,3 +93,34 @@
       (should (eq (elfeed-entry-merge entry update) nil))
       (setf (elfeed-entry-title update) (elfeed-test-generate-title))
       (should (eq (elfeed-entry-merge entry update) t)))))
+
+(ert-deftest elfeed-db-tag ()
+  (with-elfeed-test
+    (let* ((feed (elfeed-test-generate-feed))
+           (entry (elfeed-test-generate-entry feed))
+           (tags (elfeed-normalize-tags '(foo bar baz))))
+      (apply #'elfeed-tag entry tags)
+      (elfeed-untag entry 'unread)
+      (should (equal (elfeed-entry-tags entry) tags))
+      (should (elfeed-tagged-p 'foo entry))
+      (should (elfeed-tagged-p 'bar entry))
+      (should (elfeed-tagged-p 'baz entry))
+      (should-not (elfeed-tagged-p 'unread entry)))))
+
+(ert-deftest elfeed-db-visit ()
+  (with-elfeed-test
+    (loop for feed in (loop repeat 8 collect (elfeed-test-generate-feed))
+          do (elfeed-db-add
+              (loop repeat 10 collect (elfeed-test-generate-entry feed))))
+    (let ((entries nil)
+          (feeds nil))
+      (with-elfeed-db-visit (entry feed)
+        (push (elfeed-entry-date entry) entries)
+        (pushnew feed feeds :test #'equal))
+      ;; All entries should have appeared.
+      (should (= (length entries) 80))
+      ;; All feeds should have appeared.
+      (should (= (length feeds) 8))
+      ;; All entries should have appeared in date order
+      (should (equal (sort (copy-seq entries) #'<) entries))
+      entries)))
