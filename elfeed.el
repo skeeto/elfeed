@@ -4,7 +4,7 @@
 
 ;; Author: Christopher Wellons <wellons@nullprogram.com>
 ;; URL: https://github.com/skeeto/elfeed
-;; Version: 0.0.1
+;; Version: 1.0.0
 
 ;;; Commentary:
 
