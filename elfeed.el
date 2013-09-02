@@ -16,7 +16,6 @@
 ;;; Code:
 
 (require 'cl)
-(require 'shr)
 (require 'xml)
 (require 'xml-query)
 (require 'url-parse)
@@ -31,10 +30,11 @@ feeds to this list."
   :group 'elfeed
   :type 'list)
 
+(provide 'elfeed)
+
+(require 'elfeed-search)
 (require 'elfeed-lib)
 (require 'elfeed-db)
-(require 'elfeed-search)
-(require 'elfeed-show)
 
 (defcustom elfeed-initial-tags '(unread)
   "Initial tags for new entries."
@@ -283,7 +283,5 @@ The returned function should be added to `elfeed-new-entry-hook'."
             (when callback
               (funcall callback entry))
             entry))))))
-
-(provide 'elfeed)
 
 ;;; elfeed.el ends here

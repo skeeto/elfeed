@@ -172,13 +172,6 @@ update occurred, not counting content."
   (elfeed-db-ensure)
   (or (plist-get elfeed-db :last-update) 0))
 
-(defun elfeed-apply-hooks-now ()
-  "Apply `elfeed-new-entry-hook' to all entries in the database."
-  (interactive)
-  (with-elfeed-db-visit (entry feed)
-    (loop for hook in elfeed-new-entry-hook
-          do (funcall hook entry))))
-
 (defmacro with-elfeed-db-visit (entry-and-feed &rest body)
   "Visit each entry in the database from newest to oldest.
 Use `elfeed-db-return' to exit early and optionally return data.
@@ -198,6 +191,13 @@ Use `elfeed-db-return' to exit early and optionally return data.
                   (elfeed-entry-feed ,(first entry-and-feed))))
             ,@body))
         elfeed-db-index))))
+
+(defun elfeed-apply-hooks-now ()
+  "Apply `elfeed-new-entry-hook' to all entries in the database."
+  (interactive)
+  (with-elfeed-db-visit (entry _)
+    (loop for hook in elfeed-new-entry-hook
+          do (funcall hook entry))))
 
 (defmacro elfeed-db-return (&optional value)
   "Use this to exit early and return VALUE from `with-elfeed-db-visit'."
@@ -304,7 +304,7 @@ Use `elfeed-db-return' to exit early and optionally return data.
          (table (make-hash-table :test 'equal)))
     (dolist (id ids)
       (setf (gethash id table) nil))
-    (with-elfeed-db-visit (entry feed)
+    (with-elfeed-db-visit (entry _)
       (let ((content (elfeed-entry-content entry)))
         (when (elfeed-ref-p content)
           (setf (gethash (elfeed-ref-id content) table) t))))

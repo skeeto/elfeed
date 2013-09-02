@@ -7,8 +7,13 @@
 (require 'cl)
 (require 'browse-url)
 (require 'wid-edit) ; widget-inactive face
+
+(provide 'elfeed-search)
+
+(require 'elfeed)
 (require 'elfeed-db)
 (require 'elfeed-lib)
+(require 'elfeed-show)
 
 (defvar elfeed-search-entries ()
   "List of the entries currently on display.")
@@ -326,7 +331,5 @@ expression, matching against entry link, title, and feed title."
     (elfeed-search-update-entry entry)
     (forward-line)
     (elfeed-show-entry entry)))
-
-(provide 'elfeed-search)
 
 ;;; elfeed-search.el ends here

@@ -5,11 +5,13 @@
 ;;; Code:
 
 (require 'cl)
+(require 'shr)
 (require 'url-parse)
 (require 'browse-url)
 (require 'message) ; faces
 (require 'elfeed-db)
 (require 'elfeed-lib)
+(require 'elfeed-search)
 
 (defvar elfeed-show-entry nil
   "The entry being displayed in this buffer.")
