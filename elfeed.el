@@ -111,8 +111,8 @@ defaulting to the current time if DATE could not be parsed."
 
 (defun elfeed-cleanup (name)
   "Cleanup things that will be printed."
-  (let ((trim (replace-regexp-in-string "^ +\\| +$" "" name)))
-    (replace-regexp-in-string "[\n\t]+" " " trim)))
+  (let ((trim (replace-regexp-in-string "[\n\t]+" " " name)))
+    (replace-regexp-in-string "^ +\\| +$" "" trim)))
 
 (defun elfeed-entries-from-atom (url xml)
   "Turn parsed Atom content into a list of elfeed-entry structs."
