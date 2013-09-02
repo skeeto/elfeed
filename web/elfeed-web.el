@@ -173,6 +173,18 @@ advanced past it (long poll)."
 
 (add-hook 'elfeed-db-update-hook 'elfeed-web-update)
 
+;;;###autoload
+(defun elfeed-web-start ()
+  "Start the Elfeed web interface server."
+  (interactive)
+  (httpd-start)
+  (setf elfeed-web-enabled t))
+
+(defun elfeed-web-stop ()
+  "Stop the Elfeed web interface server."
+  (interactive)
+  (setf elfeed-web-enabled nil))
+
 (provide 'elfeed-web)
 
 ;;; elfeed-web.el ends here
