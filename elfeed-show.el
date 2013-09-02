@@ -5,6 +5,7 @@
 ;;; Code:
 
 (require 'cl)
+(require 'url-parse)
 (require 'browse-url)
 (require 'message) ; faces
 (require 'elfeed-db)
