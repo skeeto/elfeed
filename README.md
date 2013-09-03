@@ -79,7 +79,10 @@ the tag must not be present.
 A component beginning with a `@` indicates an age. Entries older than
 this age are filtered out. The age description accepts plain English,
 but cannot have spaces, so use dashes. For example, `"@2-years-old"`
-or `"@3-days-ago"`.
+or `"@3-days-ago"`. The database is date-oriented, so **filters that
+include an age restriction are significantly more efficient.**
+Consider adding something like `@1-week-old` to your default
+`elfeed-search-filter`.
 
 All other components are treated as a regular expression.
 
