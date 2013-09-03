@@ -144,6 +144,13 @@ Emacs developers.
 
 [files]: http://msdn.microsoft.com/en-us/library/kdfaxaay%28vs.71%29.aspx
 
+The GNU-provided W32 build of Emacs doesn't include any of the
+libraries needed to actually view entries within Emacs, but you can
+still see the entry listing and visit entries in your browser. So on
+Windows you'll either have to track down and install the missing DLLs,
+or use [ntemacs](http://ntemacs.sourceforge.net/), which includes
+these libraries.
+
 ## Status and Roadmap
 
 Elfeed is to the point where it can serve 100% of my own web feed
