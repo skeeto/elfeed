@@ -5,6 +5,7 @@
 ;; Author: Christopher Wellons <wellons@nullprogram.com>
 ;; URL: https://github.com/skeeto/elfeed
 ;; Version: 1.0.0
+;; Package-Requires: ((emacs "24.1"))
 
 ;;; Commentary:
 

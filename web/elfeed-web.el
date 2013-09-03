@@ -5,7 +5,7 @@
 ;; Author: Christopher Wellons <wellons@nullprogram.com>
 ;; URL: https://github.com/skeeto/elfeed
 ;; Version: 1.0.0
-;; Package-Requires: ((simple-httpd "1.4.3") (elfeed "1.0.0"))
+;; Package-Requires: ((simple-httpd "1.4.3") (elfeed "1.0.0") (emacs "24.1"))
 
 ;;; Commentary:
 
