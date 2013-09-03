@@ -131,6 +131,19 @@ Or building your own subset feeds:
                               :remove 'unread))
 ```
 
+## Platform Support
+
+I only use Elfeed on Linux right now, but I've also tested it on
+Windows. Unfortunately the Windows port of Emacs is a bit too unstable
+for parallel feed downloads, not to mention the
+[tiny, hard-coded, 512 open descriptor limitation][files], so it
+limits itself to one feed at a time on this platform. However, even on
+Linux Elfeed occasionally triggers segmentation faults in Emacs. If I
+am able, I intend to isolate these segfaults and report them to the
+Emacs developers.
+
+[files]: http://msdn.microsoft.com/en-us/library/kdfaxaay%28vs.71%29.aspx
+
 ## Status and Roadmap
 
 Elfeed is to the point where it can serve 100% of my own web feed
