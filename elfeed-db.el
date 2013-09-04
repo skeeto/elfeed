@@ -297,8 +297,9 @@ Use `elfeed-db-return' to exit early and optionally return data.
   "Remove the content behind REF from the database."
   (delete-file (elfeed-ref--file ref)))
 
-(defun elfeed-db-gc ()
-  "Clean up unused content from the content database."
+(defun elfeed-db-gc (&optional stats-p)
+  "Clean up unused content from the content database. If STATS is
+true, return the space cleared in bytes."
   (let* ((data (expand-file-name "data" elfeed-db-directory))
          (dirs (cddr (directory-files data t)))
          (ids (mapcan (lambda (d) (directory-files d nil nil t)) dirs))
@@ -310,7 +311,12 @@ Use `elfeed-db-return' to exit early and optionally return data.
         (when (elfeed-ref-p content)
           (setf (gethash (elfeed-ref-id content) table) t))))
     (loop for id hash-keys of table using (hash-value used)
-          unless (or used (member id '("." "..")))
+          for used-p = (or used (member id '("." "..")))
+          when (and (not used-p) stats-p)
+          sum (let* ((ref (make-elfeed-ref :id id))
+                     (file (elfeed-ref--file ref)))
+                (* 1.0 (nth 7 (file-attributes file))))
+          unless used-p
           do (elfeed-ref-delete (make-elfeed-ref :id id)))))
 
 (provide 'elfeed-db)
