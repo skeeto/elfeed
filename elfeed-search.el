@@ -116,23 +116,42 @@
   "Face used in search mode for tags."
   :group 'elfeed)
 
+(defvar elfeed-search-title-max-width 70
+  "Maximum column width for titles in the elfeed-search buffer.
+Clear `elfeed-search-cache' after setting.")
+
+(defvar elfeed-search-title-min-width 16
+  "Minimum column width for titles in the elfeed-search buffer.
+Clear `elfeed-search-cache' after setting.")
+
+(defvar elfeed-search-trailing-width 30
+  "Space reserved for displaying the feed and tag information.
+Clear `elfeed-search-cache' after setting.")
+
 (defun elfeed-search-print (entry)
   "Print ENTRY to the buffer."
   (let* ((date (elfeed-search-format-date (elfeed-entry-date entry)))
-         (title (elfeed-entry-title entry))
+         (title (or (elfeed-entry-title entry) ""))
          (title-faces '(elfeed-search-title-face))
          (feed (elfeed-entry-feed entry))
-         (feedtitle (if feed (elfeed-feed-title feed)))
+         (feed-title (if feed (elfeed-feed-title feed)))
          (tags (mapcar #'symbol-name (elfeed-entry-tags entry)))
          (tags-str (mapconcat
                     (lambda (s) (propertize s 'face 'elfeed-search-tag-face))
-                    tags ",")))
+                    tags ","))
+         (title-width (- (window-width) 10 elfeed-search-trailing-width))
+         (title-column (elfeed-format-column
+                        title (elfeed-clamp
+                               elfeed-search-title-min-width
+                               title-width
+                               elfeed-search-title-max-width)
+                        :left)))
     (when (elfeed-tagged-p 'unread entry)
       (push 'bold title-faces))
     (insert (propertize date 'face 'elfeed-search-date-face) " ")
-    (insert (propertize title 'face title-faces) " ")
-    (when feedtitle
-      (insert "(" (propertize feedtitle 'face 'elfeed-search-feed-face) ") "))
+    (insert (propertize title-column 'face title-faces) " ")
+    (when feed-title
+      (insert (propertize feed-title 'face 'elfeed-search-feed-face) " "))
     (when tags
       (insert "(" tags-str ")"))))
 
@@ -240,13 +259,14 @@ expression, matching against entry link, title, and feed title."
             (insert "\n")
             (elfeed-search--update-list)
             (loop for entry in elfeed-search-entries
-                  when (gethash entry elfeed-search-cache)
+                  when (gethash (list (window-width) entry) elfeed-search-cache)
                   do (insert it)
                   else
                   do (insert
                       (with-temp-buffer
                         (elfeed-search-print entry)
-                        (setf (gethash (copy-sequence entry)
+                        (setf (gethash (list (window-width)
+                                             (copy-sequence entry))
                                        elfeed-search-cache)
                               (buffer-string))))
                   do (insert "\n"))
