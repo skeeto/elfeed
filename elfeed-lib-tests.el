@@ -24,6 +24,14 @@
   (should (= (elfeed-time-duration "1-day")       (* 1.0 24 60 60)))
   (should (= (elfeed-time-duration "1hour")       (* 1.0 60 60))))
 
+(ert-deftest elfeed-format-column ()
+  (should (string= (elfeed-format-column "foo" 10 :right) "       foo"))
+  (should (string= (elfeed-format-column "foo" 10 :left)  "foo       "))
+  (should (string= (elfeed-format-column "foo" 2  :left)  "fo"))
+  (should (string= (elfeed-format-column "foo" 2  :right) "fo"))
+  (should (string= (elfeed-format-column "foo" 0)  ""))
+  (should (string= (elfeed-format-column "foo" -1) "")))
+
 (provide 'elfeed-lib-tests)
 
 ;;; elfeed-lib-tests.el ends here
