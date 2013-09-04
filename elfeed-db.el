@@ -319,6 +319,13 @@ true, return the space cleared in bytes."
           unless used-p
           do (elfeed-ref-delete (make-elfeed-ref :id id)))))
 
+(defun elfeed-db-gc-safe ()
+  "Run `elfeed-db-gc' without triggering any errors, for use as a safe hook."
+  (ignore-errors (elfeed-db-gc-safe)))
+
+(add-hook 'kill-emacs-hook #'elfeed-db-gc-safe)
+(add-hook 'kill-emacs-hook #'elfeed-db-save)
+
 (provide 'elfeed-db)
 
 ;;; elfeed-db.el ends here
