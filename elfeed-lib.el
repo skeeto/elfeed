@@ -55,6 +55,10 @@ Align should be a keyword :left or :right."
     (format (format "%%%s%d.%ds" (if (eq align :left) "-" "") width width)
             string)))
 
+(defun elfeed-clamp (min value max)
+  "Clamp a value between two values."
+  (min max (max min value)))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here

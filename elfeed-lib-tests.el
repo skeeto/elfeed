@@ -32,6 +32,12 @@
   (should (string= (elfeed-format-column "foo" 0)  ""))
   (should (string= (elfeed-format-column "foo" -1) "")))
 
+(ert-deftest elfeed-clamp ()
+  (should (= (elfeed-clamp  0 3 4) 3))
+  (should (= (elfeed-clamp  2 9 4) 4))
+  (should (= (elfeed-clamp  2 0 4) 2))
+  (should (= (elfeed-clamp -6 3 0) 0)))
+
 (provide 'elfeed-lib-tests)
 
 ;;; elfeed-lib-tests.el ends here
