@@ -207,6 +207,7 @@ Use `elfeed-db-return' to exit early and optionally return data.
 
 (defun elfeed-db-save ()
   "Write the database index to the filesystem."
+  (elfeed-db-ensure)
   (mkdir elfeed-db-directory t)
   (with-temp-file (expand-file-name "index" elfeed-db-directory)
     (set-buffer-multibyte nil)
