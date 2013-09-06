@@ -46,7 +46,7 @@ feeds to this list."
 
 (defcustom elfeed-max-connections
   ;; Windows Emacs cannot open many sockets at once.
-  (if (eq system-type 'windows-nt) 1 6)
+  (if (eq system-type 'windows-nt) 1 4)
   "The maximum number of feeds to be fetched in parallel."
   :group 'elfeed
   :type 'integer)
