@@ -130,7 +130,9 @@
     (let* ((content (loop repeat 25 collect (elfeed-test-generate-title)))
            (refs (mapcar #'elfeed-ref content))
            (derefs (mapcar #'elfeed-deref refs)))
-      (should (equal content derefs)))))
+      (should (equal content derefs)))
+    (let ((string "naïveté"))
+      (should (string= string (elfeed-deref (elfeed-ref string)))))))
 
 (provide 'elfeed-db-tests)
 
