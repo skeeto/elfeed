@@ -48,7 +48,9 @@ database with entries.
 If there are a lot of feeds, the initial update will take noticeably
 longer than normal operation because of the large amount of
 information being written the database. Future updates will only need
-to write new or changed data.
+to write new or changed data. If updating feeds slows down Emacs too
+much on your computer, reduce the value of `elfeed-max-connections`
+(the number of feeds to process at one time).
 
 From the search buffer there are a number of ways to interact with
 entries. Entries are selected by placing the point over an entry.
