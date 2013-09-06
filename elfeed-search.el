@@ -34,6 +34,9 @@
   "How often the buffer should update against the datebase in seconds."
   :group 'elfeed)
 
+(defvar elfeed-search-live nil
+  "When true, Elfeed is currently reading a filter from the minibuffer.")
+
 (defvar elfeed-search-cache (make-hash-table :test 'equal)
   "Cache the generated entry buffer lines and such.")
 
@@ -48,7 +51,8 @@
       (define-key map "g" (elfeed-expose #'elfeed-search-update :force))
       (define-key map "G" 'elfeed-update)
       (define-key map (kbd "RET") 'elfeed-search-show-entry)
-      (define-key map "s" 'elfeed-search-set-filter)
+      (define-key map "s" 'elfeed-search-live-filter)
+      (define-key map "S" 'elfeed-search-set-filter)
       (define-key map "b" 'elfeed-search-browse-url)
       (define-key map "y" 'elfeed-search-yank)
       (define-key map "u" (elfeed-expose #'elfeed-search-tag-all 'unread))
@@ -249,7 +253,8 @@ expression, matching against entry link, title, and feed title."
   "Update the display to match the database."
   (interactive)
   (with-current-buffer (elfeed-search-buffer)
-    (if (or force (< elfeed-search-last-update (elfeed-db-last-update)))
+    (if (or force (and (not elfeed-search-live)
+                       (< elfeed-search-last-update (elfeed-db-last-update))))
         (elfeed-save-excursion
           (let ((inhibit-read-only t)
                 (standard-output (current-buffer)))
@@ -350,5 +355,33 @@ expression, matching against entry link, title, and feed title."
     (elfeed-search-update-entry entry)
     (forward-line)
     (elfeed-show-entry entry)))
+
+;; Live Filters
+
+(defun elfeed-search--minibuffer-setup ()
+  "Set up the minibuffer for live filtering."
+  (when elfeed-search-live
+    (add-hook 'post-command-hook 'elfeed-search--live-update nil :local)))
+
+(add-hook 'minibuffer-setup-hook 'elfeed-search--minibuffer-setup)
+
+(defun elfeed-search--live-update ()
+  "Update the elfeed-search buffer based on the contents of the minibuffer."
+  (when elfeed-search-live
+    (let ((buffer (elfeed-search-buffer))
+          (current-filter (minibuffer-contents-no-properties)))
+      (when buffer
+        (with-current-buffer buffer
+          (let ((elfeed-search-filter current-filter))
+            (elfeed-search-update :force)))))))
+
+(defun elfeed-search-live-filter ()
+  "Filter the elfeed-search buffer as the filter is written."
+  (interactive)
+  (unwind-protect
+      (let ((elfeed-search-live t))
+        (setq elfeed-search-filter
+              (read-from-minibuffer "Filter: " elfeed-search-filter)))
+    (elfeed-search-update :force)))
 
 ;;; elfeed-search.el ends here
