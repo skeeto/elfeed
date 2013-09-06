@@ -38,6 +38,13 @@
   (should (= (elfeed-clamp  2 0 4) 2))
   (should (= (elfeed-clamp -6 3 0) 0)))
 
+(ert-deftest elfeed-valid-regexp-p ()
+  (should (elfeed-valid-regexp-p ""))
+  (should (elfeed-valid-regexp-p "[abc]\\."))
+  (should-not (elfeed-valid-regexp-p "\\"))
+  (should-not (elfeed-valid-regexp-p "["))
+  (should-not (elfeed-valid-regexp-p :foo)))
+
 (provide 'elfeed-lib-tests)
 
 ;;; elfeed-lib-tests.el ends here

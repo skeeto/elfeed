@@ -59,6 +59,13 @@ Align should be a keyword :left or :right."
   "Clamp a value between two values."
   (min max (max min value)))
 
+(defun elfeed-valid-regexp-p (regexp)
+  "Return t if REGEXP is a valid REGEXP."
+  (condition-case error
+      (prog1 t
+        (string-match-p regexp ""))
+    (error nil)))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here
