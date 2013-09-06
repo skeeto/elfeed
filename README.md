@@ -5,6 +5,8 @@ Atom and RSS. It requires Emacs 24 and is available for download from
 [MELPA](http://melpa.milkbox.net/). Elfeed was inspired by
 [notmuch](http://notmuchmail.org/).
 
+For a longer overview, see [Introducing Elfeed, an Emacs Web Feed Reader](http://nullprogram.com/blog/2013/09/04/).
+
 [![](http://i.imgur.com/8eTghK8.png)](http://i.imgur.com/l5aVPDc.png)
 
 [![](http://i.imgur.com/3yHGITn.png)](http://i.imgur.com/EfdBKif.png)
