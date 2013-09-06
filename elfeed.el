@@ -122,6 +122,10 @@ is allowed to be relative to now (`elfeed-time-duration')."
   (let ((trim (replace-regexp-in-string "[\n\t]+" " " (or name ""))))
     (replace-regexp-in-string "^ +\\| +$" "" trim)))
 
+(defun elfeed-generate-id (&optional content)
+  "Generate an ID based on CONTENT or from the current time."
+  (concat "urn:sha1:" (sha1 (format "%s" (or content (float-time))))))
+
 (defun elfeed-entries-from-atom (url xml)
   "Turn parsed Atom content into a list of elfeed-entry structs."
   (let* ((feed-id url)
@@ -134,12 +138,13 @@ is allowed to be relative to now (`elfeed-time-duration')."
                  (anylink (xml-query '(link :href) entry))
                  (altlink (xml-query '(link [rel "alternate"] :href) entry))
                  (link (or altlink anylink))
-                 (id (or (xml-query '(id *) entry) link))
                  (date (or (xml-query '(published *) entry)
                            (xml-query '(updated *) entry)
                            (xml-query '(date *) entry)))
                  (content (or (xml-query '(content *) entry)
                               (xml-query '(summary *) entry)))
+                 (id (or (xml-query '(id *) entry) link
+                         (elfeed-generate-id content)))
                  (type (or (xml-query '(content :type) entry)
                            (xml-query '(summary :type) entry)
                            ""))
@@ -170,10 +175,10 @@ is allowed to be relative to now (`elfeed-time-duration')."
           (let* ((title (or (xml-query '(title *) item) ""))
                  (link (xml-query '(link *) item))
                  (guid (xml-query '(guid *) item))
-                 (id (or guid link))
                  (date (or (xml-query '(pubDate *) item)
                            (xml-query '(date *) item)))
                  (description (xml-query '(description *) item))
+                 (id (or guid link (elfeed-generate-id description)))
                  (etags (xml-query-all '(enclosure) item))
                  (enclosures (loop for enclosure in etags
                                    for wrap = (list enclosure)
