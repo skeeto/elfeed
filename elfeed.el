@@ -119,7 +119,7 @@ is allowed to be relative to now (`elfeed-time-duration')."
 
 (defun elfeed-cleanup (name)
   "Cleanup things that will be printed."
-  (let ((trim (replace-regexp-in-string "[\n\t]+" " " name)))
+  (let ((trim (replace-regexp-in-string "[\n\t]+" " " (or name ""))))
     (replace-regexp-in-string "^ +\\| +$" "" trim)))
 
 (defun elfeed-entries-from-atom (url xml)
