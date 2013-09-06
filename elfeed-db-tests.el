@@ -6,22 +6,34 @@
 (require 'elfeed-db)
 (require 'elfeed-lib)
 
+(defun elfeed-test-generate-letter (&optional multibyte)
+  "Generate a single character from a-z or unicode."
+  (cl-flet ((control-p (char)
+              (or (<= char #x001F) (and (>= char #x007F) (<= char #x009F)))))
+    (if multibyte
+        (loop for char = (random* (1+ #x10FF))
+              unless (control-p char) return char)
+      (+ ?a (random* 26)))))
+
 (defun* elfeed-test-random (n &optional (variance 1.0))
   "Generate a random integer around N, minimum of 1."
   (max 1 (floor (+ n (- (random* (* 1.0 variance n)) (* variance 0.5 n))))))
 
-(defun* elfeed-test-generate-word (&optional (length 6))
+(defun* elfeed-test-generate-word (&optional multibyte (length 6))
   "Generate a word around LENGTH letters long."
   (let ((variance 1.0))
     (apply #'string
            (loop repeat (elfeed-test-random length)
-                 collect (+ ?a (random* 26))))))
+                 when multibyte
+                 collect (+ #x21 (random* (- #x7f #x21)))
+                 else
+                 collect (elfeed-test-generate-letter multibyte)))))
 
-(defun* elfeed-test-generate-title (&optional (length 8))
+(defun* elfeed-test-generate-title (&optional multibyte (length 8))
   "Generate a title around LENGTH words long, capitalized."
   (mapconcat #'identity
              (loop repeat (elfeed-test-random length)
-                   collect (elfeed-test-generate-word) into words
+                   collect (elfeed-test-generate-word multibyte) into words
                    finally (return (cons (capitalize (car words)) (cdr words))))
              " "))
 
@@ -29,11 +41,11 @@
   "Generate a random URL."
   (let* ((tlds '(".com" ".net" ".org"))
          (tld (nth (random* (length tlds)) tlds))
-         (path (downcase (elfeed-test-generate-title 3))))
+         (path (downcase (elfeed-test-generate-title nil 3))))
     (url-recreate-url
      (url-parse-make-urlobj
       "http" nil nil
-      (concat (elfeed-test-generate-word 10) tld)
+      (concat (elfeed-test-generate-word nil 10) tld)
       nil
       (concat "/" (replace-regexp-in-string " " "/" path))
       nil nil :full))))
@@ -127,7 +139,7 @@
 
 (ert-deftest elfeed-ref ()
   (with-elfeed-test
-    (let* ((content (loop repeat 25 collect (elfeed-test-generate-title)))
+    (let* ((content (loop repeat 25 collect (elfeed-test-generate-title t)))
            (refs (mapcar #'elfeed-ref content))
            (derefs (mapcar #'elfeed-deref refs)))
       (should (equal content derefs)))
