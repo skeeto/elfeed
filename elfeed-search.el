@@ -43,20 +43,29 @@
 (defvar elfeed-search--offset 2
   "Offset between line numbers and entry list position.")
 
+(defalias 'elfeed-search-tag-all-unread
+  (elfeed-expose #'elfeed-search-tag-all 'unread))
+
+(defalias 'elfeed-search-untag-all-unread
+  (elfeed-expose #'elfeed-search-untag-all 'unread))
+
+(defalias 'elfeed-search-update--force
+  (elfeed-expose #'elfeed-search-update :force))
+
 (defvar elfeed-search-mode-map
   (let ((map (make-sparse-keymap)))
     (prog1 map
       (suppress-keymap map)
       (define-key map "q" 'quit-window)
-      (define-key map "g" (elfeed-expose #'elfeed-search-update :force))
+      (define-key map "g" 'elfeed-search-update--force)
       (define-key map "G" 'elfeed-update)
       (define-key map (kbd "RET") 'elfeed-search-show-entry)
       (define-key map "s" 'elfeed-search-live-filter)
       (define-key map "S" 'elfeed-search-set-filter)
       (define-key map "b" 'elfeed-search-browse-url)
       (define-key map "y" 'elfeed-search-yank)
-      (define-key map "u" (elfeed-expose #'elfeed-search-tag-all 'unread))
-      (define-key map "r" (elfeed-expose #'elfeed-search-untag-all 'unread))
+      (define-key map "u" 'elfeed-search-tag-all-unread)
+      (define-key map "r" 'elfeed-search-untag-all-unread)
       (define-key map "+" 'elfeed-search-tag-all)
       (define-key map "-" 'elfeed-search-untag-all)))
   "Keymap for elfeed-search-mode.")
