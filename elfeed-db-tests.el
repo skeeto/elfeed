@@ -147,7 +147,7 @@
 
 (ert-deftest elfeed-ref ()
   (with-elfeed-test
-    (let* ((content (loop repeat 25 collect (elfeed-test-generate-title)))
+    (let* ((content (loop repeat 25 collect (elfeed-test-generate-title t)))
            (refs (mapcar #'elfeed-ref content))
            (derefs (mapcar #'elfeed-deref refs)))
       (should (equal content derefs)))
