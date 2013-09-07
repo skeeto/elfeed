@@ -6,9 +6,6 @@
 (require 'elfeed-db)
 (require 'elfeed-lib)
 
-(remove-hook 'kill-emacs-hook 'elfeed-db-gc-safe)
-(remove-hook 'kill-emacs-hook 'elfeed-db-save)
-
 (defvar elfeed-test-random-state [cl-random-state-tag -1 30 267466518]
   "Use the same random state for each run.")
 

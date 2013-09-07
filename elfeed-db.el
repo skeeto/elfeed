@@ -322,8 +322,9 @@ true, return the space cleared in bytes."
   "Run `elfeed-db-gc' without triggering any errors, for use as a safe hook."
   (ignore-errors (elfeed-db-gc-safe)))
 
-(add-hook 'kill-emacs-hook #'elfeed-db-gc-safe)
-(add-hook 'kill-emacs-hook #'elfeed-db-save)
+(unless noninteractive
+  (add-hook 'kill-emacs-hook #'elfeed-db-gc-safe)
+  (add-hook 'kill-emacs-hook #'elfeed-db-save))
 
 (provide 'elfeed-db)
 
