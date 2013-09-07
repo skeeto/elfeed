@@ -65,6 +65,8 @@
           (elfeed-feeds nil)
           (temp-dir (make-temp-file "elfeed-test-" t))
           (elfeed-db-directory temp-dir)
+          (elfeed-new-entry-hook nil)
+          (elfeed-db-update-hook nil)
           (elfeed-initial-tags '(unread)))
      (unwind-protect
          (progn ,@body)
