@@ -152,13 +152,19 @@
   (with-elfeed-test
     (let* ((feed (elfeed-test-generate-feed))
            (entries (loop repeat 100 collect
-                          (elfeed-test-generate-entry feed))))
+                          (elfeed-test-generate-entry feed)))
+           (updated-p nil))
       (elfeed-db-add entries)
+      (add-hook 'elfeed-new-entry-hook
+                (apply-partially #'error "No new entries expected!"))
+      (add-hook 'elfeed-db-update-hook
+                (lambda () (setf updated-p t)))
       (elfeed-db-add
        (loop for entry in entries
              for update = (copy-seq entry)
              do (setf (elfeed-entry-date update) (elfeed-test-generate-date))
              collect update))
+      (should updated-p)
       (let ((collected nil)
             (sorted nil))
         (with-elfeed-db-visit (entry _)
