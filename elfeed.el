@@ -318,6 +318,7 @@ saved to your customization file."
         (customize-save-variable 'elfeed-feeds elfeed-feeds)
         (message "%d feeds loaded from %s" (length feeds) file)))))
 
+;;;###autoload
 (defun elfeed-export-opml (file)
   "Export the current feed listing to OPML-formatted FILE."
   (interactive "FOutput OPML file: ")
