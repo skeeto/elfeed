@@ -9,18 +9,26 @@
 (remove-hook 'kill-emacs-hook 'elfeed-db-gc-safe)
 (remove-hook 'kill-emacs-hook 'elfeed-db-save)
 
+(defvar elfeed-test-random-state [cl-random-state-tag -1 30 267466518]
+  "Use the same random state for each run.")
+
+(defun elfeed-random* (x)
+  "Generate a random number from `elfeed-test-random-state'."
+  (random* x elfeed-test-random-state))
+
 (defun elfeed-test-generate-letter (&optional multibyte)
   "Generate a single character from a-z or unicode."
   (cl-flet ((control-p (char)
               (or (<= char #x001F) (and (>= char #x007F) (<= char #x009F)))))
     (if multibyte
-        (loop for char = (random* (1+ #x10FF))
+        (loop for char = (elfeed-random* (1+ #x10FF))
               unless (control-p char) return char)
-      (+ ?a (random* 26)))))
+      (+ ?a (elfeed-random* 26)))))
 
 (defun* elfeed-test-random (n &optional (variance 1.0))
   "Generate a random integer around N, minimum of 1."
-  (max 1 (floor (+ n (- (random* (* 1.0 variance n)) (* variance 0.5 n))))))
+  (max 1 (floor (+ n (- (elfeed-random* (* 1.0 variance n))
+                        (* variance 0.5 n))))))
 
 (defun* elfeed-test-generate-word (&optional multibyte (length 6))
   "Generate a word around LENGTH letters long."
@@ -40,7 +48,7 @@
 (defun elfeed-test-generate-url ()
   "Generate a random URL."
   (let* ((tlds '(".com" ".net" ".org"))
-         (tld (nth (random* (length tlds)) tlds))
+         (tld (nth (elfeed-random* (length tlds)) tlds))
          (path (downcase (elfeed-test-generate-title nil 3))))
     (url-recreate-url
      (url-parse-make-urlobj
@@ -85,7 +93,7 @@
      :id (cons feed-id link)
      :title (elfeed-test-generate-title)
      :link link
-     :date (+ min-time (random* duration))
+     :date (+ min-time (elfeed-random* duration))
      :tags (list 'unread)
      :feed-id feed-id)))
 
