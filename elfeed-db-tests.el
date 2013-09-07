@@ -24,9 +24,6 @@
   (let ((variance 1.0))
     (apply #'string
            (loop repeat (elfeed-test-random length)
-                 when multibyte
-                 collect (+ #x21 (random* (- #x7f #x21)))
-                 else
                  collect (elfeed-test-generate-letter multibyte)))))
 
 (defun* elfeed-test-generate-title (&optional multibyte (length 8))
@@ -139,7 +136,7 @@
 
 (ert-deftest elfeed-ref ()
   (with-elfeed-test
-    (let* ((content (loop repeat 25 collect (elfeed-test-generate-title t)))
+    (let* ((content (loop repeat 25 collect (elfeed-test-generate-title)))
            (refs (mapcar #'elfeed-ref content))
            (derefs (mapcar #'elfeed-deref refs)))
       (should (equal content derefs)))
