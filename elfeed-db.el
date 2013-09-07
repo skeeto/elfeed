@@ -268,7 +268,6 @@ Use `elfeed-db-return' to exit early and optionally return data.
     (let ((file (elfeed-ref--file ref)))
       (when (file-exists-p file)
         (with-temp-buffer
-          (set-buffer-multibyte t)
           (insert-file-contents file)
           (buffer-string))))))
 
@@ -276,15 +275,15 @@ Use `elfeed-db-return' to exit early and optionally return data.
   "Create a reference to CONTENT, to be persistently stored."
   (if (elfeed-ref-p content)
       content
-    (let* ((id (secure-hash 'sha1 content))
+    (let* ((id (secure-hash 'sha1 (encode-coding-string content 'utf-8 t)))
            (ref (make-elfeed-ref :id id))
            (file (elfeed-ref--file ref)))
       (prog1 ref
         (unless (file-exists-p file)
           (mkdir (file-name-directory file) t)
-          (with-temp-file file
-            (set-buffer-multibyte nil)
-            (insert content)))))))
+          (let ((coding-system-for-write 'utf-8))
+            (with-temp-file file
+              (insert content))))))))
 
 (defun elfeed-deref-entry (entry)
   "Move ENTRY's content to filesystem storage. Return the entry."
