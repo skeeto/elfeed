@@ -294,4 +294,26 @@ The returned function should be added to `elfeed-new-entry-hook'."
               (funcall callback entry))
             entry))))))
 
+;; OPML
+
+(defun elfeed--parse-opml (xml)
+  "Parse XML (from `xml-parse-region') into `elfeed-feeds' list."
+  (loop for (tag attr . content) in (remove-if-not #'listp xml)
+        when (assoc 'xmlUrl attr) collect (cdr it)
+        else append (elfeed--parse-opml content)))
+
+;;;###autoload
+(defun elfeed-load-opml (file)
+  "Load feeds from an OPML file into `elfeed-feeds'.
+When called interactively, the changes to `elfeed-feeds' are
+saved to your customization file."
+  (interactive "fOPML file: ")
+  (let* ((xml (xml-parse-file file))
+         (feeds (elfeed--parse-opml xml))
+         (full (append feeds elfeed-feeds)))
+    (prog1 (setf elfeed-feeds (delete-duplicates full :test #'string=))
+      (when (called-interactively-p 'any)
+        (customize-save-variable 'elfeed-feeds elfeed-feeds)
+        (message "%d feeds loaded from %s" (length feeds) file)))))
+
 ;;; elfeed.el ends here

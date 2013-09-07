@@ -78,6 +78,26 @@
   </entry>
 </feed>")
 
+(defvar elfeed-test-opml
+  "<?xml version=\"1.0\"?>
+<opml version=\"1.0\">
+  <head>
+    <title>Web Feeds</title>
+  </head>
+  <body>
+    <outline title=\"Subscriptions\">
+      <outline xmlUrl=\"http://example.com/feed/\" title=\"example\"/>
+      <outline xmlUrl=\"http://foo.example.com/atom.xml\" title=\"foo\"/>
+    </outline>
+    <outline title=\"Comics\">
+      <outline title=\"Funny\">
+        <outline xmlUrl=\"http://funny.example.com/feed/\" title=\"funny\"/>
+        <outline xmlUrl=\"http://boring.example.com/rss/\" title=\"boring\"/>
+      </outline>
+    </outline>
+  </body>
+</opml>")
+
 (ert-deftest elfeed-float-time ()
   (macrolet ((test (time seconds)
                    `(should (= (elfeed-float-time ,time) ,seconds))))
@@ -167,6 +187,22 @@
                         :title "welcome to barfoo: enjoy your stay"
                         :date (elfeed-float-time "1 month ago")
                         :feed-id (elfeed-feed-id feed)))))))
+
+(ert-deftest elfeed-opml ()
+  (let ((elfeed-feeds nil)
+        (file (make-temp-file "feedlist")))
+    (unwind-protect
+        (progn
+          (with-temp-file file
+            (insert elfeed-test-opml))
+          (elfeed-load-opml file)
+          (setq elfeed-feeds (sort elfeed-feeds #'string<))
+          (should (equal elfeed-feeds
+                         '("http://boring.example.com/rss/"
+                           "http://example.com/feed/"
+                           "http://foo.example.com/atom.xml"
+                           "http://funny.example.com/feed/"))))
+      (ignore-errors (delete-file file)))))
 
 (provide 'elfeed-tests)
 

@@ -45,6 +45,12 @@ database with entries.
         "http://www.terminally-incoherent.com/blog/feed/"))
 ```
 
+Another option for providing a feel list is with an OPML file. Running
+`M-x elfeed-load-opml` will fill `elfeed-feeds` with feeds listed in
+an OPML file. When `elfeed-load-opml` is called interactively, it will
+automatically save the feedlist to your customization file, so you
+will only need to do this once.
+
 If there are a lot of feeds, the initial update will take noticeably
 longer than normal operation because of the large amount of
 information being written the database. Future updates will only need
