@@ -128,6 +128,7 @@
 (defun elfeed-show-prev ()
   "Show the previous item in the elfeed-search buffer."
   (interactive)
+  (elfeed-kill-buffer)
   (with-current-buffer (elfeed-search-buffer)
     (forward-line -2)
     (call-interactively #'elfeed-search-show-entry)))
