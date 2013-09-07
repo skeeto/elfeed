@@ -66,6 +66,8 @@
       (define-key map "y" 'elfeed-search-yank)
       (define-key map "u" 'elfeed-search-tag-all-unread)
       (define-key map "r" 'elfeed-search-untag-all-unread)
+      (define-key map "n" 'next-line)
+      (define-key map "p" 'previous-line)
       (define-key map "+" 'elfeed-search-tag-all)
       (define-key map "-" 'elfeed-search-untag-all)))
   "Keymap for elfeed-search-mode.")
