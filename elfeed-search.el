@@ -234,19 +234,36 @@ expression, matching against entry link, title, and feed title."
     (setf elfeed-search-filter new-filter)
     (elfeed-search-update :force)))
 
+(defun elfeed-search-insert-header-text (text)
+  "Insert TEXT into buffer using header face."
+  (insert (propertize text 'face '(widget-inactive italic))))
+
+(defun elfeed-search-insert-intro-header ()
+  "Insert the intro header with buttons."
+  (cl-flet ((button (f)
+              (insert-button (symbol-name f)
+                             'follow-link t
+                             'action (lambda (_) (call-interactively f)))))
+    (elfeed-search-insert-header-text "Database empty. Use ")
+    (button 'elfeed-add-feed)
+    (elfeed-search-insert-header-text ", or ")
+    (button 'elfeed-load-opml)
+    (elfeed-search-insert-header-text ", or ")
+    (button 'elfeed-update)
+    (elfeed-search-insert-header-text ".")))
+
 (defun elfeed-search-insert-header ()
   "Insert a one-line status header."
-  (insert
-   (propertize
-    (if (or elfeed-waiting elfeed-connections)
-        (format "%d feeds pending, %d in process ..."
-                (length elfeed-waiting) (length elfeed-connections))
-      (let ((time (seconds-to-time (elfeed-db-last-update))))
-        (if (zerop (float-time time))
-            "Database empty. Use `elfeed-update' or `elfeed-add-feed'."
-          (format "Database last updated %s"
-                  (format-time-string "%A, %B %d %Y %H:%M:%S %Z" time)))))
-    'face '(widget-inactive italic))))
+  (if (or elfeed-waiting elfeed-connections)
+      (elfeed-search-insert-header-text
+       (format "%d feeds pending, %d in process ..."
+               (length elfeed-waiting) (length elfeed-connections)))
+    (let ((time (seconds-to-time (elfeed-db-last-update))))
+      (if (zerop (float-time time))
+          (elfeed-search-insert-intro-header)
+        (elfeed-search-insert-header-text
+         (format "Database last updated %s"
+                 (format-time-string "%A, %B %d %Y %H:%M:%S %Z" time)))))))
 
 (defun elfeed-search--update-list ()
   "Update `elfeed-search-filter' list."
