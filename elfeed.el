@@ -221,6 +221,8 @@ is allowed to be relative to now (`elfeed-time-duration')."
                    "URL: " (if (elfeed-looks-like-url-p clipboard)
                                clipboard)))))
   (pushnew url elfeed-feeds :test #'string=)
+  (when (called-interactively-p 'any)
+    (customize-save-variable 'elfeed-feeds elfeed-feeds))
   (elfeed-update-feed url))
 
 ;;;###autoload
