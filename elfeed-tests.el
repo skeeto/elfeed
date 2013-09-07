@@ -202,7 +202,24 @@
                            "http://example.com/feed/"
                            "http://foo.example.com/atom.xml"
                            "http://funny.example.com/feed/"))))
-      (ignore-errors (delete-file file)))))
+      (ignore-errors (delete-file file))))
+  (with-elfeed-test
+    (let* ((outfile (make-temp-file "opml"))
+           (feeds (loop repeat 10 collect (elfeed-test-generate-url)))
+           (elfeed-feeds feeds))
+      (unwind-protect
+          (progn
+            (loop for url in elfeed-feeds
+                  for feed = (elfeed-db-get-feed url)
+                  for title = (elfeed-test-generate-title)
+                  do (setf (elfeed-feed-title feed) title))
+            (elfeed-export-opml outfile)
+            (setf elfeed-feeds nil)
+            (elfeed-load-opml outfile)
+            (setf elfeed-feeds (sort elfeed-feeds #'string<))
+            (setf feeds (sort feeds #'string<))
+            (should (equal elfeed-feeds feeds)))
+        (ignore-errors (delete-file outfile))))))
 
 (provide 'elfeed-tests)
 

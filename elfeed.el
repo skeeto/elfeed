@@ -318,4 +318,20 @@ saved to your customization file."
         (customize-save-variable 'elfeed-feeds elfeed-feeds)
         (message "%d feeds loaded from %s" (length feeds) file)))))
 
+(defun elfeed-export-opml (file)
+  "Export the current feed listing to OPML-formatted FILE."
+  (interactive "FOutput OPML file: ")
+  (with-temp-file file
+    (let ((standard-output (current-buffer)))
+      (princ "<?xml version=\"1.0\"?>\n")
+      (xml-print
+       `((opml ((version . "1.0"))
+               (head () (title () "Elfeed Export"))
+               (body ()
+                     ,@(loop for url in elfeed-feeds
+                             for feed = (elfeed-db-get-feed url)
+                             for title = (or (elfeed-feed-title feed) "")
+                             collect `(outline ((xmlUrl . ,url)
+                                                (title . ,title)))))))))))
+
 ;;; elfeed.el ends here
