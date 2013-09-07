@@ -283,8 +283,8 @@ Use `elfeed-db-return' to exit early and optionally return data.
         (unless (file-exists-p file)
           (mkdir (file-name-directory file) t)
           (with-temp-file file
-            (set-buffer-multibyte nil)
-            (insert content)))))))
+            (insert content)
+            (set-buffer-multibyte nil)))))))
 
 (defun elfeed-deref-entry (entry)
   "Move ENTRY's content to filesystem storage. Return the entry."
