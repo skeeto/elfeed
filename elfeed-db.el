@@ -126,9 +126,15 @@ update occurred, not counting content."
   (loop for entry in entries
         for id = (elfeed-entry-id entry)
         for original = (gethash id elfeed-db-entries)
+        for new-date = (elfeed-entry-date entry)
+        for original-date = (and original (elfeed-entry-date original))
         do (elfeed-deref-entry entry)
         when original count
-          (elfeed-entry-merge original entry)
+          (if (= new-date original-date)
+              (elfeed-entry-merge original entry)
+            (avl-tree-delete elfeed-db-index id)
+            (prog1 (elfeed-entry-merge original entry)
+              (avl-tree-enter elfeed-db-index id)))
           into change-count
         else count
           (setf (gethash id elfeed-db-entries) entry)
