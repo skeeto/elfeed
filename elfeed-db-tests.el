@@ -6,6 +6,9 @@
 (require 'elfeed-db)
 (require 'elfeed-lib)
 
+(remove-hook 'kill-emacs-hook 'elfeed-db-gc-safe)
+(remove-hook 'kill-emacs-hook 'elfeed-db-save)
+
 (defun elfeed-test-generate-letter (&optional multibyte)
   "Generate a single character from a-z or unicode."
   (cl-flet ((control-p (char)
