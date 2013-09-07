@@ -329,7 +329,7 @@ true, return the space cleared in bytes."
   (ignore-errors (elfeed-db-gc-safe)))
 
 (unless noninteractive
-  (add-hook 'kill-emacs-hook #'elfeed-db-gc-safe)
+  (add-hook 'kill-emacs-hook #'elfeed-db-gc-safe :append)
   (add-hook 'kill-emacs-hook #'elfeed-db-save))
 
 (provide 'elfeed-db)
