@@ -80,17 +80,21 @@
       (setf (elfeed-feed-title feed) (elfeed-test-generate-title))
       (setf (elfeed-feed-url feed) url))))
 
+(defun* elfeed-test-generate-date (&optional (within "1 year"))
+  "Generate an epoch time within WITHIN time before now."
+  (let* ((duration (elfeed-time-duration within))
+         (min-time (- (float-time) duration)))
+    (+ min-time (elfeed-random* duration))))
+
 (defun* elfeed-test-generate-entry (feed &optional (within "1 year"))
   "Generate a random entry. Warning: run this in `with-elfeed-test'."
-  (let* ((duration (elfeed-time-duration within))
-         (min-time (- (float-time) duration))
-         (feed-id (elfeed-feed-id feed))
+  (let* ((feed-id (elfeed-feed-id feed))
          (link (elfeed-test-generate-url)))
     (make-elfeed-entry
      :id (cons feed-id link)
      :title (elfeed-test-generate-title)
      :link link
-     :date (+ min-time (elfeed-random* duration))
+     :date (elfeed-test-generate-date within)
      :tags (list 'unread)
      :feed-id feed-id)))
 
