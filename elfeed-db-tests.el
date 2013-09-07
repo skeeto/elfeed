@@ -146,6 +146,24 @@
       (should (equal (sort (copy-seq entries) #'<) entries))
       entries)))
 
+(ert-deftest elfeed-db-dates ()
+  (with-elfeed-test
+    (let* ((feed (elfeed-test-generate-feed))
+           (entries (loop repeat 100 collect
+                          (elfeed-test-generate-entry feed))))
+      (elfeed-db-add entries)
+      (elfeed-db-add
+       (loop for entry in entries
+             for update = (copy-seq entry)
+             do (setf (elfeed-entry-date update) (elfeed-test-generate-date))
+             collect update))
+      (let ((collected nil)
+            (sorted nil))
+        (with-elfeed-db-visit (entry _)
+          (push (elfeed-entry-date entry) collected))
+        (setf sorted (sort (copy-seq collected) #'<))
+        (should (equal collected sorted))))))
+
 (ert-deftest elfeed-ref ()
   (with-elfeed-test
     (let* ((content (loop repeat 25 collect (elfeed-test-generate-title t)))
