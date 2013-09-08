@@ -1,6 +1,6 @@
 ;;; elfeed-tests.el --- tests for elfeed -*- lexical-binding: t; -*-
 
-;; emacs -batch -Q -L . -l elfeed-tests.el -f ert-run-tests-batch
+;; emacs -batch -Q -L .. -L . -l elfeed-tests.el -f ert-run-tests-batch
 
 (require 'ert)
 (require 'elfeed)
