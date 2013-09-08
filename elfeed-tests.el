@@ -79,6 +79,46 @@
   </entry>
 </feed>")
 
+(defvar elfeed-test-rss1.0
+  "<?xml version=\"1.0\"?>
+<rdf:RDF
+  xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"
+  xmlns=\"http://purl.org/rss/1.0/\">
+  <channel rdf:about=\"http://www.xml.com/xml/news.rss\">
+    <title>XML.com</title>
+    <link>http://xml.com/pub</link>
+    <description>
+      XML.com features a rich mix of information and services
+      for the XML community.
+    </description>
+    <image rdf:resource=\"http://xml.com/universal/images/xml_tiny.gif\" />
+    <items>
+      <rdf:Seq>
+        <rdf:li resource=\"http://xml.com/pub/2000/08/09/xslt/xslt.html\" />
+        <rdf:li resource=\"http://xml.com/pub/2000/08/09/rdfdb/index.html\" />
+      </rdf:Seq>
+    </items>
+  </channel>
+  <item rdf:about=\"http://xml.com/pub/2000/08/09/xslt/xslt.html\">
+    <title>Processing Inclusions with XSLT</title>
+    <link>http://xml.com/pub/2000/08/09/xslt/xslt.html</link>
+    <description>
+     Processing document inclusions with general XML tools can be
+     problematic. This article proposes a way of preserving inclusion
+     information through SAX-based processing.
+    </description>
+  </item>
+  <item rdf:about=\"http://xml.com/pub/2000/08/09/rdfdb/index.html\">
+    <title>Putting RDF to Work</title>
+    <link>http://xml.com/pub/2000/08/09/rdfdb/index.html</link>
+    <description>
+     Tool and API support for the Resource Description Framework
+     is slowly coming of age. Edd Dumbill takes a look at RDFDB,
+     one of the most exciting new RDF toolkits.
+    </description>
+  </item>
+</rdf:RDF>")
+
 (defvar elfeed-test-opml
   "<?xml version=\"1.0\"?>
 <opml version=\"1.0\">
@@ -113,7 +153,11 @@
   (with-temp-buffer
     (insert elfeed-test-atom)
     (goto-char (point-min))
-    (should (eq (elfeed-feed-type (xml-parse-region)) :atom))))
+    (should (eq (elfeed-feed-type (xml-parse-region)) :atom)))
+  (with-temp-buffer
+    (insert elfeed-test-rss1.0)
+    (goto-char (point-min))
+    (should (eq (elfeed-feed-type (xml-parse-region)) :rss1.0))))
 
 (ert-deftest elfeed-cleanup ()
   (should (string= (elfeed-cleanup "  foo  bar\n") "foo  bar"))
@@ -157,7 +201,26 @@
           (should
            (equal (elfeed-entry-id b)
                   (cons url
-                        "urn:uuid:1b91e3d7-2dac-3916-27a3-8d31566f2d09"))))))))
+                        "urn:uuid:1b91e3d7-2dac-3916-27a3-8d31566f2d09"))))))
+    (with-temp-buffer
+      (insert elfeed-test-rss1.0)
+      (goto-char (point-min))
+      (let ((url (elfeed-test-generate-url))
+            (xml (xml-parse-region)))
+        (destructuring-bind (a b) (elfeed-entries-from-rss1.0 url xml)
+          (should (string= (elfeed-feed-title (elfeed-db-get-feed url))
+                           "XML.com"))
+          (should (string= (elfeed-entry-title a)
+                           "Processing Inclusions with XSLT"))
+          (should
+           (equal (elfeed-entry-id a)
+                  (cons url "http://xml.com/pub/2000/08/09/xslt/xslt.html")))
+          (should (string= (elfeed-entry-title b)
+                           "Putting RDF to Work"))
+          (should
+           (equal (elfeed-entry-id b)
+                  (cons url
+                        "http://xml.com/pub/2000/08/09/rdfdb/index.html"))))))))
 
 (ert-deftest elfeed-tagger ()
   (with-elfeed-test

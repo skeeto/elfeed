@@ -98,13 +98,10 @@ from `url-retrieve'."
 (defun elfeed-feed-type (content)
   "Return the feed type given the parsed content (:atom, :rss) or
 NIL for unknown."
-  (let* ((top (xml-query-strip-ns (caar content)))
-         (top-attr (cadar content))
-         (xmlns (cdr (assoc 'xmlns top-attr)))
-         (top-match (cadr (assoc top '((feed :atom) (rss :rss)))))
-         (ns-match (cadr (assoc xmlns '(("http://www.w3.org/2005/Atom" :atom)
-                                        ("http://purl.org/rss/1.0/" :rss))))))
-    (or top-match ns-match)))
+  (let ((top (xml-query-strip-ns (caar content))))
+    (cadr (assoc top '((feed :atom)
+                       (rss :rss)
+                       (RDF :rss1.0))))))
 
 (defun elfeed-float-time (&optional date)
   "Like `float-time' but accept anything reasonable for DATE,
@@ -200,6 +197,27 @@ is allowed to be relative to now (`elfeed-time-duration')."
                                :enclosures enclosures
                                :content description :content-type 'html)))))
 
+(defun elfeed-entries-from-rss1.0 (url xml)
+  "Turn parsed RSS 1.0 content into a list of elfeed-entry structs."
+  (let* ((feed-id url)
+         (feed (elfeed-db-get-feed feed-id))
+         (title (elfeed-cleanup (xml-query '(RDF channel title *) xml))))
+    (setf (elfeed-feed-url feed) url
+          (elfeed-feed-title feed) title)
+    (loop for item in (xml-query-all '(RDF item) xml) collect
+          (let* ((title (or (xml-query '(title *) item) ""))
+                 (link (xml-query '(link *) item))
+                 (date (or (xml-query '(pubDate *) item)
+                           (xml-query '(date *) item)))
+                 (description (xml-query '(description *) item))
+                 (id (or link (elfeed-generate-id description))))
+            (make-elfeed-entry :title (elfeed-cleanup title)
+                               :id (cons feed-id (elfeed-cleanup id))
+                               :feed-id feed-id :link link
+                               :tags (copy-seq elfeed-initial-tags)
+                               :date (elfeed-float-time date)
+                               :content description :content-type 'html)))))
+
 (defun elfeed-update-feed (url)
   "Update a specific feed."
   (interactive (list (completing-read "Feed: " elfeed-feeds)))
@@ -215,6 +233,7 @@ is allowed to be relative to now (`elfeed-time-duration')."
                    (entries (case (elfeed-feed-type xml)
                               (:atom (elfeed-entries-from-atom url xml))
                               (:rss (elfeed-entries-from-rss url xml))
+                              (:rss1.0 (elfeed-entries-from-rss1.0 url xml))
                               (t (error "Unknown feed type.")))))
               (elfeed-db-add entries)))
         (error (message "Elfeed update failed for %s: %s" url error))))))
