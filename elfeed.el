@@ -12,6 +12,20 @@
 
 ;; Elfreed requires Emacs 24 (lexical closures).
 
+;;; History:
+
+;; Version 1.0.1: features and fixes
+;;   * Live filter editing
+;;   * Support for RSS 1.0
+;;   * OPML import/export
+;;   * Fix multibyte support (thanks cellscape)
+;;   * Fix date-change database corruption
+;;   * Add n and p bindings to elfeed-search, like notmuch
+;;   * Friendlier intro header
+;;   * Automated builds
+;;   * Lots of small bug fixes
+;; Version 1.0.0: initial public release
+
 ;;; Code:
 
 (require 'cl)
