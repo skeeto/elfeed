@@ -130,7 +130,7 @@ is allowed to be relative to now (`elfeed-time-duration')."
   "Turn parsed Atom content into a list of elfeed-entry structs."
   (let* ((feed-id url)
          (feed (elfeed-db-get-feed feed-id))
-         (title (xml-query '(feed title *) xml)))
+         (title (elfeed-cleanup (xml-query '(feed title *) xml))))
     (setf (elfeed-feed-url feed) url
           (elfeed-feed-title feed) title)
     (loop for entry in (xml-query-all '(feed entry) xml) collect
@@ -168,7 +168,7 @@ is allowed to be relative to now (`elfeed-time-duration')."
   "Turn parsed RSS content into a list of elfeed-entry structs."
   (let* ((feed-id url)
          (feed (elfeed-db-get-feed feed-id))
-         (title (xml-query '(rss channel title *) xml)))
+         (title (elfeed-cleanup (xml-query '(rss channel title *) xml))))
     (setf (elfeed-feed-url feed) url
           (elfeed-feed-title feed) title)
     (loop for item in (xml-query-all '(rss channel item) xml) collect
