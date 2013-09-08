@@ -98,7 +98,8 @@ from `url-retrieve'."
 (defun elfeed-feed-type (content)
   "Return the feed type given the parsed content (:atom, :rss) or
 NIL for unknown."
-  (cadr (assoc (caar content) '((feed :atom) (rss :rss)))))
+  (cadr (assoc (xml-query-strip-ns (caar content))
+               '((feed :atom) (rss :rss)))))
 
 (defun elfeed-float-time (&optional date)
   "Like `float-time' but accept anything reasonable for DATE,
