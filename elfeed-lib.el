@@ -46,7 +46,8 @@
 
 (defun elfeed-looks-like-url-p (string)
   "Return true if STRING looks like it could be a URL."
-  (and (not (string-match-p "[ \n\t\r]" string))
+  (and (stringp string)
+       (not (string-match-p "[ \n\t\r]" string))
        (not (null (url-type (url-generic-parse-url string))))))
 
 (defun elfeed-format-column (string width &optional align)

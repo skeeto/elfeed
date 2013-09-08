@@ -45,6 +45,13 @@
   (should-not (elfeed-valid-regexp-p "["))
   (should-not (elfeed-valid-regexp-p :foo)))
 
+(ert-deftest elfeed-looks-like-url-p ()
+  (should (elfeed-looks-like-url-p "http://nullprogram.com/"))
+  (should (elfeed-looks-like-url-p "https://example.com/"))
+  (should-not (elfeed-looks-like-url-p "example.com"))
+  (should-not (elfeed-looks-like-url-p "foo bar"))
+  (should-not (elfeed-looks-like-url-p nil)))
+
 (provide 'elfeed-lib-tests)
 
 ;;; elfeed-lib-tests.el ends here
