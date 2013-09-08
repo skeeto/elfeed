@@ -26,6 +26,7 @@
 (require 'cl)
 
 (defun xml-query-strip-ns (tag)
+  "Remove the namespace, in any, from TAG."
   (when (symbolp tag)
     (let ((name (symbol-name tag)))
       (if (find ?\: name)
