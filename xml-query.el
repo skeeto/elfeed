@@ -56,6 +56,13 @@
         (value (aref matcher 1)))
     (xml-query--attrib-all attrib value xml)))
 
+(defun xml-query--list (matchers xml)
+  (loop for matcher in matchers
+        do (setf foo (list matcher xml))
+        append (xml-query-all (if (listp matcher)
+                                  matcher
+                                (list matcher)) xml)))
+
 (defun xml-query--append (xml)
   (loop for (tag attribs . content) in (remove-if-not #'listp xml)
         append content))
@@ -66,6 +73,7 @@ matching tags.
 
 A query is a list of matchers.
  - SYMBOL: filters to matching tags
+ - LIST: each element is a full sub-query, whose results are concatenated
  - VECTOR: filters to tags with matching attribute, [tag attrib value]
  - KEYWORD: filters to an attribute value (must be last)
  - * (an asterisk symbol): filters to content strings (must be last)
@@ -87,10 +95,12 @@ Atom feed:
         (let ((matches
                (typecase matcher
                  (symbol (xml-query--symbol matcher xml))
-                 (vector (xml-query--vector matcher xml)))))
+                 (vector (xml-query--vector matcher xml))
+                 (list   (xml-query--list   matcher xml)))))
           (cond
            ((null rest) matches)
-           ((and (symbolp (car rest))
+           ((and (or (symbolp (car rest))
+                     (listp (car rest)))
                  (not (keywordp (car rest)))
                  (not (eq '* (car rest))))
             (xml-query-all (cdr query) (xml-query--append matches)))
