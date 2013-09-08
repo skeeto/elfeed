@@ -4,6 +4,8 @@
 
 ;;; Code:
 
+(require 'url-parse)
+
 (defun elfeed-expose (function &rest args)
   "Return an interactive version of FUNCTION, 'exposing' it to the user."
   (lambda () (interactive) (apply function args)))
@@ -61,10 +63,9 @@ Align should be a keyword :left or :right."
 
 (defun elfeed-valid-regexp-p (regexp)
   "Return t if REGEXP is a valid REGEXP."
-  (condition-case error
-      (prog1 t
-        (string-match-p regexp ""))
-    (error nil)))
+  (ignore-errors
+    (prog1 t
+      (string-match-p regexp ""))))
 
 (provide 'elfeed-lib)
 

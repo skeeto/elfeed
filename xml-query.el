@@ -59,7 +59,6 @@
 
 (defun xml-query--list (matchers xml)
   (loop for matcher in matchers
-        do (setf foo (list matcher xml))
         append (xml-query-all (if (listp matcher)
                                   matcher
                                 (list matcher)) xml)))

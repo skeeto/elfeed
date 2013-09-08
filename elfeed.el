@@ -325,7 +325,7 @@ The returned function should be added to `elfeed-new-entry-hook'."
 
 (defun elfeed--parse-opml (xml)
   "Parse XML (from `xml-parse-region') into `elfeed-feeds' list."
-  (loop for (tag attr . content) in (remove-if-not #'listp xml)
+  (loop for (_ attr . content) in (remove-if-not #'listp xml)
         when (assoc 'xmlUrl attr) collect (cdr it)
         else append (elfeed--parse-opml content)))
 
