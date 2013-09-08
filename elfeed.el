@@ -98,8 +98,13 @@ from `url-retrieve'."
 (defun elfeed-feed-type (content)
   "Return the feed type given the parsed content (:atom, :rss) or
 NIL for unknown."
-  (cadr (assoc (xml-query-strip-ns (caar content))
-               '((feed :atom) (rss :rss)))))
+  (let* ((top (xml-query-strip-ns (caar content)))
+         (top-attr (cadar content))
+         (xmlns (cdr (assoc 'xmlns top-attr)))
+         (top-match (cadr (assoc top '((feed :atom) (rss :rss)))))
+         (ns-match (cadr (assoc xmlns '(("http://www.w3.org/2005/Atom" :atom)
+                                        ("http://purl.org/rss/1.0/" :rss))))))
+    (or top-match ns-match)))
 
 (defun elfeed-float-time (&optional date)
   "Like `float-time' but accept anything reasonable for DATE,
