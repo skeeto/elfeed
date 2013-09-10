@@ -1,3 +1,3 @@
 (define-package "elfeed" "1.0.1"
-  "an Emacs web feed reader"
+  "an Emacs Atom/RSS feed reader"
   '((emacs "24.1")))

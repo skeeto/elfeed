@@ -1,4 +1,4 @@
-;;; elfeed.el --- an Emacs web feed reader -*- lexical-binding: t; -*-
+;;; elfeed.el --- an Emacs Atom/RSS feed reader -*- lexical-binding: t; -*-
 
 ;; This is free and unencumbered software released into the public domain.
 
