@@ -2,6 +2,11 @@
 
 ;; This is free and unencumbered software released into the public domain.
 
+;;; Commentary:
+
+;; These are general functions that aren't specific to web feeds. It's
+;; a library of useful functions to Elfeed.
+
 ;;; Code:
 
 (require 'url-parse)
