@@ -287,7 +287,10 @@ Use `elfeed-db-return' to exit early and optionally return data.
       (prog1 ref
         (unless (file-exists-p file)
           (mkdir (file-name-directory file) t)
-          (let ((coding-system-for-write 'utf-8))
+          (let ((coding-system-for-write 'utf-8)
+                ;; Content data loss is a tolerable risk.
+                ;; Fsync will occur soon on index write anyway.
+                (write-region-inhibit-fsync t))
             (with-temp-file file
               (insert content))))))))
 
