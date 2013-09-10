@@ -115,11 +115,6 @@ NIL for unknown."
                        (rss :rss)
                        (RDF :rss1.0))))))
 
-(defun elfeed-cleanup (name)
-  "Cleanup things that will be printed."
-  (let ((trim (replace-regexp-in-string "[\n\t]+" " " (or name ""))))
-    (replace-regexp-in-string "^ +\\| +$" "" trim)))
-
 (defun elfeed-generate-id (&optional content)
   "Generate an ID based on CONTENT or from the current time."
   (concat "urn:sha1:" (sha1 (format "%s" (or content (float-time))))))

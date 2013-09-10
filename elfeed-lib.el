@@ -75,6 +75,11 @@ Align should be a keyword :left or :right."
     (prog1 t
       (string-match-p regexp ""))))
 
+(defun elfeed-cleanup (name)
+  "Trim trailing and leading spaces and collapse multiple spaces."
+  (let ((trim (replace-regexp-in-string "[\n\t]+" " " (or name ""))))
+    (replace-regexp-in-string "^ +\\| +$" "" trim)))
+
 (defun elfeed-float-time (&optional date)
   "Like `float-time' but accept anything reasonable for DATE,
 defaulting to the current time if DATE could not be parsed. Date

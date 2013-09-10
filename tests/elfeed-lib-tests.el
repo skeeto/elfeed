@@ -52,6 +52,10 @@
   (should-not (elfeed-looks-like-url-p "foo bar"))
   (should-not (elfeed-looks-like-url-p nil)))
 
+(ert-deftest elfeed-cleanup ()
+  (should (string= (elfeed-cleanup "  foo  bar\n") "foo  bar"))
+  (should (string= (elfeed-cleanup "foo\nbar") "foo bar")))
+
 (ert-deftest elfeed-float-time ()
   (macrolet ((test (time seconds)
                    `(should (= (elfeed-float-time ,time) ,seconds))))

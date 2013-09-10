@@ -154,10 +154,6 @@
     (goto-char (point-min))
     (should (eq (elfeed-feed-type (xml-parse-region)) :rss1.0))))
 
-(ert-deftest elfeed-cleanup ()
-  (should (string= (elfeed-cleanup "  foo  bar\n") "foo  bar"))
-  (should (string= (elfeed-cleanup "foo\nbar") "foo bar")))
-
 (ert-deftest elfeed-entries-from-x ()
   (with-elfeed-test
     (with-temp-buffer
