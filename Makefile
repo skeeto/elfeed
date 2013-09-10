@@ -9,8 +9,8 @@ EL += elfeed-lib.el
 EL += elfeed-db.el
 EL += elfeed-search.el
 EL += elfeed-show.el
+
 ELC = $(EL:.el=.elc)
-EL += elfeed-pkg.el
 
 WEB_FILES  = web/elfeed-web.el
 WEB_FILES += web/elfeed-web-pkg.el
