@@ -228,6 +228,7 @@ Use `elfeed-db-return' to exit early and optionally return data.
         (let ((db (setf elfeed-db (list :version elfeed-db-version))))
           (plist-put db :feeds (make-hash-table :test 'equal))
           (plist-put db :entries (make-hash-table :test 'equal))
+          ;; Compiler will warn about this (bug#15327):
           (plist-put db :index (avl-tree-create #'elfeed-db-compare)))
       (with-current-buffer (find-file-noselect index)
         (goto-char (point-min))
