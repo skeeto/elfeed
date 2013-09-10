@@ -158,4 +158,8 @@
 
 (provide 'elfeed-show)
 
+;; Local Variables:
+;; byte-compile-warnings: (not cl-functions)
+;; End:
+
 ;;; elfeed-show.el ends here

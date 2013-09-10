@@ -414,4 +414,8 @@ expression, matching against entry link, title, and feed title."
               (read-from-minibuffer "Filter: " elfeed-search-filter)))
     (elfeed-search-update :force)))
 
+;; Local Variables:
+;; byte-compile-warnings: (not cl-functions)
+;; End:
+
 ;;; elfeed-search.el ends here

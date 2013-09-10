@@ -337,4 +337,8 @@ true, return the space cleared in bytes."
 
 (provide 'elfeed-db)
 
+;; Local Variables:
+;; byte-compile-warnings: (not cl-functions)
+;; End:
+
 ;;; elfeed-db.el ends here

@@ -99,4 +99,8 @@ is allowed to be relative to now (`elfeed-time-duration')."
 
 (provide 'elfeed-lib)
 
+;; Local Variables:
+;; byte-compile-warnings: (not cl-functions)
+;; End:
+
 ;;; elfeed-lib.el ends here

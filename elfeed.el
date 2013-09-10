@@ -350,4 +350,8 @@ saved to your customization file."
                              collect `(outline ((xmlUrl . ,url)
                                                 (title . ,title)))))))))))
 
+;; Local Variables:
+;; byte-compile-warnings: (not cl-functions)
+;; End:
+
 ;;; elfeed.el ends here

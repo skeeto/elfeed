@@ -115,4 +115,8 @@ Atom feed:
 
 (provide 'xml-query)
 
+;; Local Variables:
+;; byte-compile-warnings: (not cl-functions)
+;; End:
+
 ;;; xml-query.el ends here
