@@ -142,7 +142,7 @@
       (browse-url link))))
 
 (defun elfeed-show-yank ()
-  "Visit the current entry in the browser."
+  "Copy the current entry link URL to the clipboard."
   (interactive)
   (let ((link (elfeed-entry-link elfeed-show-entry)))
     (when link
