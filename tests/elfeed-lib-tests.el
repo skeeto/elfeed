@@ -62,6 +62,17 @@
     (test "1985-03-24T03:23:42Z"          480482622.0)
     (test "Mon,  5 May 1986 15:16:09 GMT" 515690169.0)))
 
+(ert-deftest elfeed-xml-parse-region ()
+  (with-temp-buffer
+    (insert
+     (encode-coding-string
+      "<?xml version=\"1.0\" encoding=\"windows-1251\"?>
+<title>Тест</title>"
+      'windows-1251))
+    (let ((xml (elfeed-xml-parse-region)))
+      (should (string= "Тест" (nth 2 (nth 0 xml)))))))
+
+
 (provide 'elfeed-lib-tests)
 
 ;;; elfeed-lib-tests.el ends here

@@ -97,6 +97,24 @@ is allowed to be relative to now (`elfeed-time-duration')."
     (list (float-time date))
     (t (float-time))))
 
+(defun elfeed-xml-parse-region (&optional beg end buffer parse-dtd parse-ns)
+  "Decode (if needed) and parse XML file. Uses coding system from
+XML encoding declaration."
+  (let ((coding-system nil))
+    (progn
+      (unless beg (setq beg (point-min)))
+      (unless end (setq end (point-max)))
+      (goto-char beg)
+      (if (re-search-forward "<\\?xml.*encoding=\"\\([^\"]+\\)\".*\\?>" nil t)
+          (setq coding-system
+                (ignore-errors (check-coding-system
+                                (intern (downcase (match-string 1)))))))
+      (when coding-system
+        (setq end (+ beg
+                     (decode-coding-region beg end coding-system))))
+      (goto-char beg)))
+    (xml-parse-region beg end buffer parse-dtd parse-ns))
+
 (provide 'elfeed-lib)
 
 ;; Local Variables:

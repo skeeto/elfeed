@@ -144,15 +144,15 @@
   (with-temp-buffer
     (insert elfeed-test-rss)
     (goto-char (point-min))
-    (should (eq (elfeed-feed-type (xml-parse-region)) :rss)))
+    (should (eq (elfeed-feed-type (elfeed-xml-parse-region)) :rss)))
   (with-temp-buffer
     (insert elfeed-test-atom)
     (goto-char (point-min))
-    (should (eq (elfeed-feed-type (xml-parse-region)) :atom)))
+    (should (eq (elfeed-feed-type (elfeed-xml-parse-region)) :atom)))
   (with-temp-buffer
     (insert elfeed-test-rss1.0)
     (goto-char (point-min))
-    (should (eq (elfeed-feed-type (xml-parse-region)) :rss1.0))))
+    (should (eq (elfeed-feed-type (elfeed-xml-parse-region)) :rss1.0))))
 
 (ert-deftest elfeed-entries-from-x ()
   (with-elfeed-test
@@ -160,7 +160,7 @@
       (insert elfeed-test-rss)
       (goto-char (point-min))
       (let ((url (elfeed-test-generate-url))
-            (xml (xml-parse-region)))
+            (xml (elfeed-xml-parse-region)))
         (destructuring-bind (a b) (elfeed-entries-from-rss url xml)
           (should (string= (elfeed-feed-title (elfeed-db-get-feed url))
                            "RSS Title"))
@@ -176,7 +176,7 @@
       (insert elfeed-test-atom)
       (goto-char (point-min))
       (let ((url (elfeed-test-generate-url))
-            (xml (xml-parse-region)))
+            (xml (elfeed-xml-parse-region)))
         (destructuring-bind (a b) (elfeed-entries-from-atom url xml)
           (should (string= (elfeed-feed-title (elfeed-db-get-feed url))
                            "Example Feed"))
@@ -197,7 +197,7 @@
       (insert elfeed-test-rss1.0)
       (goto-char (point-min))
       (let ((url (elfeed-test-generate-url))
-            (xml (xml-parse-region)))
+            (xml (elfeed-xml-parse-region)))
         (destructuring-bind (a b) (elfeed-entries-from-rss1.0 url xml)
           (should (string= (elfeed-feed-title (elfeed-db-get-feed url))
                            "XML.com"))
