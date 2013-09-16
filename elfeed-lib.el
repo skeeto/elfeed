@@ -105,7 +105,7 @@ XML encoding declaration."
       (unless beg (setq beg (point-min)))
       (unless end (setq end (point-max)))
       (goto-char beg)
-      (if (re-search-forward "<\\?xml.*encoding=\"\\([^\"]+\\)\".*\\?>" nil t)
+      (if (re-search-forward "<\\?xml.*?encoding=\"\\([^\"]+\\)\".*?\\?>" nil t)
           (setq coding-system
                 (ignore-errors (check-coding-system
                                 (intern (downcase (match-string 1)))))))

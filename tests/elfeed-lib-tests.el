@@ -70,7 +70,14 @@
 <title>Тест</title>"
       'windows-1251))
     (let ((xml (elfeed-xml-parse-region)))
-      (should (string= "Тест" (nth 2 (nth 0 xml)))))))
+      (should (string= "Тест" (nth 2 (nth 0 xml))))))
+  (with-temp-buffer
+    (insert
+     (concat
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss>"
+      (mapconcat (lambda (i) " ") (number-sequence 1 100000) "")
+      "</rss>"))
+    (elfeed-xml-parse-region)))
 
 
 (provide 'elfeed-lib-tests)
