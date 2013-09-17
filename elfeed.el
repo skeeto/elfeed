@@ -89,7 +89,7 @@ feeds to this list."
     (unwind-protect
         (funcall cb status)
       (setf elfeed-connections (delete* id elfeed-connections :key #'car))
-      (elfeed--check-queue))))
+      (run-at-time 0 nil #'elfeed--check-queue))))
 
 (defun elfeed-fetch (url callback)
   "Basically wraps `url-retrieve' but uses the connection limiter."
