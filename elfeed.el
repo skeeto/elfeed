@@ -213,7 +213,8 @@ NIL for unknown."
   (interactive (list (completing-read "Feed: " elfeed-feeds)))
   (with-elfeed-fetch url
     (if (and status (eq (car status) :error))
-        (message "Elfeed update failed for %s: %s" url status)
+        (let ((print-escape-newlines t))
+          (message "Elfeed update failed for %s: %S" url status))
       (condition-case error
           (progn
             (goto-char (point-min))
