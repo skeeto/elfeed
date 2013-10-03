@@ -326,7 +326,10 @@ true, return the space cleared in bytes."
                      (file (elfeed-ref--file ref)))
                 (* 1.0 (nth 7 (file-attributes file))))
           unless used-p
-          do (elfeed-ref-delete (make-elfeed-ref :id id)))))
+          do (elfeed-ref-delete (make-elfeed-ref :id id))
+          finally (loop for dir in dirs
+                        when (null (cddr (directory-files dir)))
+                        do (delete-directory dir)))))
 
 (defun elfeed-db-gc-safe ()
   "Run `elfeed-db-gc' without triggering any errors, for use as a safe hook."
