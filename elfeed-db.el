@@ -304,7 +304,8 @@ Use `elfeed-db-return' to exit early and optionally return data.
 
 (defun elfeed-ref-delete (ref)
   "Remove the content behind REF from the database."
-  (delete-file (elfeed-ref--file ref)))
+  (ignore-errors
+    (delete-file (elfeed-ref--file ref))))
 
 (defun elfeed-db-gc (&optional stats-p)
   "Clean up unused content from the content database. If STATS is
