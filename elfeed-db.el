@@ -311,7 +311,7 @@ Use `elfeed-db-return' to exit early and optionally return data.
   "Clean up unused content from the content database. If STATS is
 true, return the space cleared in bytes."
   (let* ((data (expand-file-name "data" elfeed-db-directory))
-         (dirs (cddr (directory-files data t)))
+         (dirs (directory-files data t "^[0-9a-z]\\{2\\}$"))
          (ids (mapcan (lambda (d) (directory-files d nil nil t)) dirs))
          (table (make-hash-table :test 'equal)))
     (dolist (id ids)
