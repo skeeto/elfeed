@@ -116,6 +116,10 @@ XML encoding declaration."
       (goto-char beg)))
     (xml-parse-region beg end buffer parse-dtd parse-ns))
 
+(defun elfeed-directory-empty-p (dir)
+  "Return non-nil if DIR is empty."
+  (null (cddr (directory-files dir))))
+
 (provide 'elfeed-lib)
 
 ;; Local Variables:

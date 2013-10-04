@@ -368,7 +368,7 @@ true, return the space cleared in bytes."
           unless used-p
           do (elfeed-ref-delete (make-elfeed-ref :id id))
           finally (loop for dir in dirs
-                        when (null (cddr (directory-files dir)))
+                        when (elfeed-directory-empty-p dir)
                         do (delete-directory dir)))))
 
 (defun elfeed-db-pack ()

@@ -87,6 +87,16 @@
       "</rss>"))
     (elfeed-xml-parse-region)))
 
+(ert-deftest elfeed-directory-empty-p ()
+  (let ((empty (make-temp-file "empty" t))
+        (full (make-temp-file "full" t)))
+    (unwind-protect
+        (progn
+          (with-temp-file (expand-file-name "foo" full))
+          (should (elfeed-directory-empty-p empty))
+          (should-not (elfeed-directory-empty-p full)))
+      (delete-directory empty :recursive)
+      (delete-directory full  :recursive))))
 
 (provide 'elfeed-lib-tests)
 
