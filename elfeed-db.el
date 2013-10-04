@@ -376,6 +376,7 @@ true, return the space cleared in bytes."
   (let ((coding-system-for-write 'utf-8)
         (next-archive (make-hash-table :test 'equal))
         (packed ()))
+    (make-directory (expand-file-name "data" elfeed-db-directory) t)
     (with-temp-file (elfeed-ref-archive-filename ".gz")
       (with-elfeed-db-visit (entry _)
         (let ((ref (elfeed-entry-content entry))
