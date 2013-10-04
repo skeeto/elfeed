@@ -181,6 +181,24 @@
     (let ((string "naïveté"))
       (should (string= string (elfeed-deref (elfeed-ref string)))))))
 
+(ert-deftest elfeed-ref-pack ()
+  (with-elfeed-test
+    (let ((jka-compr-verbose nil)
+          (matcher "^[a-z0-9]\\{2\\}$")
+          (feed (elfeed-test-generate-feed))
+          (data (expand-file-name "data" elfeed-db-directory)))
+      (elfeed-db-add
+       (loop repeat 25
+             for entry = (elfeed-test-generate-entry feed)
+             do (setf (elfeed-entry-content entry) (elfeed-test-generate-title))
+             collect entry))
+      (should (directory-files data nil matcher))
+      (elfeed-db-pack)
+      (elfeed-db-gc)
+      (should-not (directory-files data nil matcher))
+      (with-elfeed-db-visit (entry _)
+        (should (elfeed-deref (elfeed-entry-content entry)))))))
+
 (provide 'elfeed-db-tests)
 
 ;;; elfeed-db-tests.el ends here
