@@ -215,11 +215,11 @@ Use `elfeed-db-return' to exit early and optionally return data.
   "Write the database index to the filesystem."
   (elfeed-db-ensure)
   (mkdir elfeed-db-directory t)
-  (with-temp-file (expand-file-name "index" elfeed-db-directory)
-    (set-buffer-multibyte nil)
-    (let ((standard-output (current-buffer)))
-      (prin1 elfeed-db)
-      :success)))
+  (let ((coding-system-for-write 'utf-8))
+    (with-temp-file (expand-file-name "index" elfeed-db-directory)
+      (let ((standard-output (current-buffer)))
+        (prin1 elfeed-db)
+        :success))))
 
 (defun elfeed-db-load ()
   "Load the database index from the filesystem."
