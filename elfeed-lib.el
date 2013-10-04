@@ -148,7 +148,9 @@ XML encoding declaration."
                (ignore-errors
                  (save-window-excursion
                    (let ((file (make-temp-file "gziptest" nil ".gz"))
-                         (data "foo"))
+                         (data (loop for i from 32 to 3200
+                                     collect i into chars
+                                     finally (return (apply #'string chars)))))
                      (unwind-protect
                          (progn
                            (elfeed-spit file data)
