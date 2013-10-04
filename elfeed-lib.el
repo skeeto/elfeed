@@ -120,6 +120,22 @@ XML encoding declaration."
   "Return non-nil if DIR is empty."
   (null (cddr (directory-files dir))))
 
+(defun elfeed-slurp (file &optional literally)
+  "Return the contents of FILE as a string."
+  (with-temp-buffer
+    (if literally
+        (insert-file-contents-literally file)
+      (insert-file-contents file))
+    (buffer-string)))
+
+(defun* elfeed-spit (file string &key fsync append (encoding 'utf-8))
+  "Write STRING to FILE."
+  (let ((coding-system-for-write encoding)
+        (write-region-inhibit-fsync (not fsync)))
+    (with-temp-buffer
+      (insert string)
+      (write-region nil nil file append 0))))
+
 (provide 'elfeed-lib)
 
 ;; Local Variables:

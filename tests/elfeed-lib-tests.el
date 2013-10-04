@@ -98,6 +98,17 @@
       (delete-directory empty :recursive)
       (delete-directory full  :recursive))))
 
+(ert-deftest elfeed-slurp-spit ()
+  (let ((file (make-temp-file "spit"))
+        (data (string 40 400 4000 40000)))
+    (unwind-protect
+        (progn
+          (elfeed-spit file data)
+          (should (string= (elfeed-slurp file) data))
+          (elfeed-spit file data :append t)
+          (should (string= (elfeed-slurp file) (concat data data))))
+      (delete-file file))))
+
 (provide 'elfeed-lib-tests)
 
 ;;; elfeed-lib-tests.el ends here
