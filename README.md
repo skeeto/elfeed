@@ -178,6 +178,20 @@ Windows you'll either have to track down and install the missing DLLs,
 or use [ntemacs](http://ntemacs.sourceforge.net/), which includes
 these libraries.
 
+## Database Management
+
+The database should keep itself under control without any manual
+intervention, but steps can be taken to minimize the database size if
+desired. The simplest option is to run the `elfeed-db-compact`
+command, which will pack the loose-file content database into a single
+compressed file. This function can be added to `kill-emacs-hook`.
+
+Going further, a function could be added to `elfeed-new-entry-hook` to
+strip unwanted/unneeded content from select entries before being
+stored in the database. For example, for YouTube videos only the entry
+link is of interest and the regularly-changing entry content could be
+tossed to save time and storage.
+
 ## Status and Roadmap
 
 Elfeed is to the point where it can serve 100% of my own web feed

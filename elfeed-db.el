@@ -23,6 +23,10 @@
 ;; whole to the filesystem. The wire format is just the s-expression
 ;; print form of the top-level hash table.
 
+;; The database can be compacted into a small number of compressed
+;; files with the interactive function `elfeed-db-compact'. This could
+;; be used as a kill-emacs hook.
+
 ;; An AVL tree containing all database entries ordered by date is
 ;; maintained as part of the database. We almost always want to look
 ;; at entries ordered by date and this step accomplished that very
@@ -394,6 +398,16 @@ true, return the space cleared in bytes."
     (setf elfeed-ref-archive next-archive)
     (mapc #'elfeed-ref-delete packed)
     :success))
+
+(defun elfeed-db-compact ()
+  "Minimize the Elfeed database storage size on the filesystem.
+This requires that auto-compression-mode can handle
+gzip-compressed files, so the gzip program must be in your PATH."
+  (interactive)
+  (unless (elfeed-gzip-supported-p)
+    (error "aborting compaction: gzip auto-compression-mode unsupported"))
+  (elfeed-db-pack)
+  (elfeed-db-gc))
 
 (defun elfeed-db-gc-safe ()
   "Run `elfeed-db-gc' without triggering any errors, for use as a safe hook."
