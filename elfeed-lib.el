@@ -114,7 +114,7 @@ XML encoding declaration."
         (setq end (+ beg
                      (decode-coding-region beg end coding-system))))
       (goto-char beg)))
-    (xml-parse-region beg end buffer parse-dtd parse-ns))
+  (xml-parse-region beg end buffer parse-dtd parse-ns))
 
 (defun elfeed-directory-empty-p (dir)
   "Return non-nil if DIR is empty."
