@@ -217,8 +217,7 @@ NIL for unknown."
           (message "Elfeed update failed for %s: %S" url status))
       (condition-case error
           (progn
-            (goto-char (point-min))
-            (search-forward "\n\n") ; skip HTTP headers
+            (goto-char (1+ url-http-end-of-headers))
             (set-buffer-multibyte t)
             (let* ((xml (elfeed-xml-parse-region (point) (point-max)))
                    (entries (case (elfeed-feed-type xml)
