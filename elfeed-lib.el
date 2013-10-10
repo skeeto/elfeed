@@ -114,7 +114,49 @@ XML encoding declaration."
         (setq end (+ beg
                      (decode-coding-region beg end coding-system))))
       (goto-char beg)))
-    (xml-parse-region beg end buffer parse-dtd parse-ns))
+  (xml-parse-region beg end buffer parse-dtd parse-ns))
+
+(defun elfeed-directory-empty-p (dir)
+  "Return non-nil if DIR is empty."
+  (null (cddr (directory-files dir))))
+
+(defun elfeed-slurp (file &optional literally)
+  "Return the contents of FILE as a string."
+  (with-temp-buffer
+    (if literally
+        (insert-file-contents-literally file)
+      (insert-file-contents file))
+    (buffer-string)))
+
+(defun* elfeed-spit (file string &key fsync append (encoding 'utf-8))
+  "Write STRING to FILE."
+  (let ((coding-system-for-write encoding)
+        (write-region-inhibit-fsync (not fsync)))
+    (with-temp-buffer
+      (insert string)
+      (write-region nil nil file append 0))))
+
+(defvar elfeed-gzip-supported-p--cache :unknown
+  "To avoid running the relatively expensive test more than once.")
+
+(defun elfeed-gzip-supported-p ()
+  "Return non-nil if `auto-compression-mode' can handle gzip."
+  (if (not (eq elfeed-gzip-supported-p--cache :unknown))
+      elfeed-gzip-supported-p--cache
+    (setf elfeed-gzip-supported-p--cache
+          (and (executable-find "gzip")
+               (ignore-errors
+                 (save-window-excursion
+                   (let ((file (make-temp-file "gziptest" nil ".gz"))
+                         (data (loop for i from 32 to 3200
+                                     collect i into chars
+                                     finally (return (apply #'string chars)))))
+                     (unwind-protect
+                         (progn
+                           (elfeed-spit file data)
+                           (and (string= data (elfeed-slurp file))
+                                (not (string= data (elfeed-slurp file t)))))
+                       (delete-file file)))))))))
 
 (provide 'elfeed-lib)
 

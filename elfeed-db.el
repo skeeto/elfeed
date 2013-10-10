@@ -23,6 +23,10 @@
 ;; whole to the filesystem. The wire format is just the s-expression
 ;; print form of the top-level hash table.
 
+;; The database can be compacted into a small number of compressed
+;; files with the interactive function `elfeed-db-compact'. This could
+;; be used as a kill-emacs hook.
+
 ;; An AVL tree containing all database entries ordered by date is
 ;; maintained as part of the database. We almost always want to look
 ;; at entries ordered by date and this step accomplished that very
@@ -215,11 +219,11 @@ Use `elfeed-db-return' to exit early and optionally return data.
   "Write the database index to the filesystem."
   (elfeed-db-ensure)
   (mkdir elfeed-db-directory t)
-  (with-temp-file (expand-file-name "index" elfeed-db-directory)
-    (set-buffer-multibyte nil)
-    (let ((standard-output (current-buffer)))
-      (prin1 elfeed-db)
-      :success)))
+  (let ((coding-system-for-write 'utf-8))
+    (with-temp-file (expand-file-name "index" elfeed-db-directory)
+      (let ((standard-output (current-buffer)))
+        (prin1 elfeed-db)
+        :success))))
 
 (defun elfeed-db-load ()
   "Load the database index from the filesystem."
@@ -254,6 +258,12 @@ Use `elfeed-db-return' to exit early and optionally return data.
 
 ;; Filesystem storage:
 
+(defvar elfeed-ref-archive nil
+  "Index of archived/packed content.")
+
+(defvar elfeed-ref-cache nil
+  "Temporary storage of the full archive content.")
+
 (defstruct elfeed-ref
   id)
 
@@ -264,19 +274,52 @@ Use `elfeed-db-return' to exit early and optionally return data.
          (subdir (expand-file-name (substring id 0 2) root)))
     (expand-file-name id subdir)))
 
+(defun* elfeed-ref-archive-filename (&optional (suffix ""))
+  "Return the base filename of the archive files."
+  (concat (expand-file-name "data/archive" elfeed-db-directory) suffix))
+
+(defun elfeed-ref-archive-load ()
+  "Load the archived ref index."
+  (let ((archive-index (elfeed-ref-archive-filename ".index")))
+    (if (file-exists-p archive-index)
+      (with-temp-buffer
+        (insert-file-contents archive-index)
+        (setf elfeed-ref-archive (read (current-buffer))))
+      (setf elfeed-ref-archive :empty))))
+
+(defun elfeed-ref-archive-ensure ()
+  "Ensure that the archive index is loaded."
+  (when (null elfeed-ref-archive) (elfeed-ref-archive-load)))
+
 (defun elfeed-ref-exists-p (ref)
   "Return true if REF can be dereferenced."
-  (file-exists-p (elfeed-ref--file ref)))
+  (elfeed-ref-archive-ensure)
+  (or (and (hash-table-p elfeed-ref-archive)
+           (not (null (gethash (elfeed-ref-id ref) elfeed-ref-archive))))
+      (file-exists-p (elfeed-ref--file ref))))
 
 (defun elfeed-deref (ref)
   "Fetch the content behind the reference, or nil if non-existent."
+  (elfeed-ref-archive-ensure)
   (if (not (elfeed-ref-p ref))
       ref
-    (let ((file (elfeed-ref--file ref)))
-      (when (file-exists-p file)
-        (with-temp-buffer
-          (insert-file-contents file)
-          (buffer-string))))))
+    (let ((index (and (hash-table-p elfeed-ref-archive)
+                      (gethash (elfeed-ref-id ref) elfeed-ref-archive)))
+          (archive-file (elfeed-ref-archive-filename ".gz")))
+      (if (and index (file-exists-p archive-file))
+          (progn
+            (when (null elfeed-ref-cache)
+              (with-temp-buffer
+                (insert-file-contents archive-file)
+                (setf elfeed-ref-cache (buffer-string)))
+              ;; Clear cache on next turn.
+              (run-at-time 0 nil (lambda () (setf elfeed-ref-cache nil))))
+            (substring elfeed-ref-cache (car index) (cdr index)))
+        (let ((file (elfeed-ref--file ref)))
+          (when (file-exists-p file)
+            (with-temp-buffer
+              (insert-file-contents file)
+              (buffer-string))))))))
 
 (defun elfeed-ref (content)
   "Create a reference to CONTENT, to be persistently stored."
@@ -286,7 +329,7 @@ Use `elfeed-db-return' to exit early and optionally return data.
            (ref (make-elfeed-ref :id id))
            (file (elfeed-ref--file ref)))
       (prog1 ref
-        (unless (file-exists-p file)
+        (unless (elfeed-ref-exists-p ref)
           (mkdir (file-name-directory file) t)
           (let ((coding-system-for-write 'utf-8)
                 ;; Content data loss is a tolerable risk.
@@ -329,8 +372,42 @@ true, return the space cleared in bytes."
           unless used-p
           do (elfeed-ref-delete (make-elfeed-ref :id id))
           finally (loop for dir in dirs
-                        when (null (cddr (directory-files dir)))
+                        when (elfeed-directory-empty-p dir)
                         do (delete-directory dir)))))
+
+(defun elfeed-db-pack ()
+  "Pack all content into a single archive for efficient storage."
+  (let ((coding-system-for-write 'utf-8)
+        (next-archive (make-hash-table :test 'equal))
+        (packed ()))
+    (make-directory (expand-file-name "data" elfeed-db-directory) t)
+    (with-temp-file (elfeed-ref-archive-filename ".gz")
+      (with-elfeed-db-visit (entry _)
+        (let ((ref (elfeed-entry-content entry))
+              (start (1- (point))))
+          (when (elfeed-ref-p ref)
+            (let ((content (elfeed-deref ref)))
+              (when content
+                (push ref packed)
+                (insert content)
+                (setf (gethash (elfeed-ref-id ref) next-archive)
+                      (cons start (1- (point))))))))))
+    (with-temp-file (elfeed-ref-archive-filename ".index")
+      (let ((standard-output (current-buffer)))
+        (prin1 next-archive)))
+    (setf elfeed-ref-archive next-archive)
+    (mapc #'elfeed-ref-delete packed)
+    :success))
+
+(defun elfeed-db-compact ()
+  "Minimize the Elfeed database storage size on the filesystem.
+This requires that auto-compression-mode can handle
+gzip-compressed files, so the gzip program must be in your PATH."
+  (interactive)
+  (unless (elfeed-gzip-supported-p)
+    (error "aborting compaction: gzip auto-compression-mode unsupported"))
+  (elfeed-db-pack)
+  (elfeed-db-gc))
 
 (defun elfeed-db-gc-safe ()
   "Run `elfeed-db-gc' without triggering any errors, for use as a safe hook."

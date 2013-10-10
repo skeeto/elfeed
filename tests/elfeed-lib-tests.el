@@ -87,6 +87,27 @@
       "</rss>"))
     (elfeed-xml-parse-region)))
 
+(ert-deftest elfeed-directory-empty-p ()
+  (let ((empty (make-temp-file "empty" t))
+        (full (make-temp-file "full" t)))
+    (unwind-protect
+        (progn
+          (with-temp-file (expand-file-name "foo" full))
+          (should (elfeed-directory-empty-p empty))
+          (should-not (elfeed-directory-empty-p full)))
+      (delete-directory empty :recursive)
+      (delete-directory full  :recursive))))
+
+(ert-deftest elfeed-slurp-spit ()
+  (let ((file (make-temp-file "spit"))
+        (data (string 40 400 4000 40000)))
+    (unwind-protect
+        (progn
+          (elfeed-spit file data)
+          (should (string= (elfeed-slurp file) data))
+          (elfeed-spit file data :append t)
+          (should (string= (elfeed-slurp file) (concat data data))))
+      (delete-file file))))
 
 (provide 'elfeed-lib-tests)
 
