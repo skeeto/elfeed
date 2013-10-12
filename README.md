@@ -41,7 +41,7 @@ database with entries.
 ```el
 ;; Somewhere in your .emacs file
 (setq elfeed-feeds
-      '("http://nullprogram.com/feeds/"
+      '("http://nullprogram.com/feed/"
         "http://www.terminally-incoherent.com/blog/feed/"))
 ```
 
