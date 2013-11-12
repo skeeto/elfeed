@@ -91,16 +91,14 @@ this age are filtered out. The age description accepts plain English,
 but cannot have spaces, so use dashes. For example, `"@2-years-old"`
 or `"@3-days-ago"`. The database is date-oriented, so **filters that
 include an age restriction are significantly more efficient.**
-Consider adding something like `@1-week-old` to your default
-`elfeed-search-filter`.
 
 All other components are treated as a regular expression.
 
 Here are some example filters.
 
- * `+unread`
+ * `@6-months-ago +unread`
 
-Only show unread entries. This is the default filter.
+Only show unread entries of the last six months. This is the default filter.
 
  * `linu[xs] @1-year-old`
 
