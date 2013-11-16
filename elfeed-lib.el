@@ -158,6 +158,12 @@ XML encoding declaration."
                                 (not (string= data (elfeed-slurp file t)))))
                        (delete-file file)))))))))
 
+(defun elfeed-libxml-supported-p ()
+  "Return non-nil if `libxml-parse-html-region' is available."
+  (with-temp-buffer
+    (insert "<html></html>")
+    (not (null (libxml-parse-html-region (point-min) (point-max))))))
+
 (provide 'elfeed-lib)
 
 ;; Local Variables:

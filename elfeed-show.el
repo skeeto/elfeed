@@ -47,11 +47,13 @@
 (defun elfeed-insert-html (html &optional base-url)
   "Converted HTML markup to a propertized string."
   (shr-insert-document
-   (with-temp-buffer
-     ;; insert <base> to work around libxml-parse-html-region bug
-     (insert (format "<base href=\"%s\">" base-url))
-     (insert html)
-     (libxml-parse-html-region (point-min) (point-max) base-url))))
+   (if (elfeed-libxml-supported-p)
+       (with-temp-buffer
+         ;; insert <base> to work around libxml-parse-html-region bug
+         (insert (format "<base href=\"%s\">" base-url))
+         (insert html)
+         (libxml-parse-html-region (point-min) (point-max) base-url))
+     '(i () "Elfeed: libxml2 functionality is unavailable"))))
 
 (defun* elfeed-insert-link (url &optional (content url))
   "Insert a clickable hyperlink to URL titled CONTENT."
