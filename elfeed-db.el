@@ -157,9 +157,10 @@ update occurred, not counting content."
   "Get the feed struct for ENTRY."
   (elfeed-db-get-feed (elfeed-entry-feed-id entry)))
 
-(defun elfeed-normalize-tags (tags)
+(defun elfeed-normalize-tags (tags &rest more-tags)
   "Return the normalized tag list for TAGS."
-  (remove-duplicates (sort* (copy-seq tags) #'string< :key #'symbol-name)))
+  (let ((all (copy-seq (apply #'append tags more-tags))))
+    (remove-duplicates (sort* all #'string< :key #'symbol-name))))
 
 (defun elfeed-tag (entry &rest tags)
   "Add TAGS to ENTRY."
