@@ -276,6 +276,24 @@
             (should (equal elfeed-feeds feeds)))
         (ignore-errors (delete-file outfile))))))
 
+(ert-deftest elfeed-autotags ()
+  (let ((elfeed-feeds '("foo" ("bar" :tag-a tag-b) "baz" ("qux"))))
+    (should (equal (elfeed-feed-list) '("foo" "bar" "baz" "qux")))
+    (should (equal (elfeed-feed-autotags "foo") '()))
+    (should (equal (elfeed-feed-autotags "qux") '()))
+    (should (equal (elfeed-feed-autotags "bar") '(tag-a tag-b)))
+    (should (equal (elfeed-feed-autotags (make-elfeed-feed :url "bar"))
+                   '(tag-a tag-b))))
+  (with-elfeed-test
+    (with-temp-buffer
+      (insert elfeed-test-atom)
+      (goto-char (point-min))
+      (let* ((elfeed-feeds '("http://bar/" ("http://foo/" tag-a :tag-b)))
+             (xml (elfeed-xml-parse-region))
+             (entry (first (elfeed-entries-from-atom "http://foo/" xml))))
+        (should (equal (elfeed-entry-tags entry)
+                       (elfeed-normalize-tags '(unread tag-a tag-b))))))))
+
 (provide 'elfeed-tests)
 
 ;;; elfeed-tests.el ends here
