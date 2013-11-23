@@ -32,7 +32,8 @@
 
 (defcustom elfeed-search-refresh-rate 3
   "How often the buffer should update against the datebase in seconds."
-  :group 'elfeed)
+  :group 'elfeed
+  :type 'number)
 
 (defvar elfeed-search-live nil
   "When true, Elfeed is currently reading a filter from the minibuffer.")
@@ -130,17 +131,23 @@
   "Face used in search mode for tags."
   :group 'elfeed)
 
-(defvar elfeed-search-title-max-width 70
+(defcustom elfeed-search-title-max-width 70
   "Maximum column width for titles in the elfeed-search buffer.
-Clear `elfeed-search-cache' after setting.")
+Clear `elfeed-search-cache' (or restart Emacs) after setting."
+  :group 'elfeed
+  :type 'integer)
 
-(defvar elfeed-search-title-min-width 16
+(defcustom elfeed-search-title-min-width 16
   "Minimum column width for titles in the elfeed-search buffer.
-Clear `elfeed-search-cache' after setting.")
+Clear `elfeed-search-cache' (or restart Emacs) after setting."
+  :group 'elfeed
+  :type 'integer)
 
-(defvar elfeed-search-trailing-width 30
+(defcustom elfeed-search-trailing-width 30
   "Space reserved for displaying the feed and tag information.
-Clear `elfeed-search-cache' after setting.")
+Clear `elfeed-search-cache' (or restart Emacs) after setting."
+  :group 'elfeed
+  :type 'integer)
 
 (defun elfeed-search-print (entry)
   "Print ENTRY to the buffer."
