@@ -76,6 +76,20 @@ Elfeed maintains a list of arbitrary tags -- symbols attached to an
 entry. The tag `unread` is treated specially by default, with unread
 entries appearing in bold.
 
+### Autotagging
+
+Tags can automatically be applied to entries discovered in specific
+feeds through a special form `elfeed-feeds`. Normally this is a list
+of strings, but an item can also be a list, providing set of
+"autotags" for a feed's entries.
+
+```el
+(setq elfeed-feeds
+      '(("http://nullprogram.com/feed/" blog emacs)
+        "http://www.50ply.com/atom.xml"  ; no autotagging
+        ("http://nedroid.com/feed/" webcomic)))
+```
+
 ### Filter Syntax
 
 To make tags useful, the Elfeed entry listing buffer can be filtered
