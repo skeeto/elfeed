@@ -211,6 +211,7 @@ NIL for unknown."
 (defun elfeed-update-feed (url)
   "Update a specific feed."
   (interactive (list (completing-read "Feed: " elfeed-feeds)))
+  (declare (special url-http-end-of-headers)) ; url-http bug workaround
   (with-elfeed-fetch url
     (if (and status (eq (car status) :error))
         (let ((print-escape-newlines t))
