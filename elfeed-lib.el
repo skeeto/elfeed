@@ -164,6 +164,12 @@ XML encoding declaration."
     (insert "<html></html>")
     (not (null (libxml-parse-html-region (point-min) (point-max))))))
 
+(defun elfeed-keyword->symbol (keyword)
+  "If a keyword, convert KEYWORD into a plain symbol (remove the colon)."
+  (if (keywordp keyword)
+      (intern (substring (symbol-name keyword) 1))
+    keyword))
+
 (provide 'elfeed-lib)
 
 ;; Local Variables:

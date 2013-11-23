@@ -109,6 +109,10 @@
           (should (string= (elfeed-slurp file) (concat data data))))
       (delete-file file))))
 
+(ert-deftest elfeed-keyword->symbol ()
+  (should (eq (elfeed-keyword->symbol :foo) 'foo))
+  (should (eq (elfeed-keyword->symbol 'foo) 'foo)))
+
 (provide 'elfeed-lib-tests)
 
 ;;; elfeed-lib-tests.el ends here
