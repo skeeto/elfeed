@@ -79,7 +79,7 @@ entries appearing in bold.
 ### Autotagging
 
 Tags can automatically be applied to entries discovered in specific
-feeds through a special form `elfeed-feeds`. Normally this is a list
+feeds through extra syntax in `elfeed-feeds`. Normally this is a list
 of strings, but an item can also be a list, providing set of
 "autotags" for a feed's entries.
 
