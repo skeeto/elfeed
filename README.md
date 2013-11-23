@@ -213,6 +213,7 @@ test case as I optimize and add features.
 Some things I still might want to add:
 
  * Database synchronization between computers
+ * Support for [RDF content](http://web.resource.org/rss/1.0/modules/content/)
 
 ## Motivation
 
