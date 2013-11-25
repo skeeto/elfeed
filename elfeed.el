@@ -70,7 +70,7 @@ when they are first discovered."
 
 (defcustom elfeed-max-connections
   ;; Windows Emacs cannot open many sockets at once.
-  (if (eq system-type 'windows-nt) 1 4)
+  (if (or (not (gnutls-available-p)) (eq system-type 'windows-nt)) 1 4)
   "The maximum number of feeds to be fetched in parallel."
   :group 'elfeed
   :type 'integer)
