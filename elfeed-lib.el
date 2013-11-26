@@ -162,7 +162,8 @@ XML encoding declaration."
   "Return non-nil if `libxml-parse-html-region' is available."
   (with-temp-buffer
     (insert "<html></html>")
-    (not (null (libxml-parse-html-region (point-min) (point-max))))))
+    (and (fboundp 'libxml-parse-html-region)
+         (not (null (libxml-parse-html-region (point-min) (point-max)))))))
 
 (defun elfeed-keyword->symbol (keyword)
   "If a keyword, convert KEYWORD into a plain symbol (remove the colon)."
