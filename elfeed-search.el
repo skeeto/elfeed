@@ -35,6 +35,12 @@
   :group 'elfeed
   :type 'number)
 
+(defcustom elfeed-search-clipboard-type 'PRIMARY
+  "Selects the clipboard `elfeed-search-yank' should use.
+Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
+  :group 'elfeed
+  :type '(choice (const PRIMARY) (const SECONDARY) (const CLIPBOARD)))
+
 (defvar elfeed-search-live nil
   "When true, Elfeed is currently reading a filter from the minibuffer.")
 
@@ -363,7 +369,7 @@ expression, matching against entry link, title, and feed title."
          (link (and entry (elfeed-entry-link entry))))
     (when entry
       (elfeed-untag entry 'unread)
-      (x-set-selection 'PRIMARY link)
+      (x-set-selection elfeed-search-clipboard-type link)
       (message "Copied: %s" link)
       (elfeed-search-update-line)
       (forward-line))))
