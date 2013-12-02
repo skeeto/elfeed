@@ -396,6 +396,7 @@ true, return the space cleared in bytes."
     (with-temp-file (elfeed-ref-archive-filename ".index")
       (let ((standard-output (current-buffer)))
         (prin1 next-archive)))
+    (setf elfeed-ref-cache nil)
     (setf elfeed-ref-archive next-archive)
     (mapc #'elfeed-ref-delete packed)
     :success))
