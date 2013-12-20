@@ -178,6 +178,12 @@ XML encoding declaration."
       (dotimes (i (min (length new-vector) (length vector)))
         (setf (aref new-vector i) (aref vector i))))))
 
+(defun elfeed-readable-p (value)
+  "Return non-nil if VALUE can be serialized."
+  (condition-case _
+      (prog1 t (read (prin1-to-string value)))
+    (error nil)))
+
 (provide 'elfeed-lib)
 
 ;; Local Variables:

@@ -118,6 +118,16 @@
   (should (equal [1 2] (elfeed-resize-vector [1 2 3 4] 2)))
   (should (equal [9 8 7 nil] (elfeed-resize-vector [9 8 7] 4))))
 
+(ert-deftest elfeed-readable-p ()
+  (should (elfeed-readable-p t))
+  (should (elfeed-readable-p nil))
+  (should-not (elfeed-readable-p (current-buffer)))
+  (should (elfeed-readable-p 101))
+  (should-not (elfeed-readable-p (make-marker)))
+  (should (elfeed-readable-p "foobar"))
+  (should (elfeed-readable-p (make-hash-table)))
+  (should-not (elfeed-readable-p (symbol-function '+))))
+
 (provide 'elfeed-lib-tests)
 
 ;;; elfeed-lib-tests.el ends here
