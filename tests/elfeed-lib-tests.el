@@ -113,6 +113,11 @@
   (should (eq (elfeed-keyword->symbol :foo) 'foo))
   (should (eq (elfeed-keyword->symbol 'foo) 'foo)))
 
+(ert-deftest elfeed-resize-vector ()
+  (should (equal [nil nil] (elfeed-resize-vector [] 2)))
+  (should (equal [1 2] (elfeed-resize-vector [1 2 3 4] 2)))
+  (should (equal [9 8 7 nil] (elfeed-resize-vector [9 8 7] 4))))
+
 (provide 'elfeed-lib-tests)
 
 ;;; elfeed-lib-tests.el ends here

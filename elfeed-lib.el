@@ -171,6 +171,13 @@ XML encoding declaration."
       (intern (substring (symbol-name keyword) 1))
     keyword))
 
+(defun elfeed-resize-vector (vector length)
+  "Return a copy of VECTOR set to size LENGTH."
+  (let ((new-vector (make-vector length nil)))
+    (prog1 new-vector ; don't use dotimes result (bug#16206)
+      (dotimes (i (min (length new-vector) (length vector)))
+        (setf (aref new-vector i) (aref vector i))))))
+
 (provide 'elfeed-lib)
 
 ;; Local Variables:
