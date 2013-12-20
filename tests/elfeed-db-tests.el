@@ -214,6 +214,17 @@
                     (content (elfeed-deref (elfeed-entry-content entry))))
                 (should (string= title content))))))))))
 
+(ert-deftest elfeed-db-upgrade ()
+  (with-elfeed-test
+    (elfeed-db-ensure)
+    (setf (gethash "foo" elfeed-db-feeds) [cl-struct-elfeed-feed 1])
+    (setf (gethash "bar" elfeed-db-feeds) [cl-struct-elfeed-feed 1 2])
+    (setf (gethash "baz" elfeed-db-feeds) [cl-struct-elfeed-feed 1 2 3])
+    (elfeed-db-upgrade)
+    (should (elfeed-feed-p (elfeed-db-get-feed "foo")))
+    (should (elfeed-feed-p (elfeed-db-get-feed "bar")))
+    (should (elfeed-feed-p (elfeed-db-get-feed "baz")))))
+
 (provide 'elfeed-db-tests)
 
 ;;; elfeed-db-tests.el ends here

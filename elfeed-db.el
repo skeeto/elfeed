@@ -62,7 +62,7 @@
 (defvar elfeed-db-index nil
   "Collection of all entries sorted by date, part of `elfeed-db'.")
 
-(defvar elfeed-db-version "0.0.1"
+(defvar elfeed-db-version "0.0.2"
   "The database version this version of Elfeed expects to use.")
 
 (defvar elfeed-new-entry-hook ()
@@ -77,11 +77,11 @@ the :last-update time is updated.")
 
 (defstruct elfeed-feed
   "A web feed, contains elfeed-entry structs."
-  id url title author)
+  id url title author meta)
 
 (defstruct elfeed-entry
   "A single entry from a feed, normalized towards Atom."
-  id title link date content content-type enclosures tags feed-id)
+  id title link date content content-type enclosures tags feed-id meta)
 
 (defun elfeed-entry-merge (a b)
   "Merge B into A, preserving A's tags. Return true if an actual
@@ -226,6 +226,24 @@ Use `elfeed-db-return' to exit early and optionally return data.
         (prin1 elfeed-db)
         :success))))
 
+(defun elfeed-db-upgrade ()
+  "Upgrade the database from a previous format.
+This function increases the size of the structs in the database."
+  (loop with feed-size = (length (make-elfeed-feed))
+        for feed hash-values in elfeed-db-feeds
+        using (hash-key id)
+        unless (elfeed-feed-p feed)
+        do (setf (gethash id elfeed-db-feeds)
+                 (elfeed-resize-vector feed feed-size)))
+  (loop with entry-size = (length (make-elfeed-entry))
+        for entry hash-values in elfeed-db-entries
+        using (hash-key id)
+        unless (elfeed-entry-p entry)
+        do (setf (gethash id elfeed-db-entries)
+                 (elfeed-resize-vector entry entry-size)))
+  (plist-put elfeed-db :version elfeed-db-version)
+  elfeed-db-version)
+
 (defun elfeed-db-load ()
   "Load the database index from the filesystem."
   (let ((index (expand-file-name "index" elfeed-db-directory)))
@@ -243,7 +261,9 @@ Use `elfeed-db-return' to exit early and optionally return data.
           elfeed-db-entries (plist-get elfeed-db :entries)
           elfeed-db-index (plist-get elfeed-db :index)
           ;; Internal function use required for security!
-          (avl-tree--cmpfun elfeed-db-index) #'elfeed-db-compare)))
+          (avl-tree--cmpfun elfeed-db-index) #'elfeed-db-compare)
+    (when (version< (or (plist-get elfeed-db :version) "0") elfeed-db-version)
+      (elfeed-db-upgrade))))
 
 (defun elfeed-db-ensure ()
   "Ensure that the database has been loaded."
