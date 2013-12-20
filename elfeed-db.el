@@ -39,6 +39,10 @@
 ;; next few years. This means the database format can't exploit
 ;; circular references.
 
+;; Entry and feed objects can have arbitrary metadata attached,
+;; automatically stored in the database. The setf-able `elfeed-meta'
+;; function is used to access these.
+
 ;;; Code:
 
 (require 'cl)
@@ -276,6 +280,35 @@ This function increases the size of the structs in the database."
     (if (= count-table count-tree)
         count-table
       (error "Elfeed database error: entry count mismatch."))))
+
+;; Metadata:
+
+(defun elfeed-meta--plist (thing)
+  "Get the metadata plist for THING."
+  (typecase thing
+    (elfeed-feed  (elfeed-feed-meta  thing))
+    (elfeed-entry (elfeed-entry-meta thing))
+    (t (error "Don't know how to access metadata on %S" thing))))
+
+(defun elfeed-meta--set-plist (thing plist)
+  "Set the metadata plist on THING to PLIST."
+  (typecase thing
+    (elfeed-feed  (setf (elfeed-feed-meta thing) plist))
+    (elfeed-entry (setf (elfeed-entry-meta thing) plist))
+    (t (error "Don't know how to access metadata on %S" thing))))
+
+(defun elfeed-meta (thing key)
+  "Access metadata for THING (entry, feed) under KEY."
+  (plist-get (elfeed-meta--plist thing) key))
+
+(defun elfeed-meta--put (thing key value)
+  "Set metadata to VALUE on THING under KEY."
+  (when (not (elfeed-readable-p value)) (error "New value must be readable."))
+  (let ((new-plist (plist-put (elfeed-meta--plist thing) key value)))
+    (prog1 value
+      (elfeed-meta--set-plist thing new-plist))))
+
+(gv-define-simple-setter elfeed-meta elfeed-meta--put)
 
 ;; Filesystem storage:
 

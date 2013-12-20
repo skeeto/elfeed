@@ -225,6 +225,18 @@
     (should (elfeed-feed-p (elfeed-db-get-feed "bar")))
     (should (elfeed-feed-p (elfeed-db-get-feed "baz")))))
 
+(ert-deftest elfeed-db-meta ()
+  (with-elfeed-test
+    (let* ((feed (elfeed-db-get-feed (elfeed-test-generate-url)))
+           (entry (elfeed-test-generate-entry feed)))
+      (should (null (elfeed-meta feed :status)))
+      (should (null (elfeed-meta entry :rating)))
+      (setf (elfeed-meta feed :status) 'down
+            (elfeed-meta entry :rating) 4)
+      (should (equal 'down (elfeed-meta feed :status)))
+      (should (equal 4 (elfeed-meta entry :rating)))
+      (should-error (setf (elfeed-meta entry :rating) (current-buffer))))))
+
 (provide 'elfeed-db-tests)
 
 ;;; elfeed-db-tests.el ends here
