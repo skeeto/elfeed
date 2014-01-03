@@ -27,6 +27,8 @@
       (define-key map "b" 'elfeed-show-visit)
       (define-key map "y" 'elfeed-show-yank)
       (define-key map "u" (elfeed-expose #'elfeed-show-tag 'unread))
+      (define-key map "+" 'elfeed-show-tag)
+      (define-key map "-" 'elfeed-show-untag)
       (define-key map (kbd "SPC") 'scroll-up-command)
       (define-key map (kbd "DEL") 'scroll-down-command)
       (define-key map [mouse-2] 'shr-browse-url)))
@@ -153,10 +155,24 @@
 
 (defun elfeed-show-tag (&rest tags)
   "Add TAGS to the displayed entry."
+  (interactive (list (intern (read-from-minibuffer "Tag: "))))
   (let ((entry elfeed-show-entry))
     (apply #'elfeed-tag entry tags)
     (with-current-buffer (elfeed-search-buffer)
-      (elfeed-search-update-entry entry))))
+      (elfeed-search-update-entry entry))
+    (elfeed-show-refresh)))
+
+(defun elfeed-show-untag (&rest tags)
+  "Remove TAGS from the displayed entry."
+  (interactive (let* ((tags (elfeed-entry-tags elfeed-show-entry))
+                      (names (mapcar #'symbol-name tags))
+                      (select (completing-read "Untag: " names nil :match)))
+                 (list (intern select))))
+  (let ((entry elfeed-show-entry))
+    (apply #'elfeed-untag entry tags)
+    (with-current-buffer (elfeed-search-buffer)
+      (elfeed-search-update-entry entry))
+    (elfeed-show-refresh)))
 
 (provide 'elfeed-show)
 
