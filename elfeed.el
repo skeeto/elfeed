@@ -70,7 +70,7 @@ when they are first discovered."
 
 (defcustom elfeed-max-connections
   ;; Windows Emacs cannot open many sockets at once.
-  (if (or (not (fboundp 'gnutls-available-p))
+  (if (or (not (and (fboundp 'gnutls-available-p) (gnutls-available-p)))
           (eq system-type 'windows-nt))
       1
     4)
