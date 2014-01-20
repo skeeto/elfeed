@@ -114,7 +114,11 @@ XML encoding declaration."
         (setq end (+ beg
                      (decode-coding-region beg end coding-system))))
       (goto-char beg)))
-  (xml-parse-region beg end buffer parse-dtd parse-ns))
+  (if (elfeed-libxml-supported-p)
+      (with-current-buffer (or buffer (current-buffer))
+        (list (libxml-parse-xml-region
+               (or beg (point-min)) (or end (point-max)))))
+    (xml-parse-region beg end buffer parse-dtd parse-ns)))
 
 (defun elfeed-directory-empty-p (dir)
   "Return non-nil if DIR is empty."
@@ -158,12 +162,19 @@ XML encoding declaration."
                                 (not (string= data (elfeed-slurp file t)))))
                        (delete-file file)))))))))
 
+(defvar elfeed-libxml-supported-p--cache :unknown
+  "To avoid running the relatively expensive test more than once.")
+
 (defun elfeed-libxml-supported-p ()
   "Return non-nil if `libxml-parse-html-region' is available."
-  (with-temp-buffer
-    (insert "<html></html>")
-    (and (fboundp 'libxml-parse-html-region)
-         (not (null (libxml-parse-html-region (point-min) (point-max)))))))
+  (if (not (eq elfeed-libxml-supported-p--cache :unknown))
+      elfeed-libxml-supported-p--cache
+    (setf elfeed-libxml-supported-p--cache
+          (with-temp-buffer
+            (insert "<html></html>")
+            (and (fboundp 'libxml-parse-html-region)
+                 (not (null (libxml-parse-html-region
+                             (point-min) (point-max)))))))))
 
 (defun elfeed-keyword->symbol (keyword)
   "If a keyword, convert KEYWORD into a plain symbol (remove the colon)."
