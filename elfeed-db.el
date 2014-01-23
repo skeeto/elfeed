@@ -45,7 +45,7 @@
 
 ;;; Code:
 
-(require 'cl)
+(require 'cl-lib)
 (require 'avl-tree)
 (require 'elfeed-lib)
 
@@ -79,11 +79,11 @@ the :last-update time is updated.")
 
 ;; Data model:
 
-(defstruct elfeed-feed
+(cl-defstruct (elfeed-feed (:constructor elfeed-feed--create))
   "A web feed, contains elfeed-entry structs."
   id url title author meta)
 
-(defstruct elfeed-entry
+(cl-defstruct (elfeed-entry (:constructor elfeed-entry--create))
   "A single entry from a feed, normalized towards Atom."
   id title link date content content-type enclosures tags feed-id meta)
 
@@ -94,11 +94,11 @@ update occurred, not counting content."
         (elfeed-entry-content a) (elfeed-entry-content b))
   (not
    (zerop
-    (loop for i from 0 below (length a)
-          for part-a = (aref a i)
-          for part-b = (aref b i)
-          count (not (equal part-a part-b))
-          do (setf (aref a i) part-b)))))
+    (cl-loop for i from 0 below (length a)
+             for part-a = (aref a i)
+             for part-b = (aref b i)
+             count (not (equal part-a part-b))
+             do (setf (aref a i) part-b)))))
 
 (defun elfeed-db-get-feed (id)
   "Get/create the feed for ID."
@@ -106,7 +106,7 @@ update occurred, not counting content."
   (let ((feed (gethash id elfeed-db-feeds)))
     (or feed
         (setf (gethash id elfeed-db-feeds)
-              (make-elfeed-feed :id id)))))
+              (elfeed-feed--create :id id)))))
 
 (defun elfeed-db-get-entry (id)
   "Get the entry for ID."
@@ -131,30 +131,30 @@ update occurred, not counting content."
 (defun elfeed-db-add (entries)
   "Add ENTRIES to the database."
   (elfeed-db-ensure)
-  (loop for entry in entries
-        for id = (elfeed-entry-id entry)
-        for original = (gethash id elfeed-db-entries)
-        for new-date = (elfeed-entry-date entry)
-        for original-date = (and original (elfeed-entry-date original))
-        do (elfeed-deref-entry entry)
-        when original count
-          (if (= new-date original-date)
-              (elfeed-entry-merge original entry)
-            (avl-tree-delete elfeed-db-index id)
-            (prog1 (elfeed-entry-merge original entry)
-              (avl-tree-enter elfeed-db-index id)))
-          into change-count
-        else count
-          (setf (gethash id elfeed-db-entries) entry)
-          into change-count
-        and do
-          (progn
-            (avl-tree-enter elfeed-db-index id)
-            (loop for hook in elfeed-new-entry-hook
-                  do (funcall hook entry)))
-        finally
-          (unless (zerop change-count)
-            (elfeed-db-set-update-time)))
+  (cl-loop for entry in entries
+           for id = (elfeed-entry-id entry)
+           for original = (gethash id elfeed-db-entries)
+           for new-date = (elfeed-entry-date entry)
+           for original-date = (and original (elfeed-entry-date original))
+           do (elfeed-deref-entry entry)
+           when original count
+           (if (= new-date original-date)
+               (elfeed-entry-merge original entry)
+             (avl-tree-delete elfeed-db-index id)
+             (prog1 (elfeed-entry-merge original entry)
+               (avl-tree-enter elfeed-db-index id)))
+           into change-count
+           else count
+           (setf (gethash id elfeed-db-entries) entry)
+           into change-count
+           and do
+           (progn
+             (avl-tree-enter elfeed-db-index id)
+             (cl-loop for hook in elfeed-new-entry-hook
+                      do (funcall hook entry)))
+           finally
+           (unless (zerop change-count)
+             (elfeed-db-set-update-time)))
   :success)
 
 (defun elfeed-entry-feed (entry)
@@ -163,8 +163,8 @@ update occurred, not counting content."
 
 (defun elfeed-normalize-tags (tags &rest more-tags)
   "Return the normalized tag list for TAGS."
-  (let ((all (copy-seq (apply #'append tags more-tags))))
-    (remove-duplicates (sort* all #'string< :key #'symbol-name))))
+  (let ((all (copy-sequence (apply #'append tags more-tags))))
+    (cl-remove-duplicates (cl-sort all #'string< :key #'symbol-name))))
 
 (defun elfeed-tag (entry &rest tags)
   "Add TAGS to ENTRY."
@@ -175,8 +175,8 @@ update occurred, not counting content."
 (defun elfeed-untag (entry &rest tags)
   "Remove TAGS from ENTRY."
   (setf (elfeed-entry-tags entry)
-        (loop for tag in (elfeed-entry-tags entry)
-              unless (member tag tags) collect tag)))
+        (cl-loop for tag in (elfeed-entry-tags entry)
+                 unless (member tag tags) collect tag)))
 
 (defun elfeed-tagged-p (tag entry)
   "Return true if ENTRY is tagged by TAG."
@@ -201,9 +201,9 @@ Use `elfeed-db-return' to exit early and optionally return data.
        (elfeed-db-ensure)
        (avl-tree-mapc
         (lambda (id)
-          (let* ((,(first entry-and-feed) (elfeed-db-get-entry id))
-                 (,(second entry-and-feed)
-                  (elfeed-entry-feed ,(first entry-and-feed))))
+          (let* ((,(cl-first entry-and-feed) (elfeed-db-get-entry id))
+                 (,(cl-second entry-and-feed)
+                  (elfeed-entry-feed ,(cl-first entry-and-feed))))
             ,@body))
         elfeed-db-index))))
 
@@ -211,8 +211,8 @@ Use `elfeed-db-return' to exit early and optionally return data.
   "Apply `elfeed-new-entry-hook' to all entries in the database."
   (interactive)
   (with-elfeed-db-visit (entry _)
-    (loop for hook in elfeed-new-entry-hook
-          do (funcall hook entry))))
+    (cl-loop for hook in elfeed-new-entry-hook
+             do (funcall hook entry))))
 
 (defmacro elfeed-db-return (&optional value)
   "Use this to exit early and return VALUE from `with-elfeed-db-visit'."
@@ -234,18 +234,18 @@ Use `elfeed-db-return' to exit early and optionally return data.
 (defun elfeed-db-upgrade ()
   "Upgrade the database from a previous format.
 This function increases the size of the structs in the database."
-  (loop with feed-size = (length (make-elfeed-feed))
-        for feed hash-values in elfeed-db-feeds
-        using (hash-key id)
-        unless (elfeed-feed-p feed)
-        do (setf (gethash id elfeed-db-feeds)
-                 (elfeed-resize-vector feed feed-size)))
-  (loop with entry-size = (length (make-elfeed-entry))
-        for entry hash-values in elfeed-db-entries
-        using (hash-key id)
-        unless (elfeed-entry-p entry)
-        do (setf (gethash id elfeed-db-entries)
-                 (elfeed-resize-vector entry entry-size)))
+  (cl-loop with feed-size = (length (elfeed-feed--create))
+           for feed hash-values in elfeed-db-feeds
+           using (hash-key id)
+           unless (elfeed-feed-p feed)
+           do (setf (gethash id elfeed-db-feeds)
+                    (elfeed-resize-vector feed feed-size)))
+  (cl-loop with entry-size = (length (elfeed-entry--create))
+           for entry hash-values in elfeed-db-entries
+           using (hash-key id)
+           unless (elfeed-entry-p entry)
+           do (setf (gethash id elfeed-db-entries)
+                    (elfeed-resize-vector entry entry-size)))
   (plist-put elfeed-db :version elfeed-db-version)
   elfeed-db-version)
 
@@ -286,17 +286,17 @@ This function increases the size of the structs in the database."
 
 (defun elfeed-meta--plist (thing)
   "Get the metadata plist for THING."
-  (typecase thing
+  (cl-typecase thing
     (elfeed-feed  (elfeed-feed-meta  thing))
     (elfeed-entry (elfeed-entry-meta thing))
-    (t (error "Don't know how to access metadata on %S" thing))))
+    (otherwise (error "Don't know how to access metadata on %S" thing))))
 
 (defun elfeed-meta--set-plist (thing plist)
   "Set the metadata plist on THING to PLIST."
-  (typecase thing
+  (cl-typecase thing
     (elfeed-feed  (setf (elfeed-feed-meta thing) plist))
     (elfeed-entry (setf (elfeed-entry-meta thing) plist))
-    (t (error "Don't know how to access metadata on %S" thing))))
+    (otherwise (error "Don't know how to access metadata on %S" thing))))
 
 (defun elfeed-meta (thing key)
   "Access metadata for THING (entry, feed) under KEY."
@@ -319,7 +319,7 @@ This function increases the size of the structs in the database."
 (defvar elfeed-ref-cache nil
   "Temporary storage of the full archive content.")
 
-(defstruct elfeed-ref
+(cl-defstruct (elfeed-ref (:constructor elfeed-ref--create))
   id)
 
 (defun elfeed-ref--file (ref)
@@ -329,7 +329,7 @@ This function increases the size of the structs in the database."
          (subdir (expand-file-name (substring id 0 2) root)))
     (expand-file-name id subdir)))
 
-(defun* elfeed-ref-archive-filename (&optional (suffix ""))
+(cl-defun elfeed-ref-archive-filename (&optional (suffix ""))
   "Return the base filename of the archive files."
   (concat (expand-file-name "data/archive" elfeed-db-directory) suffix))
 
@@ -337,9 +337,9 @@ This function increases the size of the structs in the database."
   "Load the archived ref index."
   (let ((archive-index (elfeed-ref-archive-filename ".index")))
     (if (file-exists-p archive-index)
-      (with-temp-buffer
-        (insert-file-contents archive-index)
-        (setf elfeed-ref-archive (read (current-buffer))))
+        (with-temp-buffer
+          (insert-file-contents archive-index)
+          (setf elfeed-ref-archive (read (current-buffer))))
       (setf elfeed-ref-archive :empty))))
 
 (defun elfeed-ref-archive-ensure ()
@@ -381,7 +381,7 @@ This function increases the size of the structs in the database."
   (if (elfeed-ref-p content)
       content
     (let* ((id (secure-hash 'sha1 (encode-coding-string content 'utf-8 t)))
-           (ref (make-elfeed-ref :id id))
+           (ref (elfeed-ref--create :id id))
            (file (elfeed-ref--file ref)))
       (prog1 ref
         (unless (elfeed-ref-exists-p ref)
@@ -410,7 +410,7 @@ This function increases the size of the structs in the database."
 true, return the space cleared in bytes."
   (let* ((data (expand-file-name "data" elfeed-db-directory))
          (dirs (directory-files data t "^[0-9a-z]\\{2\\}$"))
-         (ids (mapcan (lambda (d) (directory-files d nil nil t)) dirs))
+         (ids (cl-mapcan (lambda (d) (directory-files d nil nil t)) dirs))
          (table (make-hash-table :test 'equal)))
     (dolist (id ids)
       (setf (gethash id table) nil))
@@ -418,17 +418,17 @@ true, return the space cleared in bytes."
       (let ((content (elfeed-entry-content entry)))
         (when (elfeed-ref-p content)
           (setf (gethash (elfeed-ref-id content) table) t))))
-    (loop for id hash-keys of table using (hash-value used)
-          for used-p = (or used (member id '("." "..")))
-          when (and (not used-p) stats-p)
-          sum (let* ((ref (make-elfeed-ref :id id))
-                     (file (elfeed-ref--file ref)))
-                (* 1.0 (nth 7 (file-attributes file))))
-          unless used-p
-          do (elfeed-ref-delete (make-elfeed-ref :id id))
-          finally (loop for dir in dirs
-                        when (elfeed-directory-empty-p dir)
-                        do (delete-directory dir)))))
+    (cl-loop for id hash-keys of table using (hash-value used)
+             for used-p = (or used (member id '("." "..")))
+             when (and (not used-p) stats-p)
+             sum (let* ((ref (elfeed-ref--create :id id))
+                        (file (elfeed-ref--file ref)))
+                   (* 1.0 (nth 7 (file-attributes file))))
+             unless used-p
+             do (elfeed-ref-delete (elfeed-ref--create :id id))
+             finally (cl-loop for dir in dirs
+                              when (elfeed-directory-empty-p dir)
+                              do (delete-directory dir)))))
 
 (defun elfeed-db-pack ()
   "Pack all content into a single archive for efficient storage."
@@ -474,9 +474,5 @@ gzip-compressed files, so the gzip program must be in your PATH."
   (add-hook 'kill-emacs-hook #'elfeed-db-save))
 
 (provide 'elfeed-db)
-
-;; Local Variables:
-;; byte-compile-warnings: (not cl-functions)
-;; End:
 
 ;;; elfeed-db.el ends here

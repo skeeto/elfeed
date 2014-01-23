@@ -4,7 +4,7 @@
 
 ;;; Code:
 
-(require 'cl)
+(require 'cl-lib)
 (require 'shr)
 (require 'url-parse)
 (require 'browse-url)
@@ -57,7 +57,7 @@
          (libxml-parse-html-region (point-min) (point-max) base-url))
      '(i () "Elfeed: libxml2 functionality is unavailable"))))
 
-(defun* elfeed-insert-link (url &optional (content url))
+(cl-defun elfeed-insert-link (url &optional (content url))
   "Insert a clickable hyperlink to URL titled CONTENT."
   (when (> (length content) (- shr-width 8))
     (let ((len (- (/ shr-width 2) 10)))
@@ -101,10 +101,10 @@
     (insert (propertize "Link: " 'face 'message-header-name))
     (elfeed-insert-link link link)
     (insert "\n")
-    (loop for enclosure in (elfeed-entry-enclosures elfeed-show-entry)
-          do (insert (propertize "Enclosure: " 'face 'message-header-name))
-          do (elfeed-insert-link (car enclosure))
-          do (insert "\n"))
+    (cl-loop for enclosure in (elfeed-entry-enclosures elfeed-show-entry)
+             do (insert (propertize "Enclosure: " 'face 'message-header-name))
+             do (elfeed-insert-link (car enclosure))
+             do (insert "\n"))
     (insert "\n")
     (if content
         (if (eq type 'html)
@@ -175,9 +175,5 @@
     (elfeed-show-refresh)))
 
 (provide 'elfeed-show)
-
-;; Local Variables:
-;; byte-compile-warnings: (not cl-functions)
-;; End:
 
 ;;; elfeed-show.el ends here

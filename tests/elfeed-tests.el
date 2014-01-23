@@ -161,7 +161,7 @@
       (goto-char (point-min))
       (let ((url (elfeed-test-generate-url))
             (xml (elfeed-xml-parse-region)))
-        (destructuring-bind (a b) (elfeed-entries-from-rss url xml)
+        (cl-destructuring-bind (a b) (elfeed-entries-from-rss url xml)
           (should (string= (elfeed-feed-title (elfeed-db-get-feed url))
                            "RSS Title"))
           (should (string= (elfeed-entry-title a) "Example entry 1"))
@@ -177,7 +177,7 @@
       (goto-char (point-min))
       (let ((url (elfeed-test-generate-url))
             (xml (elfeed-xml-parse-region)))
-        (destructuring-bind (a b) (elfeed-entries-from-atom url xml)
+        (cl-destructuring-bind (a b) (elfeed-entries-from-atom url xml)
           (should (string= (elfeed-feed-title (elfeed-db-get-feed url))
                            "Example Feed"))
           (should (string= (elfeed-entry-title a)
@@ -198,7 +198,7 @@
       (goto-char (point-min))
       (let ((url (elfeed-test-generate-url))
             (xml (elfeed-xml-parse-region)))
-        (destructuring-bind (a b) (elfeed-entries-from-rss1.0 url xml)
+        (cl-destructuring-bind (a b) (elfeed-entries-from-rss1.0 url xml)
           (should (string= (elfeed-feed-title (elfeed-db-get-feed url))
                            "XML.com"))
           (should (string= (elfeed-entry-title a)
@@ -221,24 +221,24 @@
                                        :feed-title '(not "exclude"))))
       (setf (elfeed-feed-title feed) "exclude this")
       (should-not
-       (funcall tagger (make-elfeed-entry
+       (funcall tagger (elfeed-entry--create
                         :title "welcome to foobar: enjoy your stay"
                         :date (elfeed-float-time "6 months ago")
                         :feed-id (elfeed-feed-id feed))))
       (setf (elfeed-feed-title feed) "now include this")
       (should
-       (funcall tagger (make-elfeed-entry
+       (funcall tagger (elfeed-entry--create
                         :title "welcome to foobar: enjoy your stay"
                         :date (elfeed-float-time "6 months ago")
                         :feed-id (elfeed-feed-id feed))))
       ;; May fail if this test takes more than 2 months to run!
       (should-not
-       (funcall tagger (make-elfeed-entry
+       (funcall tagger (elfeed-entry--create
                         :title "welcome to foobar: enjoy your stay"
                         :date (elfeed-float-time "14 months ago")
                         :feed-id (elfeed-feed-id feed))))
       (should-not
-       (funcall tagger (make-elfeed-entry
+       (funcall tagger (elfeed-entry--create
                         :title "welcome to barfoo: enjoy your stay"
                         :date (elfeed-float-time "1 month ago")
                         :feed-id (elfeed-feed-id feed)))))))
@@ -260,14 +260,14 @@
       (ignore-errors (delete-file file))))
   (with-elfeed-test
     (let* ((outfile (make-temp-file "opml"))
-           (feeds (loop repeat 10 collect (elfeed-test-generate-url)))
+           (feeds (cl-loop repeat 10 collect (elfeed-test-generate-url)))
            (elfeed-feeds feeds))
       (unwind-protect
           (progn
-            (loop for url in elfeed-feeds
-                  for feed = (elfeed-db-get-feed url)
-                  for title = (elfeed-test-generate-title)
-                  do (setf (elfeed-feed-title feed) title))
+            (cl-loop for url in elfeed-feeds
+                     for feed = (elfeed-db-get-feed url)
+                     for title = (elfeed-test-generate-title)
+                     do (setf (elfeed-feed-title feed) title))
             (elfeed-export-opml outfile)
             (setf elfeed-feeds nil)
             (elfeed-load-opml outfile)
@@ -282,7 +282,7 @@
     (should (equal (elfeed-feed-autotags "foo") '()))
     (should (equal (elfeed-feed-autotags "qux") '()))
     (should (equal (elfeed-feed-autotags "bar") '(tag-a tag-b)))
-    (should (equal (elfeed-feed-autotags (make-elfeed-feed :url "bar"))
+    (should (equal (elfeed-feed-autotags (elfeed-feed--create :url "bar"))
                    '(tag-a tag-b))))
   (with-elfeed-test
     (with-temp-buffer
@@ -290,7 +290,7 @@
       (goto-char (point-min))
       (let* ((elfeed-feeds '("http://bar/" ("http://foo/" tag-a :tag-b)))
              (xml (elfeed-xml-parse-region))
-             (entry (first (elfeed-entries-from-atom "http://foo/" xml))))
+             (entry (cl-first (elfeed-entries-from-atom "http://foo/" xml))))
         (should (equal (elfeed-entry-tags entry)
                        (elfeed-normalize-tags '(unread tag-a tag-b))))))))
 

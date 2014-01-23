@@ -9,7 +9,7 @@
 
 ;;; Code:
 
-(require 'cl)
+(require 'cl-lib)
 (require 'time-date)
 (require 'url-parse)
 
@@ -84,7 +84,7 @@ Align should be a keyword :left or :right."
   "Like `float-time' but accept anything reasonable for DATE,
 defaulting to the current time if DATE could not be parsed. Date
 is allowed to be relative to now (`elfeed-time-duration')."
-  (typecase date
+  (cl-typecase date
     (string
      (let ((duration (elfeed-time-duration date)))
        (if duration
@@ -95,7 +95,7 @@ is allowed to be relative to now (`elfeed-time-duration')."
              (float-time time))))))
     (integer date)
     (list (float-time date))
-    (t (float-time))))
+    (otherwise (float-time))))
 
 (defun elfeed-xml-parse-region (&optional beg end buffer parse-dtd parse-ns)
   "Decode (if needed) and parse XML file. Uses coding system from
@@ -128,7 +128,7 @@ XML encoding declaration."
       (insert-file-contents file))
     (buffer-string)))
 
-(defun* elfeed-spit (file string &key fsync append (encoding 'utf-8))
+(cl-defun elfeed-spit (file string &key fsync append (encoding 'utf-8))
   "Write STRING to FILE."
   (let ((coding-system-for-write encoding)
         (write-region-inhibit-fsync (not fsync)))
@@ -148,9 +148,10 @@ XML encoding declaration."
                (ignore-errors
                  (save-window-excursion
                    (let ((file (make-temp-file "gziptest" nil ".gz"))
-                         (data (loop for i from 32 to 3200
-                                     collect i into chars
-                                     finally (return (apply #'string chars)))))
+                         (data (cl-loop for i from 32 to 3200
+                                        collect i into chars
+                                        finally
+                                        (return (apply #'string chars)))))
                      (unwind-protect
                          (progn
                            (elfeed-spit file data)
@@ -185,9 +186,5 @@ XML encoding declaration."
     (error nil)))
 
 (provide 'elfeed-lib)
-
-;; Local Variables:
-;; byte-compile-warnings: (not cl-functions)
-;; End:
 
 ;;; elfeed-lib.el ends here

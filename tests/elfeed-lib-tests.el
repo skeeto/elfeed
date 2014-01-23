@@ -57,7 +57,7 @@
   (should (string= (elfeed-cleanup "foo\nbar") "foo bar")))
 
 (ert-deftest elfeed-float-time ()
-  (macrolet ((test (time seconds)
+  (cl-macrolet ((test (time seconds)
                    `(should (= (elfeed-float-time ,time) ,seconds))))
     (test "1985-03-24T03:23:42Z"          480482622.0)
     (test "Mon,  5 May 1986 15:16:09 GMT" 515690169.0)))

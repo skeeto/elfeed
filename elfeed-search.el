@@ -4,7 +4,7 @@
 
 ;;; Code:
 
-(require 'cl)
+(require 'cl-lib)
 (require 'browse-url)
 (require 'wid-edit) ; widget-inactive face
 
@@ -188,20 +188,20 @@ Clear `elfeed-search-cache' (or restart Emacs) after setting."
         (must-not-have ())
         (after nil)
         (matches ()))
-    (loop for element in (split-string filter)
-          for type = (aref element 0)
-          do (case type
-               (?+ (push (intern (substring element 1)) must-have))
-               (?- (push (intern (substring element 1)) must-not-have))
-               (?@ (setf after (elfeed-time-duration (substring element 1))))
-               (t  (when (elfeed-valid-regexp-p element)
-                     (push element matches)))))
+    (cl-loop for element in (split-string filter)
+             for type = (aref element 0)
+             do (cl-case type
+                  (?+ (push (intern (substring element 1)) must-have))
+                  (?- (push (intern (substring element 1)) must-not-have))
+                  (?@ (setf after (elfeed-time-duration (substring element 1))))
+                  (otherwise (when (elfeed-valid-regexp-p element)
+                               (push element matches)))))
     (list after must-have must-not-have matches)))
 
 (defun elfeed-search-filter (filter entry feed)
   "Filter out only entries that match the filter. See
 `elfeed-search-set-filter' for format/syntax documentation."
-  (destructuring-bind (after must-have must-not-have matches) filter
+  (cl-destructuring-bind (after must-have must-not-have matches) filter
     (let* ((tags (elfeed-entry-tags entry))
            (date (elfeed-entry-date entry))
            (age (- (float-time) date))
@@ -210,10 +210,10 @@ Clear `elfeed-search-cache' (or restart Emacs) after setting."
            (feed-title (or (elfeed-feed-title feed) "")))
       (when (and after (> age after))
         (elfeed-db-return))
-      (and (every  (lambda (tag) (member tag tags)) must-have)
-           (notany (lambda (tag) (member tag tags)) must-not-have)
+      (and (cl-every  (lambda (tag) (member tag tags)) must-have)
+           (cl-notany (lambda (tag) (member tag tags)) must-not-have)
            (or (null matches)
-               (some (lambda (m)
+               (cl-some (lambda (m)
                        (or (and title      (string-match-p m title))
                            (and link       (string-match-p m link))
                            (and feed-title (string-match-p m feed-title))))
@@ -221,13 +221,13 @@ Clear `elfeed-search-cache' (or restart Emacs) after setting."
 
 (defun elfeed-search--prompt (current)
   "Prompt for a new filter, starting with CURRENT."
-   (read-from-minibuffer
-    "Filter: "
-    (if (or (string= "" current)
-            (string-match-p " $" current))
-        current
-      (concat current " "))
-    nil nil 'elfeed-search-filter-history))
+  (read-from-minibuffer
+   "Filter: "
+   (if (or (string= "" current)
+           (string-match-p " $" current))
+       current
+     (concat current " "))
+   nil nil 'elfeed-search-filter-history))
 
 (defun elfeed-search-set-filter (new-filter)
   "Set a new search filter for the elfeed-search buffer.
@@ -305,18 +305,19 @@ expression, matching against entry link, title, and feed title."
             (elfeed-search-insert-header)
             (insert "\n")
             (elfeed-search--update-list)
-            (loop for entry in elfeed-search-entries
-                  when (gethash (list (window-width) entry) elfeed-search-cache)
-                  do (insert it)
-                  else
-                  do (insert
-                      (with-temp-buffer
-                        (elfeed-search-print entry)
-                        (setf (gethash (list (window-width)
-                                             (copy-sequence entry))
-                                       elfeed-search-cache)
-                              (buffer-string))))
-                  do (insert "\n"))
+            (cl-loop for entry in elfeed-search-entries
+                     when (gethash (list (window-width) entry)
+                                   elfeed-search-cache)
+                     do (insert it)
+                     else
+                     do (insert
+                         (with-temp-buffer
+                           (elfeed-search-print entry)
+                           (setf (gethash (list (window-width)
+                                                (copy-sequence entry))
+                                          elfeed-search-cache)
+                                 (buffer-string))))
+                     do (insert "\n"))
             (insert "End of entries.\n")
             (setf elfeed-search-last-update (float-time))))
       (let ((inhibit-read-only t))
@@ -337,7 +338,7 @@ expression, matching against entry link, title, and feed title."
 
 (defun elfeed-search-update-entry (entry)
   "Redraw a specific entry."
-  (let ((n (position entry elfeed-search-entries)))
+  (let ((n (cl-position entry elfeed-search-entries)))
     (when n (elfeed-search-update-line (+ elfeed-search--offset n)))))
 
 (defun elfeed-search-selected (&optional ignore-region)
@@ -345,20 +346,21 @@ expression, matching against entry link, title, and feed title."
   (let ((use-region (and (not ignore-region) (use-region-p))))
     (let ((start (if use-region (region-beginning) (point)))
           (end   (if use-region (region-end)       (point))))
-      (loop for line from (line-number-at-pos start) to (line-number-at-pos end)
-            for offset = (- line elfeed-search--offset)
-            when (and (>= offset 0) (nth offset elfeed-search-entries))
-            collect it into selected
-            finally (return (if ignore-region (car selected) selected))))))
+      (cl-loop for line from (line-number-at-pos start)
+               to (line-number-at-pos end)
+               for offset = (- line elfeed-search--offset)
+               when (and (>= offset 0) (nth offset elfeed-search-entries))
+               collect it into selected
+               finally (return (if ignore-region (car selected) selected))))))
 
 (defun elfeed-search-browse-url ()
   "Visit the current entry in your browser using `browse-url'."
   (interactive)
   (let ((entries (elfeed-search-selected)))
-    (loop for entry in entries
-          do (elfeed-untag entry 'unread)
-          when (elfeed-entry-link entry)
-          do (browse-url it))
+    (cl-loop for entry in entries
+             do (elfeed-untag entry 'unread)
+             when (elfeed-entry-link entry)
+             do (browse-url it))
     (mapc #'elfeed-search-update-entry entries)
     (unless (use-region-p) (forward-line))))
 
@@ -378,7 +380,7 @@ expression, matching against entry link, title, and feed title."
   "Apply TAG to all selected entries."
   (interactive (list (intern (read-from-minibuffer "Tag: "))))
   (let ((entries (elfeed-search-selected)))
-    (loop for entry in entries do (elfeed-tag entry tag))
+    (cl-loop for entry in entries do (elfeed-tag entry tag))
     (mapc #'elfeed-search-update-entry entries)
     (unless (use-region-p) (forward-line))))
 
@@ -386,7 +388,7 @@ expression, matching against entry link, title, and feed title."
   "Remove TAG from all selected entries."
   (interactive (list (intern (read-from-minibuffer "Tag: "))))
   (let ((entries (elfeed-search-selected)))
-    (loop for entry in entries do (elfeed-untag entry tag))
+    (cl-loop for entry in entries do (elfeed-untag entry tag))
     (mapc #'elfeed-search-update-entry entries)
     (unless (use-region-p) (forward-line))))
 
@@ -426,9 +428,5 @@ expression, matching against entry link, title, and feed title."
         (setq elfeed-search-filter
               (read-from-minibuffer "Filter: " elfeed-search-filter)))
     (elfeed-search-update :force)))
-
-;; Local Variables:
-;; byte-compile-warnings: (not cl-functions)
-;; End:
 
 ;;; elfeed-search.el ends here

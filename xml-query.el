@@ -23,31 +23,31 @@
 
 ;;; Code:
 
-(require 'cl)
+(require 'cl-lib)
 
 (defun xml-query-strip-ns (tag)
   "Remove the namespace, in any, from TAG."
   (when (symbolp tag)
     (let ((name (symbol-name tag)))
-      (if (find ?\: name)
+      (if (cl-find ?\: name)
           (intern (replace-regexp-in-string "^.+:" "" name))
         tag))))
 
 (defun xml-query--tag-all (match xml)
-  (loop for (tag attribs . content) in (remove-if-not #'listp xml)
-        when (or (eq tag match) (eq (xml-query-strip-ns tag) match))
-        collect (cons tag (cons attribs content))))
+  (cl-loop for (tag attribs . content) in (cl-remove-if-not #'listp xml)
+           when (or (eq tag match) (eq (xml-query-strip-ns tag) match))
+           collect (cons tag (cons attribs content))))
 
 (defun xml-query--attrib-all (attrib value xml)
-  (loop for (tag attribs . content) in (remove-if-not #'listp xml)
-        when (equal (cdr (assoc attrib attribs)) value)
-        collect (cons tag (cons attribs content))))
+  (cl-loop for (tag attribs . content) in (cl-remove-if-not #'listp xml)
+           when (equal (cdr (assoc attrib attribs)) value)
+           collect (cons tag (cons attribs content))))
 
 (defun xml-query--keyword (matcher xml)
-  (loop with match = (intern (substring (symbol-name matcher) 1))
-        for (tag attribs . content) in (remove-if-not #'listp xml)
-        when (cdr (assoc match attribs))
-        collect it))
+  (cl-loop with match = (intern (substring (symbol-name matcher) 1))
+           for (tag attribs . content) in (cl-remove-if-not #'listp xml)
+           when (cdr (assoc match attribs))
+           collect it))
 
 (defun xml-query--symbol (matcher xml)
   (xml-query--tag-all matcher xml))
@@ -58,14 +58,14 @@
     (xml-query--attrib-all attrib value xml)))
 
 (defun xml-query--list (matchers xml)
-  (loop for matcher in matchers
-        append (xml-query-all (if (listp matcher)
-                                  matcher
-                                (list matcher)) xml)))
+  (cl-loop for matcher in matchers
+           append (xml-query-all (if (listp matcher)
+                                     matcher
+                                   (list matcher)) xml)))
 
 (defun xml-query--append (xml)
-  (loop for (tag attribs . content) in (remove-if-not #'listp xml)
-        append content))
+  (cl-loop for (tag attribs . content) in (cl-remove-if-not #'listp xml)
+           append content))
 
 (defun xml-query-all (query xml)
   "Given a list of tags, XML, apply QUERY and return a list of
@@ -84,16 +84,16 @@ Atom feed:
   (xml-query-all '(feed entry link [rel \"alternate\"] :href) xml)"
   (if (null query)
       xml
-    (destructuring-bind (matcher . rest) query
+    (cl-destructuring-bind (matcher . rest) query
       (cond
        ((keywordp matcher) (xml-query--keyword matcher xml))
        ((eq matcher '*)
-        (let ((strings (remove-if-not #'stringp (xml-query--append xml))))
+        (let ((strings (cl-remove-if-not #'stringp (xml-query--append xml))))
           (when strings
             (mapconcat #'identity strings " "))))
        (:else
         (let ((matches
-               (typecase matcher
+               (cl-etypecase matcher
                  (symbol (xml-query--symbol matcher xml))
                  (vector (xml-query--vector matcher xml))
                  (list   (xml-query--list   matcher xml)))))
@@ -114,9 +114,5 @@ Atom feed:
       (car (xml-query-all query xml)))))
 
 (provide 'xml-query)
-
-;; Local Variables:
-;; byte-compile-warnings: (not cl-functions)
-;; End:
 
 ;;; xml-query.el ends here
