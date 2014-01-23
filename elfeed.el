@@ -14,6 +14,14 @@
 
 ;;; History:
 
+;; Version 1.1.0: features and fixes
+;;   * Autotagging support
+;;   * Better database performance
+;;   * Database packing
+;;   * Arbitrary struct metadata
+;;   * Added `elfeed-search-clipboard-type'
+;;   * Update to cl-lib from cl
+;;   * Lots of bug fixes
 ;; Version 1.0.1: features and fixes
 ;;   * Live filter editing
 ;;   * Support for RSS 1.0
