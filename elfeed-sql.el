@@ -2,7 +2,7 @@
 
 (require 'cl-lib)
 (require 'emacsql)
-(require 'emacsql-db)
+(require 'elfeed-db)
 
 (defvar elfeed-sql--connection nil)
 
