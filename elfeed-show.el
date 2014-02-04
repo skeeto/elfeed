@@ -31,6 +31,8 @@
       (define-key map "-" 'elfeed-show-untag)
       (define-key map (kbd "SPC") 'scroll-up-command)
       (define-key map (kbd "DEL") 'scroll-down-command)
+      (define-key map [tab] 'shr-next-link)
+      (define-key map [backtab] 'shr-previous-link)
       (define-key map [mouse-2] 'shr-browse-url)))
   "Keymap for `elfeed-show-mode'.")
 
