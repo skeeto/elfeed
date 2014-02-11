@@ -49,11 +49,6 @@
 (require 'avl-tree)
 (require 'elfeed-lib)
 
-(defcustom elfeed-db-directory "~/.elfeed"
-  "Directory where elfeed will store its database."
-  :group 'elfeed
-  :type 'directory)
-
 (defvar elfeed-db nil
   "The core database for elfeed.")
 
