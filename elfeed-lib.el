@@ -185,6 +185,16 @@ XML encoding declaration."
       (prog1 t (read (prin1-to-string value)))
     (error nil)))
 
+(defun elfeed-uuid (&rest strings)
+  "Create a UUID suitable for a feed-id or entry-id from STRINGS."
+  (let ((hash (secure-hash 'sha1 (mapconcat #'identity strings " "))))
+    (format "urn:uuid:%s-4%s-%s-%s-%s"
+            (substring hash 0 8)
+            (substring hash 8 11)
+            (substring hash 11 15)
+            (substring hash 15 19)
+            (substring hash 19 31))))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here
