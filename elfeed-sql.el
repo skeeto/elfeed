@@ -21,7 +21,6 @@
 
 (require 'cl-lib)
 (require 'emacsql)
-(require 'elfeed-db)
 
 (defcustom elfeed-db-directory "~/.elfeed"
   "Directory where elfeed will store its database.
@@ -399,7 +398,21 @@ Given no criteria, return *all* entries.
 
 ;; Old Import:
 
-(defun elfeed-sql-load-old-db ()
+(require 'elfeed)
+
+(defun elfeed-legacy-lookup (url)
+  "Determine the canonical UUID for the feed at URL."
+  (let ((buffer (url-retrieve-synchronously url)))
+    (unwind-protect
+        (with-current-buffer buffer
+          (let* ((beg (1+ (marker-position url-http-end-of-headers)))
+                 (xml (xml-parse-region beg (point-max)))
+                 (type (elfeed-feed-type xml)))
+            (or (and (eq type :atom) (xml-query '(feed id *) xml))
+                (elfeed-uuid url))))
+      (kill-buffer buffer))))
+
+(defun elfeed-legacy-import ()
   "Load everything from the old Elfeed database."
   (let* ((index (expand-file-name "index" elfeed-db-directory))
          (db (with-current-buffer (find-file-noselect index)
@@ -408,9 +421,29 @@ Given no criteria, return *all* entries.
                  (kill-buffer))))
          (feeds-hash (plist-get db :feeds))
          (entries-hash (plist-get db :entries)))
-    (cl-loop for feed hash-values of feeds-hash collect feed)
-    (cl-loop for entry hash-values of entries-hash collect entry)))
+    (elfeed-with-transaction
+     (cl-loop for feed hash-values of feeds-hash
+              for url = (elt feed 2)
+              for feed-id = (ignore-errors (elfeed-legacy-lookup url))
+              when feed-id do (elfeed-get-feed feed-id url))
+     (cl-loop for entry hash-values of entries-hash
+              for (old-id . feed-url) = (elt entry 1)
+              for feed = (elfeed-get-feed-by-url feed-url)
+              for feed-id = (if feed (elfeed-feed-id feed) "")
+              for new-id = (if (string-match "^urn:uuid:" old-id)
+                               old-id  ; atom id
+                             (elfeed-uuid feed-id old-id))
+              when feed do
+              (elfeed-entry-save
+               (elfeed-entry--create
+                :id new-id
+                :feed-id feed-id
+                :title (elt entry 2)
+                :link (elt entry 3)
+                :tags (elt entry 8)
+                :date (elt entry 4)
+                :enclosures (elt entry 7)))))))
 
-(provide 'elfeed-emacsql)
+(provide 'elfeed-sql)
 
 ;;; elfeed-emacsql.el ends here

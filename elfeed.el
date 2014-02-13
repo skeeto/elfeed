@@ -4,6 +4,8 @@
 
 ;; Author: Christopher Wellons <wellons@nullprogram.com>
 ;; URL: https://github.com/skeeto/elfeed
+;; Version: 2.0.0
+;; Package-Requires: ((emacs "24.3") (cl-lib "0.3") (emacsql "1.0.1"))
 
 ;;; Commentary:
 
@@ -67,7 +69,7 @@ when they are first discovered."
 
 (require 'elfeed-search)
 (require 'elfeed-lib)
-(require 'elfeed-db)
+(require 'elfeed-sql)
 
 (defcustom elfeed-initial-tags '(unread)
   "Initial tags for new entries."
@@ -173,20 +175,19 @@ NIL for unknown."
                                 for type = (xml-query '(:type) wrap)
                                 for length = (xml-query '(:length) wrap)
                                 collect (list href type length))))
-                 (elfeed-entry-save
-                  (elfeed-entry--create
-                   :title (elfeed-cleanup title)
-                   :feed-id feed-id
-                   :id (elfeed-cleanup id)
-                   :link link
-                   :tags (if (elfeed-get-entry-exists-p id)
-                             (elfeed-get-entry-tags entry-id)
-                           (cl-union autotags elfeed-initial-tags))
-                   :date (elfeed-float-time date)
-                   :enclosures enclosures
-                   :-content content
-                   :-content-type
-                   (if (string-match-p "html" type) 'html nil))))))))
+                 (elfeed-entry--create
+                  :title (elfeed-cleanup title)
+                  :feed-id feed-id
+                  :id (elfeed-cleanup id)
+                  :link link
+                  :tags (if (elfeed-get-entry-exists-p id)
+                            (elfeed-get-entry-tags entry-id)
+                          (cl-union autotags elfeed-initial-tags))
+                  :date (elfeed-float-time date)
+                  :enclosures enclosures
+                  :-content content
+                  :-content-type
+                  (if (string-match-p "html" type) 'html nil)))))))
 
 (defun elfeed-entries-from-rss (url xml)
   "Turn parsed RSS content into a list of elfeed-entry structs.
@@ -216,19 +217,18 @@ never actually a GUID."
                                 for type = (xml-query '(:type) wrap)
                                 for length = (xml-query '(:length) wrap)
                                 collect (list url type length))))
-                 (elfeed-entry-save
-                  (elfeed-entry--create
-                   :title (elfeed-cleanup title)
-                   :id (elfeed-uuid feed-id (elfeed-cleanup id))
-                   :feed-id feed-id
-                   :link link
-                   :tags (if (elfeed-get-entry-exists-p id)
-                             (elfeed-get-entry-tags entry-id)
-                           (cl-union autotags elfeed-initial-tags))
-                   :date (elfeed-float-time date)
-                   :enclosures enclosures
-                   :-content description
-                   :-content-type 'html)))))))
+                 (elfeed-entry--create
+                  :title (elfeed-cleanup title)
+                  :id (elfeed-uuid feed-id (elfeed-cleanup id))
+                  :feed-id feed-id
+                  :link link
+                  :tags (if (elfeed-get-entry-exists-p id)
+                            (elfeed-get-entry-tags entry-id)
+                          (cl-union autotags elfeed-initial-tags))
+                  :date (elfeed-float-time date)
+                  :enclosures enclosures
+                  :-content description
+                  :-content-type 'html))))))
 
 (defun elfeed-entries-from-rss1.0 (url xml)
   "Turn parsed RSS 1.0 content into a list of elfeed-entry structs.
@@ -247,18 +247,17 @@ See the docstring for `elfeed-entries-from-rss'."
                                 (xml-query '(date *) item)))
                       (description (xml-query '(description *) item))
                       (id (or link description)))
-                 (elfeed-entry-save
-                  (elfeed-entry--create
-                   :title (elfeed-cleanup title)
-                   :id (elfeed-uuid feed-id (elfeed-cleanup id))
-                   :feed-id feed-id
-                   :link link
-                   :tags (if (elfeed-get-entry-exists-p id)
-                             (elfeed-get-entry-tags entry-id)
-                           (cl-union autotags elfeed-initial-tags))
-                   :date (elfeed-float-time date)
-                   :-content description
-                   :-content-type 'html)))))))
+                 (elfeed-entry--create
+                  :title (elfeed-cleanup title)
+                  :id (elfeed-uuid feed-id (elfeed-cleanup id))
+                  :feed-id feed-id
+                  :link link
+                  :tags (if (elfeed-get-entry-exists-p id)
+                            (elfeed-get-entry-tags entry-id)
+                          (cl-union autotags elfeed-initial-tags))
+                  :date (elfeed-float-time date)
+                  :-content description
+                  :-content-type 'html))))))
 
 (defun elfeed-feed-list ()
   "Return a flat list version of `elfeed-feeds'.
@@ -270,8 +269,7 @@ Only a list of strings will be returned."
 (defun elfeed-feed-autotags (url-or-feed)
   "Return tags to automatically apply to all entries from URL-OR-FEED."
   (let ((url (if (elfeed-feed-p url-or-feed)
-                 (or (elfeed-feed-url url-or-feed)
-                     (elfeed-feed-id url-or-feed))
+                 (elfeed-feed-url url-or-feed)
                url-or-feed)))
     (mapcar #'elfeed-keyword->symbol (cdr (assoc url elfeed-feeds)))))
 
@@ -287,13 +285,18 @@ Only a list of strings will be returned."
           (progn
             (goto-char (1+ url-http-end-of-headers))
             (set-buffer-multibyte t)
-            (let* ((xml (elfeed-xml-parse-region (point) (point-max)))
-                   (entries (cl-case (elfeed-feed-type xml)
-                              (:atom (elfeed-entries-from-atom url xml))
-                              (:rss (elfeed-entries-from-rss url xml))
-                              (:rss1.0 (elfeed-entries-from-rss1.0 url xml))
-                              (otherwise (error "Unknown feed type.")))))
-              (elfeed-db-add entries)))
+            (elfeed-with-transaction
+             (let* ((xml (elfeed-xml-parse-region (point) (point-max)))
+                    (entries (cl-case (elfeed-feed-type xml)
+                               (:atom (elfeed-entries-from-atom url xml))
+                               (:rss (elfeed-entries-from-rss url xml))
+                               (:rss1.0 (elfeed-entries-from-rss1.0 url xml))
+                               (otherwise (error "Unknown feed type."))))
+                    (new (cl-remove-if #'elfeed-get-entry-exists-p entries
+                                       :key #'elfeed-entry-id)))
+               (dolist (hook elfeed-new-entry-hook)
+                 (mapc hook new))
+               (mapc #'elfeed-entry-save entries))))
         (error (message "Elfeed update failed for %s: %s" url error))))))
 
 (defun elfeed-add-feed (url)

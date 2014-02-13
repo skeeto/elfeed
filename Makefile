@@ -1,11 +1,16 @@
 EMACS   ?= emacs
-BATCH   := $(EMACS) -batch -Q -L .
-COMPILE := $(BATCH) -f batch-byte-compile
+CASK    ?= cask
+VIRTUAL := $(CASK) exec $(EMACS)
+BATCH   := $(VIRTUAL) -Q -batch -L .
 VERSION := $(word 1,$(subst -, ,$(shell git describe)))
+
+PACKAGE := elfeed
+VERSION := $(shell $(CASK) version)
 
 EL  = elfeed.el
 EL += xml-query.el
 EL += elfeed-lib.el
+EL += elfeed-sql.el
 EL += elfeed-db.el
 EL += elfeed-search.el
 EL += elfeed-show.el
@@ -22,23 +27,30 @@ EXTRA_DIST = README.md UNLICENSE
 
 .PHONY : all package compile clean test
 
-all : package
+all : test
 
-elfeed-$(VERSION).tar : $(EL) elfeed-pkg.el $(EXTRA_DIST)
-	tar -cf $@ --transform "s,^,elfeed-$(VERSION)/," $^
+.cask : Cask
+	cask install
+	touch .cask
 
-elfeed-web-$(VERSION).tar : $(WEB_FILES)
-	tar -cf $@ --transform "s,^web/,elfeed-web-$(VERSION)/," $^
+$(PACKAGE)-pkg.el : Cask
+	$(CASK) package
 
-package: elfeed-$(VERSION).tar elfeed-web-$(VERSION).tar
+$(PACKAGE)-$(VERSION).tar : $(EL) $(PACKAGE)-pkg.el $(EXTRA_DIST)
+	tar -cf $@ --transform "s,^,$(PACKAGE)-$(VERSION)/," $^
+
+$(PACKAGE)-web-$(VERSION).tar : $(WEB_FILES)
+	tar -cf $@ --transform "s,^web/,$(PACKAGE)-web-$(VERSION)/," $^
+
+package: $(PACKAGE)-$(VERSION).tar $(PACKAGE)-web-$(VERSION).tar
 
 test: compile
 	$(BATCH) -L tests -l tests/elfeed-tests.el -f ert-run-tests-batch
 
-compile: $(ELC)
+compile: .cask $(ELC)
 
 clean:
 	$(RM) *.tar *.elc
 
-%.elc: %.el
-	@$(COMPILE) $<
+%.elc : %.el
+	$(BATCH) -f batch-byte-compile $<
