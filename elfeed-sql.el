@@ -368,7 +368,7 @@ Warning: this also deletes all entries belonging to FEED."
 ;; General Database Queries:
 
 (cl-defun elfeed-find
-    (&key (required-tags () required-p) prohibited-tags (since -1e32))
+    (&key prohibited-tags (required-tags () required-p) (since -1e32))
   "Return a list of all entry-ids, ordered by date, which meet the criteria.
 Given no criteria, return *all* entries.
 
@@ -377,16 +377,24 @@ Given no criteria, return *all* entries.
 :since -- entry must have a timestamp at or after this date (float)"
   (let ((required (vconcat required-tags))
         (prohibited (vconcat prohibited-tags)))
+    ;; This query still has some problems. It doesn't find untagged
+    ;; entries (natural join). Required tags being empty should return
+    ;; all entries.
     (mapcar #'car (elfeed-sql
                    [:select [entry-id]
                     :from entries :natural-join tags
                     :where (and (>= entry-date $s1)
                                 (or (not $s2)
-                                    (in tag $v3)) ; XXX not quite right
+                                    (in tag $v3))
                                 (not (in tag $v4)))
                     :group-by entry-id
+                    :having (or (not $s2)
+                                (= (funcall count entry-id) $s5))
                     :order-by [(desc entry-date)]]
-                   since (if required-p 1 0) required prohibited))))
+                   since
+                   (if required-p 1 0) required
+                   prohibited
+                   (length required)))))
 
 (defun elfeed-db-size ()
   "Return a count of the number of entries in the database."
