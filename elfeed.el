@@ -181,7 +181,7 @@ NIL for unknown."
                   :id (elfeed-cleanup id)
                   :link link
                   :tags (if (elfeed-get-entry-exists-p id)
-                            (elfeed-get-entry-tags entry-id)
+                            (elfeed-get-entry-tags id)
                           (cl-union autotags elfeed-initial-tags))
                   :date (elfeed-float-time date)
                   :enclosures enclosures
@@ -223,7 +223,7 @@ never actually a GUID."
                   :feed-id feed-id
                   :link link
                   :tags (if (elfeed-get-entry-exists-p id)
-                            (elfeed-get-entry-tags entry-id)
+                            (elfeed-get-entry-tags id)
                           (cl-union autotags elfeed-initial-tags))
                   :date (elfeed-float-time date)
                   :enclosures enclosures
@@ -253,7 +253,7 @@ See the docstring for `elfeed-entries-from-rss'."
                   :feed-id feed-id
                   :link link
                   :tags (if (elfeed-get-entry-exists-p id)
-                            (elfeed-get-entry-tags entry-id)
+                            (elfeed-get-entry-tags id)
                           (cl-union autotags elfeed-initial-tags))
                   :date (elfeed-float-time date)
                   :-content description
@@ -315,8 +315,7 @@ Only a list of strings will be returned."
 (defun elfeed-update ()
   "Update all the feeds in `elfeed-feeds'."
   (interactive)
-  (mapc #'elfeed-update-feed (elfeed-feed-list))
-  (elfeed-db-save))
+  (mapc #'elfeed-update-feed (elfeed-feed-list)))
 
 ;;;###autoload
 (defun elfeed ()
@@ -417,7 +416,7 @@ saved to your customization file."
                (head () (title () "Elfeed Export"))
                (body ()
                      ,@(cl-loop for url in (elfeed-feed-list)
-                                for feed = (elfeed-db-get-feed url)
+                                for feed = (elfeed-get-feed-by-url url)
                                 for title = (or (elfeed-feed-title feed) "")
                                 collect `(outline ((xmlUrl . ,url)
                                                    (title . ,title)))))))))))

@@ -49,7 +49,7 @@ Use `elfeed-db-return' to exit early and optionally return data.
              (let ((,entry-var (elfeed-get-entry (cl-first row)))
                    (,feed-var (elfeed-get-feed (cl-second row))))
                ,@body)))))))
-(make-obsolete 'with-elfeed-db-visit 'elfeed-find)
+(make-obsolete 'with-elfeed-db-visit 'elfeed-find "2.0.0")
 
 ;; Obsolete functions:
 
@@ -58,10 +58,10 @@ Use `elfeed-db-return' to exit early and optionally return data.
   :success)
 (make-obsolete 'elfeed-db-save nil "2.0.0")
 
-(defun elfeed-deref-entry (entry)
+(defun elfeed-deref (entry)
   "Return ENTRY (no-op)."
   entry)
-(make-obsolete 'elfeed-deref-entry nil "2.0.0")
+(make-obsolete 'elfeed-deref nil "2.0.0")
 
 (defun elfeed-db-gc (&optional _)
   "No-op."

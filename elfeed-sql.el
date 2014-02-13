@@ -21,6 +21,7 @@
 
 (require 'cl-lib)
 (require 'emacsql)
+(require 'elfeed-lib)
 
 (defcustom elfeed-db-directory "~/.elfeed"
   "Directory where elfeed will store its database.
@@ -187,6 +188,8 @@ the database is updated.")
   "Return all entries belonging to FEED."
   (mapcar #'elfeed-get-entry (elfeed-get-feed-entries (elfeed-feed-id feed))))
 
+(define-obsolete-function-alias 'elfeed-feed-url 'elfeed-feed-link "2.0.0")
+
 ;; Entry Access:
 
 (defun elfeed-get-entry-exists-p (entry-id)
@@ -249,6 +252,12 @@ the database is updated.")
   (elfeed--fill-entry-content entry)
   (elfeed-entry--content-type entry))
 
+(gv-define-setter elfeed-entry-content (value entry)
+  `(setf (elfeed-entry--content .entry) ,value))
+
+(gv-define-setter elfeed-entry-content-type (value entry)
+  `(setf (elfeed-entry--content-type ,entry) ,value))
+
 (defun elfeed-entry-feed (entry)
   "Get the feed struct for ENTRY."
   (elfeed-get-feed (elfeed-entry-feed-id entry)))
@@ -284,7 +293,7 @@ the database is updated.")
     (emacsql (elfeed-sql-db)
              [:replace-into feeds [feed-id feed-link feed-title feed-author]
               :values $v1]
-             (subseq feed 2 6))))
+             (cl-subseq feed 2 6))))
 
 (defun elfeed-entry-save (entry)
   "Insert or update ENTRY in the database, returning ENTRY."
@@ -295,7 +304,7 @@ the database is updated.")
                [:replace-into entries
                 [entry-id feed-id entry-link entry-title entry-date]
                 :values $v1]
-               (subseq entry 2 7))
+               (cl-subseq entry 2 7))
       (let* ((db-tags (elfeed-get-entry-tags entry-id))
              (tags (elfeed-entry-tags entry))
              (remove (cl-set-difference db-tags tags))
@@ -402,6 +411,7 @@ Given no criteria, return *all* entries.
 
 (defun elfeed-legacy-lookup (url)
   "Determine the canonical UUID for the feed at URL."
+  (cl-declare (special url-http-end-of-headers))
   (let ((buffer (url-retrieve-synchronously url)))
     (unwind-protect
         (with-current-buffer buffer
