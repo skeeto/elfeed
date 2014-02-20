@@ -30,6 +30,11 @@
 (defvar elfeed-search-refresh-timer nil
   "The timer used to keep things updated as the database updates.")
 
+(defcustom elfeed-older-entry-on-top nil
+  "Put the oldest entry on top"
+  :group 'elfeed
+  :type 'boolean)
+
 (defcustom elfeed-search-refresh-rate 3
   "How often the buffer should update against the datebase in seconds."
   :group 'elfeed
@@ -290,7 +295,9 @@ expression, matching against entry link, title, and feed title."
       (when (elfeed-search-filter filter entry feed)
         (setf (cdr tail) (list entry)
               tail (cdr tail))))
-    (setf elfeed-search-entries (cdr head))))
+    (setf elfeed-search-entries (if elfeed-older-entry-on-top
+                                    (reverse (cdr head))
+                                  (cdr head)))))
 
 (defun elfeed-search-update (&optional force)
   "Update the display to match the database."
