@@ -177,7 +177,7 @@ NIL for unknown."
                 :title (elfeed-cleanup title)
                 :feed-id feed-id
                 :id (cons feed-id (elfeed-cleanup id))
-                :link link
+                :link (elfeed-cleanup link)
                 :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
                 :date (elfeed-float-time date)
                 :content content
@@ -212,7 +212,7 @@ NIL for unknown."
                 :title (elfeed-cleanup title)
                 :id (cons feed-id (elfeed-cleanup id))
                 :feed-id feed-id
-                :link link
+                :link (elfeed-cleanup link)
                 :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
                 :date (elfeed-float-time date)
                 :enclosures enclosures
@@ -238,7 +238,7 @@ NIL for unknown."
                 :title (elfeed-cleanup title)
                 :id (cons feed-id (elfeed-cleanup id))
                 :feed-id feed-id
-                :link link
+                :link (elfeed-cleanup link)
                 :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
                 :date (elfeed-float-time date)
                 :content description
