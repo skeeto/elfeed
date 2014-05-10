@@ -175,6 +175,28 @@ XML encoding declaration."
       (prog1 t (read (prin1-to-string value)))
     (error nil)))
 
+(defun elfeed-strip-properties (string)
+  "Return a copy of STRING with all properties removed.
+If STRING is nil, returns nil."
+  (when string
+    (let ((copy (copy-sequence string)))
+      (prog1 copy
+        (set-text-properties 0 (length copy) nil copy)))))
+
+(defun elfeed-clipboard-get ()
+  "Try to get a sensible value from the system clipboard.
+On systems running X, it will try to use the PRIMARY selection
+first, then fall back onto the standard clipboard like other
+systems."
+  (elfeed-strip-properties
+   (or (and (fboundp 'x-get-selection-value)
+            (funcall 'x-get-selection-value))
+       (and (functionp interprogram-paste-function)
+            (funcall interprogram-paste-function))
+       (and (fboundp 'w32-get-clipboard-data)
+            (funcall 'w32-get-clipboard-data))
+       (current-kill 0 :non-destructively))))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here

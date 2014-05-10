@@ -291,10 +291,10 @@ Only a list of strings will be returned."
 (defun elfeed-add-feed (url)
   "Manually add a feed to the database."
   (interactive (list
-                (let ((clipboard (x-get-selection-value)))
+                (let ((clipboard (elfeed-cleanup (elfeed-clipboard-get))))
                   (read-from-minibuffer
-                   "URL: " (if (elfeed-looks-like-url-p clipboard)
-                               clipboard)))))
+                   "URL: " (when (elfeed-looks-like-url-p clipboard)
+                             clipboard)))))
   (cl-pushnew url elfeed-feeds :test #'string=)
   (when (called-interactively-p 'any)
     (customize-save-variable 'elfeed-feeds elfeed-feeds))
