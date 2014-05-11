@@ -300,6 +300,20 @@ expression, matching against entry link, title, and feed title."
               (nreverse (cdr head))
             (cdr head)))))
 
+(defmacro elfeed-save-excursion (&rest body)
+  "Like `save-excursion', but by entry/line/column instead of point."
+  (declare (indent defun))
+  `(let ((entry (elfeed-search-selected :single))
+         (line (line-number-at-pos))
+         (column (current-column)))
+     (unwind-protect
+         (progn ,@body)
+       (let ((entry-position (cl-position entry elfeed-search-entries)))
+         (elfeed-goto-line (if entry-position
+                               (+ elfeed-search--offset entry-position)
+                             line))
+         (move-to-column column)))))
+
 (defun elfeed-search-update (&optional force)
   "Update the display to match the database."
   (interactive)

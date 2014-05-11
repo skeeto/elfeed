@@ -27,16 +27,6 @@
   (interactive)
   (kill-buffer (current-buffer)))
 
-(defmacro elfeed-save-excursion (&rest body)
-  "Like `save-excursion', but by line/column instead of point."
-  (declare (indent defun))
-  `(let ((line (line-number-at-pos))
-         (column (current-column)))
-     (unwind-protect
-         (progn ,@body)
-       (elfeed-goto-line line)
-       (move-to-column column))))
-
 (defun elfeed-kill-line ()
   "Clear out the current line without touching anything else."
   (beginning-of-line)
