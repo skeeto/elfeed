@@ -200,6 +200,8 @@ NIL for unknown."
                               (xml-query '(date *) item)))
                     (description (xml-query '(description *) item))
                     (id (or guid link (elfeed-generate-id description)))
+                    (full-id (cons feed-id (elfeed-cleanup id)))
+                    (original (elfeed-db-get-entry full-id))
                     (etags (xml-query-all '(enclosure) item))
                     (enclosures
                      (cl-loop for enclosure in etags
@@ -210,11 +212,13 @@ NIL for unknown."
                               collect (list url type length))))
                (elfeed-entry--create
                 :title (elfeed-cleanup title)
-                :id (cons feed-id (elfeed-cleanup id))
+                :id full-id
                 :feed-id feed-id
                 :link (elfeed-cleanup link)
                 :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
-                :date (elfeed-float-time date)
+                :date (if (and original (null date))
+                          (elfeed-entry-date original)
+                        (elfeed-float-time date))
                 :enclosures enclosures
                 :content description
                 :content-type 'html)))))
@@ -233,14 +237,18 @@ NIL for unknown."
                     (date (or (xml-query '(pubDate *) item)
                               (xml-query '(date *) item)))
                     (description (xml-query '(description *) item))
-                    (id (or link (elfeed-generate-id description))))
+                    (id (or link (elfeed-generate-id description)))
+                    (full-id (cons feed-id (elfeed-cleanup id)))
+                    (original (elfeed-db-get-entry full-id)))
                (elfeed-entry--create
                 :title (elfeed-cleanup title)
-                :id (cons feed-id (elfeed-cleanup id))
+                :id full-id
                 :feed-id feed-id
                 :link (elfeed-cleanup link)
                 :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
-                :date (elfeed-float-time date)
+                :date (if (and original (null date))
+                          (elfeed-entry-date original)
+                        (elfeed-float-time date))
                 :content description
                 :content-type 'html)))))
 
