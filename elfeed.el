@@ -304,6 +304,7 @@ Only a list of strings will be returned."
 (defun elfeed-update ()
   "Update all the feeds in `elfeed-feeds'."
   (interactive)
+  (message "Elfeed update: %s" (format-time-string "%B %e %Y %H:%M:%S %Z"))
   (mapc #'elfeed-update-feed (elfeed-feed-list))
   (elfeed-db-save))
 
