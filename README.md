@@ -23,7 +23,8 @@ someday that requires you to initialize a new database from scratch.
 
 Elfeed is broken into a multiple source files, so if you manually
 install it you will need to add the Elfeed package directory to your
-`load-path`. If installed via ELPA or el-get, this will be done automatically.
+`load-path`. If installed via package.el or el-get, this will be done
+automatically.
 
 It is recommended that you make a global binding for `elfeed`.
 
