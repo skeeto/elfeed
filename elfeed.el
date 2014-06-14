@@ -14,6 +14,13 @@
 
 ;;; History:
 
+;; Version 1.1.1: fixes
+;;   * Fix database corruption issue
+;;   * Properly handle URLs from XML
+;;   * Slightly better RSS date guessing
+;;   * User interface tweaks
+;;   * Add `elfeed-sort-order'
+;;   * Use tab and backtab to move between links
 ;; Version 1.1.0: features and fixes
 ;;   * Autotagging support
 ;;   * Better database performance
