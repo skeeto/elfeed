@@ -2,7 +2,8 @@
 
 Elfeed is an extensible web feed reader for Emacs, supporting both
 Atom and RSS. It requires Emacs 24 and is available for download from
-[MELPA](http://melpa.milkbox.net/). Elfeed was inspired by
+[MELPA](http://melpa.milkbox.net/) or
+[el-get](https://github.com/dimitri/el-get). Elfeed was inspired by
 [notmuch](http://notmuchmail.org/).
 
 For a longer overview,
@@ -22,7 +23,7 @@ someday that requires you to initialize a new database from scratch.
 
 Elfeed is broken into a multiple source files, so if you manually
 install it you will need to add the Elfeed package directory to your
-`load-path`. If installed via ELPA, this will be done automatically.
+`load-path`. If installed via ELPA or el-get, this will be done automatically.
 
 It is recommended that you make a global binding for `elfeed`.
 
