@@ -133,7 +133,11 @@ when they are first discovered."
 URL. This macro is anaphoric, with STATUS referring to the status
 from `url-retrieve'."
   (declare (indent defun))
-  `(elfeed-fetch ,url (lambda (status) ,@body (kill-buffer))))
+  `(elfeed-fetch ,url (lambda (status)
+                        (unwind-protect
+                            (let ((inhibit-quit t))
+                              ,@body)
+                          (kill-buffer)))))
 
 ;; Parsing:
 
