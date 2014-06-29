@@ -135,6 +135,16 @@ from `url-retrieve'."
   (declare (indent defun))
   `(elfeed-fetch ,url (lambda (status) ,@body (kill-buffer))))
 
+(defun elfeed-unjam ()
+  "Manually clear the connection pool when connections fail to timeout.
+This is a short-term workaround for connection handling issues."
+  (interactive)
+  (let ((fails (mapcar #'cl-second elfeed-connections)))
+    (when fails
+      (message "Elfeed aborted feeds: %s" (mapconcat #'identity fails " ")))
+    (setf elfeed-connections nil)
+    (elfeed--check-queue)))
+
 ;; Parsing:
 
 (defun elfeed-feed-type (content)
