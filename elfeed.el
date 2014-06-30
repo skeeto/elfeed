@@ -211,8 +211,8 @@ NIL for unknown."
           (elfeed-feed-title feed) title)
     (cl-loop for item in (xml-query-all '(rss channel item) xml) collect
              (let* ((title (or (xml-query '(title *) item) ""))
-                    (link (xml-query '(link *) item))
                     (guid (xml-query '(guid *) item))
+                    (link (or (xml-query '(link *) item) guid))
                     (date (or (xml-query '(pubDate *) item)
                               (xml-query '(date *) item)))
                     (description (xml-query '(description *) item))
