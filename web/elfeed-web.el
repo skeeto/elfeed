@@ -39,7 +39,7 @@
 
 ;;; Code:
 
-(require 'cl)
+(require 'cl-lib)
 (require 'json)
 (require 'simple-httpd)
 (require 'elfeed-db)
@@ -136,7 +136,7 @@
          (when (< (decf count) 0)
            (elfeed-db-return))))
      (princ (json-encode
-             (coerce (mapcar #'elfeed-web-for-json (cdr results)) 'vector))))))
+             (cl-coerce (mapcar #'elfeed-web-for-json (cdr results)) 'vector))))))
 
 (defvar elfeed-web-waiting ()
   "Clients waiting for an update.")
