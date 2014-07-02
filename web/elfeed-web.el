@@ -116,7 +116,7 @@
 (defservlet* elfeed/content/:ref text/html ()
   "Serve content-addressable content at REF."
   (with-elfeed-web
-   (let ((content (elfeed-deref (make-elfeed-ref :id ref))))
+   (let ((content (elfeed-deref (elfeed-ref--create :id ref))))
      (if content
          (princ content)
        (princ (json-encode '(:error 404)))
