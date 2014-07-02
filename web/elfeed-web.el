@@ -39,7 +39,7 @@
 
 ;;; Code:
 
-(require 'cl)
+(require 'cl-lib)
 (require 'json)
 (require 'simple-httpd)
 (require 'elfeed-db)
@@ -76,13 +76,13 @@
             (when (string= webid (elfeed-web-make-webid entry))
               (setf (gethash webid elfeed-web-webid-map)
                     (elfeed-db-return entry))))
-          (loop for feed hash-values of elfeed-db-feeds
-                when (string= (elfeed-web-make-webid feed) webid)
-                return (setf (gethash webid elfeed-web-webid-map) feed))))))
+          (cl-loop for feed hash-values of elfeed-db-feeds
+                   when (string= (elfeed-web-make-webid feed) webid)
+                   return (setf (gethash webid elfeed-web-webid-map) feed))))))
 
 (defun elfeed-web-for-json (thing)
   "Prepare THING for JSON serialization."
-  (etypecase thing
+  (cl-etypecase thing
     (elfeed-entry
      (list :webid        (elfeed-web-make-webid thing)
            :title        (elfeed-entry-title thing)
@@ -133,10 +133,11 @@
        (when (elfeed-search-filter filter entry feed)
          (setf (cdr tail) (list entry)
                tail (cdr tail))
-         (when (< (decf count) 0)
+         (when (< (cl-decf count) 0)
            (elfeed-db-return))))
-     (princ (json-encode
-             (coerce (mapcar #'elfeed-web-for-json (cdr results)) 'vector))))))
+     (princ
+      (json-encode
+       (cl-coerce (mapcar #'elfeed-web-for-json (cdr results)) 'vector))))))
 
 (defvar elfeed-web-waiting ()
   "Clients waiting for an update.")
