@@ -192,21 +192,25 @@ Clear `elfeed-search-cache' (or restart Emacs) after setting."
   (let ((must-have ())
         (must-not-have ())
         (after nil)
-        (matches ()))
+        (matches ())
+        (not-matches ()))
     (cl-loop for element in (split-string filter)
              for type = (aref element 0)
              do (cl-case type
                   (?+ (push (intern (substring element 1)) must-have))
                   (?- (push (intern (substring element 1)) must-not-have))
                   (?@ (setf after (elfeed-time-duration (substring element 1))))
+                  (?! (let ((re (substring element 1)))
+                        (when (elfeed-valid-regexp-p re)
+                          (push re not-matches))))
                   (otherwise (when (elfeed-valid-regexp-p element)
                                (push element matches)))))
-    (list after must-have must-not-have matches)))
+    (list after must-have must-not-have matches not-matches)))
 
 (defun elfeed-search-filter (filter entry feed)
   "Filter out only entries that match the filter. See
 `elfeed-search-set-filter' for format/syntax documentation."
-  (cl-destructuring-bind (after must-have must-not-have matches) filter
+  (cl-destructuring-bind (after must-have must-not-have matches not-matches) filter
     (let* ((tags (elfeed-entry-tags entry))
            (date (elfeed-entry-date entry))
            (age (- (float-time) date))
@@ -222,7 +226,12 @@ Clear `elfeed-search-cache' (or restart Emacs) after setting."
                        (or (and title      (string-match-p m title))
                            (and link       (string-match-p m link))
                            (and feed-title (string-match-p m feed-title))))
-                     matches))))))
+                     matches))
+           (cl-notany (lambda (m)
+                        (or (and title      (string-match-p m title))
+                            (and link       (string-match-p m link))
+                            (and feed-title (string-match-p m feed-title))))
+                      not-matches)))))
 
 (defun elfeed-search--prompt (current)
   "Prompt for a new filter, starting with CURRENT."

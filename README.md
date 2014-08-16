@@ -112,7 +112,13 @@ but cannot have spaces, so use dashes. For example, `"@2-years-old"`
 or `"@3-days-ago"`. The database is date-oriented, so **filters that
 include an age restriction are significantly more efficient.**
 
-All other components are treated as a regular expression.
+A component beginning with a `!` is treated as an "inverse" regular
+expression.  This means that any entry matching this regular
+expression will be filtered out (the regular expression begins *after*
+the `!` character).  You can read this as "entry not matching `foo`".
+
+All other components are treated as a regular expression, which means
+only entries matching this will be shown.
 
 Here are some example filters.
 
@@ -127,6 +133,11 @@ Only show entries about Linux or Linus from the last year.
  * `-unread +youtube`
 
 Only show previously-read entries tagged as `youtube`.
+
+ * `+unread !x?emacs`
+
+Only show unread entries not having `emacs` or `xemacs` in the title
+or link.
 
 ### Tag Hooks
 
