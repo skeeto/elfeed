@@ -139,6 +139,15 @@ Only show previously-read entries tagged as `youtube`.
 Only show unread entries not having `emacs` or `xemacs` in the title
 or link.
 
+#### Default Search Filter
+
+You can set your default search filter by changing the default value
+of `elfeed-search-filter`. It only changes buffer-locally when you're
+adjusting the filter within Elfeed. For example, some users prefer to
+have a space on the end for easier quick searching.
+
+    (setq-default elfeed-search-filter "@1-week-ago +unread ")
+
 ### Tag Hooks
 
 The last example assumes you've tagged posts with `youtube`. You
