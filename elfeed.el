@@ -287,14 +287,13 @@ Only a list of strings will be returned."
 (defun elfeed-update-feed (url)
   "Update a specific feed."
   (interactive (list (completing-read "Feed: " (elfeed-feed-list))))
-  (cl-declare (special url-http-end-of-headers)) ; url-http bug workaround
   (with-elfeed-fetch url
     (if (and status (eq (car status) :error))
         (let ((print-escape-newlines t))
           (message "Elfeed update failed for %s: %S" url status))
       (condition-case error
           (progn
-            (goto-char (1+ url-http-end-of-headers))
+            (elfeed-move-to-first-empty-line)
             (set-buffer-multibyte t)
             (let* ((xml (elfeed-xml-parse-region (point) (point-max)))
                    (entries (cl-case (elfeed-feed-type xml)
