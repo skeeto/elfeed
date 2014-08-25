@@ -197,6 +197,14 @@ systems."
             (funcall 'w32-get-clipboard-data))
        (current-kill 0 :non-destructively))))
 
+(defun elfeed-move-to-first-empty-line ()
+  "Place point after first blank line, for use with `url-retrieve'.
+If no such line exists, point is left in place."
+  (let ((start (point)))
+    (setf (point) (point-min))
+    (unless (search-forward-regexp "^$" nil t)
+      (setf (point) start))))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here

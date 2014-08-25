@@ -128,6 +128,17 @@
   (should (elfeed-readable-p (make-hash-table)))
   (should-not (elfeed-readable-p (symbol-function '+))))
 
+(ert-deftest elfeed-move-to-first-empty-line ()
+  (with-temp-buffer
+    (insert "aaaaa\nbbbb\n\ncccccc")
+    (elfeed-move-to-first-empty-line)
+    (should (= (point) 12)))
+  (with-temp-buffer
+    (insert "aaaaa\nbbbb\ncccccc")
+    (setf (point) 5)
+    (elfeed-move-to-first-empty-line)
+    (should (= (point) 5))))
+
 (provide 'elfeed-lib-tests)
 
 ;;; elfeed-lib-tests.el ends here
