@@ -311,7 +311,7 @@ Only a list of strings will be returned."
                   (read-from-minibuffer
                    "URL: " (when (elfeed-looks-like-url-p clipboard)
                              clipboard)))))
-  (cl-pushnew url elfeed-feeds :test #'string=)
+  (cl-pushnew url elfeed-feeds)
   (when (called-interactively-p 'any)
     (customize-save-variable 'elfeed-feeds elfeed-feeds))
   (elfeed-update-feed url))
