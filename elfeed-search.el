@@ -94,6 +94,7 @@ Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
         mode-name "elfeed-search"
         truncate-lines t
         buffer-read-only t)
+  (buffer-disable-undo)
   (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)
   (make-local-variable 'elfeed-search-filter)

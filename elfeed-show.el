@@ -47,6 +47,7 @@
   (setq major-mode 'elfeed-show-mode
         mode-name "elfeed-show"
         buffer-read-only t)
+  (buffer-disable-undo)
   (make-local-variable 'elfeed-show-entry)
   (run-hooks 'elfeed-show-mode-hook))
 
