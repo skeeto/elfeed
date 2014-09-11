@@ -13,6 +13,11 @@
 (require 'elfeed-lib)
 (require 'elfeed-search)
 
+(defcustom elfeed-show-truncate-long-urls t
+  "When non-nil, use an ellipsis to shorten very long displayed URLs."
+  :group 'elfeed
+  :type 'bool)
+
 (defvar elfeed-show-entry nil
   "The entry being displayed in this buffer.")
 
@@ -64,7 +69,8 @@
 
 (cl-defun elfeed-insert-link (url &optional (content url))
   "Insert a clickable hyperlink to URL titled CONTENT."
-  (when (> (length content) (- shr-width 8))
+  (when (and elfeed-show-truncate-long-urls
+             (> (length content) (- shr-width 8)))
     (let ((len (- (/ shr-width 2) 10)))
       (setq content (format "%s[...]%s"
                             (substring content 0 len)
