@@ -29,6 +29,7 @@
       (define-key map "g" 'elfeed-show-refresh)
       (define-key map "n" 'elfeed-show-next)
       (define-key map "p" 'elfeed-show-prev)
+      (define-key map "s" 'elfeed-show-new-live-search)
       (define-key map "b" 'elfeed-show-visit)
       (define-key map "y" 'elfeed-show-yank)
       (define-key map "u" (elfeed-expose #'elfeed-show-tag 'unread))
@@ -147,6 +148,13 @@
   (with-current-buffer (elfeed-search-buffer)
     (forward-line -2)
     (call-interactively #'elfeed-search-show-entry)))
+
+(defun elfeed-show-new-live-search ()
+  "Kill the current buffer, search again in *elfeed-search*."
+  (interactive)
+  (elfeed-kill-buffer)
+  (elfeed)
+  (elfeed-search-live-filter))
 
 (defun elfeed-show-visit ()
   "Visit the current entry in the browser."
