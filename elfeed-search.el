@@ -18,9 +18,6 @@
 (defvar elfeed-search-entries ()
   "List of the entries currently on display.")
 
-(defvar elfeed-search-filter "@6-months-ago +unread"
-  "Query string filtering shown entries.")
-
 (defvar elfeed-search-filter-history nil
   "Filter history for `completing-read'.")
 
@@ -29,6 +26,11 @@
 
 (defvar elfeed-search-refresh-timer nil
   "The timer used to keep things updated as the database updates.")
+
+(defcustom elfeed-search-filter "@6-months-ago +unread"
+  "Query string filtering shown entries."
+  :group 'elfeed
+  :type 'string)
 
 (defcustom elfeed-sort-order 'descending
   "The order in which entries should be displayed, by time."
