@@ -16,8 +16,8 @@ For a longer overview,
 
 [![](http://i.imgur.com/3yHGITn.png)](http://i.imgur.com/EfdBKif.png)
 
-The database format is now stable, but there *may* still be an update
-someday that requires you to initialize a new database from scratch.
+The database format is stable, but there *may* still be an update
+someday that requires migration.
 
 ## Getting Started
 
@@ -113,9 +113,9 @@ or `"@3-days-ago"`. The database is date-oriented, so **filters that
 include an age restriction are significantly more efficient.**
 
 A component beginning with a `!` is treated as an "inverse" regular
-expression.  This means that any entry matching this regular
-expression will be filtered out (the regular expression begins *after*
-the `!` character).  You can read this as "entry not matching `foo`".
+expression. This means that any entry matching this regular expression
+will be filtered out. The regular expression begins *after* the `!`
+character. You can read this as "entry not matching `foo`".
 
 All other components are treated as a regular expression, which means
 only entries matching this will be shown.
@@ -151,10 +151,10 @@ have a space on the end for easier quick searching.
 ### Tag Hooks
 
 The last example assumes you've tagged posts with `youtube`. You
-probably want to do this sort of thing automatically, which can be
-done with the `elfeed-new-entry-hook`. Functions in this hook are
-called with new entries, allowing them to be manipulated, such as
-adding tags.
+probably want to do this sort of thing automatically, either through
+the "autotags" feature mentioned above, or with the
+`elfeed-new-entry-hook`. Functions in this hook are called with new
+entries, allowing them to be manipulated, such as adding tags.
 
 ```el
 ;; Mark all YouTube entries
@@ -184,37 +184,35 @@ Or building your own subset feeds:
 
 ## Web Interface
 
-Elfeed includes a web interface for remote network access. It's a
-single-page web application that follows the database live as new
-entries arrive. It's packaged separately on MELPA as `elfeed-web`. To
-fire it up, run `M-x elfeed-web-start` and visit
+Elfeed includes a demonstration/toy web interface for remote network
+access. It's a single-page web application that follows the database
+live as new entries arrive. It's packaged separately as `elfeed-web`.
+To fire it up, run `M-x elfeed-web-start` and visit
 http://localhost:8080/elfeed/ (check your `httpd-port`) with a
 browser. See the `elfeed-web.el` header for endpoint documentation if
 you'd like to access the Elfeed database through the web API.
 
-It's a bit rough at the moment -- no keyboard shortcuts, read-only, no
-authentication, and a narrow entry viewer -- but I'm looking to
-improve it in the future. This will be Elfeed's "mobile" interface.
+It's rough and unfinished -- no keyboard shortcuts, read-only, no
+authentication, and a narrow entry viewer. This is basically Elfeed's
+"mobile" interface. Patches welcome.
 
 ## Platform Support
 
-I only use Elfeed on Linux right now, but I've also tested it on
+I personally only use Elfeed on Linux, but it's occasionally tested on
 Windows. Unfortunately the Windows port of Emacs is a bit too unstable
-for parallel feed downloads, not to mention the
-[tiny, hard-coded, 512 open descriptor limitation][files], so it
-limits itself to one feed at a time on this platform. However, even on
-Linux Elfeed occasionally triggers segmentation faults in Emacs. If I
-am able, I intend to isolate these segfaults and report them to the
-Emacs developers.
+for parallel feed downloads, not to mention the [tiny, hard-coded, 512
+open descriptor limitation][files], so it limits itself to one feed at
+a time on this platform.
 
 [files]: http://msdn.microsoft.com/en-us/library/kdfaxaay%28vs.71%29.aspx
 
 The GNU-provided W32 build of Emacs doesn't include any of the
 libraries needed to actually view entries within Emacs, but you can
-still see the entry listing and visit entries in your browser. So on
-Windows you'll either have to track down and install the missing DLLs,
-or use [ntemacs](http://ntemacs.sourceforge.net/), which includes
-these libraries.
+still see the entry listing and visit entries in your browser. For
+full support, you'll either have to track down and install the missing
+DLLs, or use [a build that includes it][w64].
+
+[w64]: http://semantic.supelec.fr/popineau/programming-emacs.html#sec-2
 
 ## Database Management
 
@@ -222,7 +220,7 @@ The database should keep itself under control without any manual
 intervention, but steps can be taken to minimize the database size if
 desired. The simplest option is to run the `elfeed-db-compact`
 command, which will pack the loose-file content database into a single
-compressed file. This function can be added to `kill-emacs-hook`.
+compressed file. This function works well in `kill-emacs-hook`.
 
 Going further, a function could be added to `elfeed-new-entry-hook` to
 strip unwanted/unneeded content from select entries before being
@@ -233,13 +231,16 @@ tossed to save time and storage.
 ## Status and Roadmap
 
 Elfeed is to the point where it can serve 100% of my own web feed
-needs. My personal selection of about 140 feeds has been acting as my
+needs. My personal selection of about 150 feeds has been acting as my
 test case as I optimize and add features.
 
 Some things I still might want to add:
 
- * Database synchronization between computers
- * Support for [RDF content](http://web.resource.org/rss/1.0/modules/content/)
+* Database synchronization between computers
+* Parallel feed fetching via separate Emacs subprocesses
+* SQLite-backed database via [EmacSQL](https://github.com/skeeto/emacsql)
+* Support for xml:base in Atom feeds
+* Smaller database footprint
 
 ## Motivation
 
