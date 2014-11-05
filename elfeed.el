@@ -14,6 +14,15 @@
 
 ;;; History:
 
+;; Version 1.1.2: fixes
+;;   * Fixed support for non-HTTP protocols
+;;   * Add ! search syntax
+;;   * Add elfeed-unjam
+;;   * Combine regexp search terms by AND instead of OR
+;;   * Link navigation keybindings (tab)
+;;   * Add elfeed-show-truncate-long-urls
+;;   * Add elfeed-search-filter customization
+;;   * Various bug fixes
 ;; Version 1.1.1: fixes
 ;;   * Fix database corruption issue
 ;;   * Properly handle URLs from XML
