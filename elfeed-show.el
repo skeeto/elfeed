@@ -71,6 +71,7 @@
 (cl-defun elfeed-insert-link (url &optional (content url))
   "Insert a clickable hyperlink to URL titled CONTENT."
   (when (and elfeed-show-truncate-long-urls
+             (integerp shr-width)
              (> (length content) (- shr-width 8)))
     (let ((len (- (/ shr-width 2) 10)))
       (setq content (format "%s[...]%s"
