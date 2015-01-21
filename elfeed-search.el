@@ -200,8 +200,14 @@ Clear `elfeed-search-cache' (or restart Emacs) after setting."
     (cl-loop for element in (split-string filter)
              for type = (aref element 0)
              do (cl-case type
-                  (?+ (push (intern (substring element 1)) must-have))
-                  (?- (push (intern (substring element 1)) must-not-have))
+                  (?+
+                   (let ((symbol (intern (substring element 1))))
+                     (unless (eq '## symbol)
+                       (push symbol must-have))))
+                  (?-
+                   (let ((symbol (intern (substring element 1))))
+                     (unless (eq '## symbol)
+                       (push symbol must-not-have))))
                   (?@ (setf after (elfeed-time-duration (substring element 1))))
                   (?! (let ((re (substring element 1)))
                         (when (elfeed-valid-regexp-p re)
