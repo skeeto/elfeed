@@ -13,6 +13,14 @@
 (require 'time-date)
 (require 'url-parse)
 
+(defcustom elfeed-title-cleanup-replacement-regexps  '(("&amp;" . "&") ("&nbsp;" . " ")
+                                                       ("&lt;" . "<")  ("&gt;" . ">")
+                                                       ("&quote;" . "\""))
+  "Alist of regex and replacement values to be applied by
+`elfeed-title-cleanup' before trimming."
+  :group 'elfeed
+  :type 'alist)
+
 (defun elfeed-expose (function &rest args)
   "Return an interactive version of FUNCTION, 'exposing' it to the user."
   (lambda () (interactive) (apply function args)))
@@ -69,6 +77,25 @@ Align should be a keyword :left or :right."
   "Trim trailing and leading spaces and collapse multiple spaces."
   (let ((trim (replace-regexp-in-string "[\n\t]+" " " (or name ""))))
     (replace-regexp-in-string "^ +\\| +$" "" trim)))
+
+(defun elfeed-title-cleanup (title)
+  "Collapse multiple spaces within the string, perform HTML
+numeric entity replacements along with replacements in
+`elfeed-title-cleanup-replacement-regexps' and finally trim
+trailing/leading spaces."
+  ; Decode any HTML numeric entities
+  (let ((entity-decoded (replace-regexp-in-string "&#[0-9]*;"
+                          (lambda (match)
+                            (format "%c" (string-to-number (substring match 2 -1))))
+                          (or title ""))))
+    ; Walk our list of customizable replacements
+    (dolist (rep elfeed-title-cleanup-replacement-regexps)
+      (setq entity-decoded (replace-regexp-in-string (car rep) (cdr rep) entity-decoded)))
+    ; And finally remove any of the leading and trailing spaces after
+    ; compressing space
+    (replace-regexp-in-string "^ +\\| +$" ""
+       (replace-regexp-in-string "[\n\t ]+" " " entity-decoded))))
+
 
 (defun elfeed-float-time (&optional date)
   "Like `float-time' but accept anything reasonable for DATE,
