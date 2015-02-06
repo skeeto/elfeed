@@ -406,12 +406,13 @@ expression, matching against entry link, title, and feed title."
     (unless (use-region-p) (forward-line))))
 
 (defun elfeed-search-yank ()
-  "Copy the selected feed item to "
+  "Copy the selected feed item to clipboard and kill-ring."
   (interactive)
   (let* ((entry (elfeed-search-selected :ignore-region))
          (link (and entry (elfeed-entry-link entry))))
     (when entry
       (elfeed-untag entry 'unread)
+      (kill-new link)
       (x-set-selection elfeed-search-clipboard-type link)
       (message "Copied: %s" link)
       (elfeed-search-update-line)
