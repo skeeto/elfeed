@@ -77,7 +77,8 @@ entries as tags (\"autotags\"). For example,
 All entries from the \"baz\" feed will be tagged as \"comic\"
 when they are first discovered."
   :group 'elfeed
-  :type 'list)
+  :type '(repeat (choice string
+                         (cons string (repeat symbol)))))
 
 (provide 'elfeed)
 
@@ -88,7 +89,7 @@ when they are first discovered."
 (defcustom elfeed-initial-tags '(unread)
   "Initial tags for new entries."
   :group 'elfeed
-  :type 'list)
+  :type '(repeat symbol))
 
 ;; Fetching:
 
