@@ -103,6 +103,18 @@ when they are first discovered."
   :group 'elfeed
   :type 'integer)
 
+(defvar elfeed-http-error-hooks nil
+  "Hooks to run when an http connection error occurs. 
+It is called with 2 arguments. 
+The first argument is the url of the failing feed. 
+The second argument is the http status code.")
+
+(defvar elfeed-parse-error-hooks nil
+  "Hooks to run when an error occurs during the parsing of a feed.
+It is called with 2 arguments. 
+The first argument is the url of the failing feed. 
+The second argument is the error message .")
+
 (defvar elfeed-connections nil
   "List of callbacks awaiting responses.")
 
@@ -294,13 +306,23 @@ Only a list of strings will be returned."
                url-or-feed)))
     (mapcar #'elfeed-keyword->symbol (cdr (assoc url elfeed-feeds)))))
 
+(defun elfeed-handle-http-error (url status)
+  "Handle an http error during retrieval of URL with STATUS code."
+  (run-hook-with-args 'elfeed-http-error-hooks url status)
+  (message "Elfeed update failed for %s: %S" url status))
+
+(defun elfeed-handle-parse-error (url error)
+  "Handle parse error during parsing of URL with ERROR message."
+  (run-hook-with-args 'elfeed-parse-error-hooks url error)
+  (message "Elfeed update failed for %s: %s" url error))
+
 (defun elfeed-update-feed (url)
   "Update a specific feed."
   (interactive (list (completing-read "Feed: " (elfeed-feed-list))))
   (with-elfeed-fetch url
     (if (and status (eq (car status) :error))
         (let ((print-escape-newlines t))
-          (message "Elfeed update failed for %s: %S" url status))
+          (elfeed-handle-http-error url status))
       (condition-case error
           (progn
             (elfeed-move-to-first-empty-line)
@@ -310,9 +332,9 @@ Only a list of strings will be returned."
                               (:atom (elfeed-entries-from-atom url xml))
                               (:rss (elfeed-entries-from-rss url xml))
                               (:rss1.0 (elfeed-entries-from-rss1.0 url xml))
-                              (otherwise (error "Unknown feed type.")))))
+                              (otherwise (error (elfeed-handle-parse-error url "Unknown feed type."))))))
               (elfeed-db-add entries)))
-        (error (message "Elfeed update failed for %s: %s" url error))))))
+        (error (elfeed-handle-parse-error url error))))))
 
 (defun elfeed-add-feed (url)
   "Manually add a feed to the database."
