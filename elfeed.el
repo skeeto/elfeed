@@ -102,6 +102,18 @@ when they are first discovered."
   :group 'elfeed
   :type 'integer)
 
+(defvar elfeed-http-error-hooks nil
+  "Hooks to run when an http connection error occurs. 
+It is called with 2 arguments. 
+The first argument is the url of the failing feed. 
+The second argument is the http status code.")
+
+(defvar elfeed-parse-error-hooks nil
+  "Hooks to run when an error occurs during the parsing of a feed.
+It is called with 2 arguments. 
+The first argument is the url of the failing feed. 
+The second argument is the error message .")
+
 (defvar elfeed-connections nil
   "List of callbacks awaiting responses.")
 
@@ -295,10 +307,12 @@ Only a list of strings will be returned."
 
 (defun elfeed-handle-http-error (url status)
   "Handle an http error during retrieval of URL with STATUS code."
+  (run-hook-with-args 'elfeed-http-error-hooks url status)
   (message "Elfeed update failed for %s: %S" url status))
 
 (defun elfeed-handle-parse-error (url error)
   "Handle parse error during parsing of URL with ERROR message."
+  (run-hook-with-args 'elfeed-parse-error-hooks url error)
   (message "Elfeed update failed for %s: %s" url error))
 
 (defun elfeed-update-feed (url)
