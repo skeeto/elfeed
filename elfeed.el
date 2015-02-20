@@ -183,7 +183,7 @@ NIL for unknown."
   "Turn parsed Atom content into a list of elfeed-entry structs."
   (let* ((feed-id url)
          (feed (elfeed-db-get-feed feed-id))
-         (title (elfeed-cleanup (xml-query '(feed title *) xml)))
+         (title (elfeed-title-cleanup (xml-query '(feed title *) xml)))
          (autotags (elfeed-feed-autotags url)))
     (setf (elfeed-feed-url feed) url
           (elfeed-feed-title feed) title)
@@ -211,7 +211,7 @@ NIL for unknown."
                               for length = (xml-query '(:length) wrap)
                               collect (list href type length))))
                (elfeed-entry--create
-                :title (elfeed-cleanup title)
+                :title (elfeed-title-cleanup title)
                 :feed-id feed-id
                 :id (cons feed-id (elfeed-cleanup id))
                 :link (elfeed-cleanup link)
@@ -225,7 +225,7 @@ NIL for unknown."
   "Turn parsed RSS content into a list of elfeed-entry structs."
   (let* ((feed-id url)
          (feed (elfeed-db-get-feed feed-id))
-         (title (elfeed-cleanup (xml-query '(rss channel title *) xml)))
+         (title (elfeed-title-cleanup (xml-query '(rss channel title *) xml)))
          (autotags (elfeed-feed-autotags url)))
     (setf (elfeed-feed-url feed) url
           (elfeed-feed-title feed) title)
@@ -248,7 +248,7 @@ NIL for unknown."
                               for length = (xml-query '(:length) wrap)
                               collect (list url type length))))
                (elfeed-entry--create
-                :title (elfeed-cleanup title)
+                :title (elfeed-title-cleanup title)
                 :id full-id
                 :feed-id feed-id
                 :link (elfeed-cleanup link)
@@ -264,7 +264,7 @@ NIL for unknown."
   "Turn parsed RSS 1.0 content into a list of elfeed-entry structs."
   (let* ((feed-id url)
          (feed (elfeed-db-get-feed feed-id))
-         (title (elfeed-cleanup (xml-query '(RDF channel title *) xml)))
+         (title (elfeed-title-cleanup (xml-query '(RDF channel title *) xml)))
          (autotags (elfeed-feed-autotags url)))
     (setf (elfeed-feed-url feed) url
           (elfeed-feed-title feed) title)
@@ -278,7 +278,7 @@ NIL for unknown."
                     (full-id (cons feed-id (elfeed-cleanup id)))
                     (original (elfeed-db-get-entry full-id)))
                (elfeed-entry--create
-                :title (elfeed-cleanup title)
+                :title (elfeed-title-cleanup title)
                 :id full-id
                 :feed-id feed-id
                 :link (elfeed-cleanup link)

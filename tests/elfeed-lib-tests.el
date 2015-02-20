@@ -56,6 +56,13 @@
   (should (string= (elfeed-cleanup "  foo  bar\n") "foo  bar"))
   (should (string= (elfeed-cleanup "foo\nbar") "foo bar")))
 
+(ert-deftest elfeed-title-cleanup ()
+  (should (string= (elfeed-title-cleanup "  foo  bar\n ") "foo bar"))
+  (should (string= (elfeed-title-cleanup "foo\nbar") "foo bar"))
+  (should (string= (elfeed-title-cleanup "foo&amp;bar") "foo&bar"))
+  (should (string= (elfeed-title-cleanup "foo  &amp;  bar") "foo & bar"))
+  (should (string= (elfeed-title-cleanup "&#8216;test&#8217;") "‘test’")))
+
 (ert-deftest elfeed-float-time ()
   (cl-macrolet ((test (time seconds)
                    `(should (= (elfeed-float-time ,time) ,seconds))))
