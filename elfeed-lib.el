@@ -39,7 +39,9 @@
 `timer-duration' but allows a bit more flair."
   (if (numberp time)
       time
-    (timer-duration (replace-regexp-in-string "\\(ago\\|old\\|-\\)" "" time))))
+    (when (string-match-p "[[:alpha:]]" time)
+      (let ((clean (replace-regexp-in-string "\\(ago\\|old\\|-\\)" " " time)))
+        (timer-duration clean)))))
 
 (defun elfeed-looks-like-url-p (string)
   "Return true if STRING looks like it could be a URL."
@@ -70,19 +72,35 @@ Align should be a keyword :left or :right."
   (let ((trim (replace-regexp-in-string "[\n\t]+" " " (or name ""))))
     (replace-regexp-in-string "^ +\\| +$" "" trim)))
 
+(defun elfeed-parse-simple-iso-8601 (string)
+  "Attempt to parse STRING as a simply formatted ISO 8601 date.
+Examples: 2015-02-22, 2015-02, 20150222"
+  (save-match-data
+    (let ((re "^\\([0-9]\\{4\\}\\)-?\\([0-9]\\{2\\}\\)-?\\([0-9]\\{2\\}\\)?$")
+          (clean (elfeed-cleanup string)))
+      (when (string-match re clean)
+        (let ((year (string-to-number (match-string 1 clean)))
+              (month (string-to-number (match-string 2 clean)))
+              (day (string-to-number (or (match-string 3 clean) "1"))))
+          (when (and (>= year 1900) (< year 2200))
+            (time-to-seconds (encode-time 0 0 0 day month year t))))))))
+
 (defun elfeed-float-time (&optional date)
   "Like `float-time' but accept anything reasonable for DATE,
 defaulting to the current time if DATE could not be parsed. Date
 is allowed to be relative to now (`elfeed-time-duration')."
   (cl-typecase date
     (string
-     (let ((duration (elfeed-time-duration date)))
-       (if duration
-           (- (float-time) duration)
-         (let ((time (ignore-errors (date-to-time date))))
-           (if (equal time '(14445 17280)) ; date-to-time silently failed
-               (float-time)
-             (float-time time))))))
+     (let ((iso-8601 (elfeed-parse-simple-iso-8601 date)))
+       (if iso-8601
+           iso-8601
+         (let ((duration (elfeed-time-duration date)))
+           (if duration
+               (- (float-time) duration)
+             (let ((time (ignore-errors (date-to-time date))))
+               (if (equal time '(14445 17280)) ; date-to-time silently failed
+                   (float-time)
+                 (float-time time))))))))
     (integer date)
     (list (float-time date))
     (otherwise (float-time))))

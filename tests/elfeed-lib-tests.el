@@ -60,7 +60,10 @@
   (cl-macrolet ((test (time seconds)
                    `(should (= (elfeed-float-time ,time) ,seconds))))
     (test "1985-03-24T03:23:42Z"          480482622.0)
-    (test "Mon,  5 May 1986 15:16:09 GMT" 515690169.0)))
+    (test "Mon,  5 May 1986 15:16:09 GMT" 515690169.0)
+    (test "2015-02-20" 1424390400.0)
+    (test "20150220" 1424390400.0)
+    (test "2015-02" 1422748800.0)))
 
 (ert-deftest elfeed-xml-parse-region ()
   (with-temp-buffer
