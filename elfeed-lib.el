@@ -83,7 +83,7 @@ Examples: 2015-02-22, 2015-02, 20150222"
               (month (string-to-number (match-string 2 clean)))
               (day (string-to-number (or (match-string 3 clean) "1"))))
           (when (and (>= year 1900) (< year 2200))
-            (time-to-seconds (encode-time 0 0 0 day month year t))))))))
+            (float-time (encode-time 0 0 0 day month year t))))))))
 
 (defun elfeed-float-time (&optional date)
   "Like `float-time' but accept anything reasonable for DATE,
