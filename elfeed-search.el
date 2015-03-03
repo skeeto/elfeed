@@ -434,6 +434,17 @@ expression, matching against entry link, title, and feed title."
     (mapc #'elfeed-search-update-entry entries)
     (unless (use-region-p) (forward-line))))
 
+(defun elfeed-search-toggle-all (tag)
+  "Toggle TAG on all selected entries."
+  (interactive (list (intern (read-from-minibuffer "Tag: "))))
+  (let ((entries (elfeed-search-selected)))
+    (cl-loop for entry in entries
+             when (elfeed-tagged-p tag entry)
+             do (elfeed-untag entry tag)
+             else do (elfeed-tag entry tag))
+    (mapc #'elfeed-search-update-entry entries)
+    (unless (use-region-p) (forward-line))))
+
 (defun elfeed-search-show-entry (entry)
   "Display the currently selected item in a buffer."
   (interactive (list (elfeed-search-selected :ignore-region)))
