@@ -88,9 +88,7 @@ Atom feed:
       (cond
        ((keywordp matcher) (xml-query--keyword matcher xml))
        ((eq matcher '*)
-        (let ((strings (cl-remove-if-not #'stringp (xml-query--append xml))))
-          (when strings
-            (mapconcat #'identity strings " "))))
+        (cl-remove-if-not #'stringp (xml-query--append xml)))
        (:else
         (let ((matches
                (cl-etypecase matcher

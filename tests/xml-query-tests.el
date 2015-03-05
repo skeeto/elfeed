@@ -10,8 +10,9 @@
     (should (string= (xml-query '(foo :xmlns) xml) "example/xml"))
     (should (string= (xml-query '(foo bar :href) xml) "example.com"))
     (should (string= (xml-query '(foo baz *) xml) "FOOBAZ"))
-    (should (string= (xml-query '(foo bar *) xml) "FOO BAR"))
-    (should (string= (xml-query-all '(foo (baz bar) *) xml) "FOOBAZ FOO BAR"))))
+    (should (string= (xml-query '(foo bar *) xml) "FOO"))
+    (should (equal (xml-query-all '(foo (baz bar) *) xml)
+                   '("FOOBAZ" "FOO" "BAR")))))
 
 (provide 'xml-query-tests)
 
