@@ -170,6 +170,7 @@
   (interactive)
   (let ((link (elfeed-entry-link elfeed-show-entry)))
     (when link
+      (kill-new link)
       (x-set-selection 'PRIMARY link)
       (message "Yanked: %s" link))))
 
