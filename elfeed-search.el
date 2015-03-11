@@ -58,13 +58,16 @@ Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
   "Offset between line numbers and entry list position.")
 
 (defalias 'elfeed-search-tag-all-unread
-  (elfeed-expose #'elfeed-search-tag-all 'unread))
+  (elfeed-expose #'elfeed-search-tag-all 'unread)
+  "Add the `unread' tag to all selected entries.")
 
 (defalias 'elfeed-search-untag-all-unread
-  (elfeed-expose #'elfeed-search-untag-all 'unread))
+  (elfeed-expose #'elfeed-search-untag-all 'unread)
+  "Remove the `unread' tag from all selected entries.")
 
 (defalias 'elfeed-search-update--force
-  (elfeed-expose #'elfeed-search-update :force))
+  (elfeed-expose #'elfeed-search-update :force)
+  "Force refresh view of the feed listing.")
 
 (defvar elfeed-search-mode-map
   (let ((map (make-sparse-keymap)))
