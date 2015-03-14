@@ -143,15 +143,12 @@
 (ert-deftest elfeed-feed-type ()
   (with-temp-buffer
     (insert elfeed-test-rss)
-    (goto-char (point-min))
     (should (eq (elfeed-feed-type (elfeed-xml-parse-region)) :rss)))
   (with-temp-buffer
     (insert elfeed-test-atom)
-    (goto-char (point-min))
     (should (eq (elfeed-feed-type (elfeed-xml-parse-region)) :atom)))
   (with-temp-buffer
     (insert elfeed-test-rss1.0)
-    (goto-char (point-min))
     (should (eq (elfeed-feed-type (elfeed-xml-parse-region)) :rss1.0))))
 
 (ert-deftest elfeed-entries-from-x ()
