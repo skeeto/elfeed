@@ -169,10 +169,12 @@ Clear `elfeed-search-cache' (or restart Emacs) after setting."
 (defun elfeed-search-print (entry)
   "Print ENTRY to the buffer."
   (let* ((date (elfeed-search-format-date (elfeed-entry-date entry)))
-         (title (or (elfeed-entry-title entry) ""))
+         (title (or (elfeed-meta entry :title) (elfeed-entry-title entry) ""))
          (title-faces '(elfeed-search-title-face))
          (feed (elfeed-entry-feed entry))
-         (feed-title (if feed (elfeed-feed-title feed)))
+         (feed-title
+          (when feed
+            (or (elfeed-meta feed :title) (elfeed-feed-title feed))))
          (tags (mapcar #'symbol-name (elfeed-entry-tags entry)))
          (tags-str (mapconcat
                     (lambda (s) (propertize s 'face 'elfeed-search-tag-face))
@@ -226,9 +228,10 @@ Clear `elfeed-search-cache' (or restart Emacs) after setting."
     (let* ((tags (elfeed-entry-tags entry))
            (date (elfeed-entry-date entry))
            (age (- (float-time) date))
-           (title (elfeed-entry-title entry))
+           (title (or (elfeed-meta entry :title) (elfeed-entry-title entry)))
            (link (elfeed-entry-link entry))
-           (feed-title (or (elfeed-feed-title feed) "")))
+           (feed-title
+            (or (elfeed-meta feed :title) (elfeed-feed-title feed) "")))
       (when (and after (> age after))
         (elfeed-db-return))
       (and (cl-every  (lambda (tag) (member tag tags)) must-have)
