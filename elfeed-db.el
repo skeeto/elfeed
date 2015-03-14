@@ -91,7 +91,8 @@ the :last-update time is updated.")
   "Merge B into A, preserving A's tags. Return true if an actual
 update occurred, not counting content."
   (setf (elfeed-entry-tags b) (elfeed-entry-tags a)
-        (elfeed-entry-content a) (elfeed-entry-content b))
+        (elfeed-entry-content a) (elfeed-entry-content b)
+        (elfeed-entry-meta b) (elfeed-entry-meta a))
   (not
    (zerop
     (cl-loop for i from 0 below (length a)
