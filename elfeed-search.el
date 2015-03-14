@@ -51,9 +51,6 @@ Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
 (defvar elfeed-search-live nil
   "When true, Elfeed is currently reading a filter from the minibuffer.")
 
-(defvar elfeed-search-cache (make-hash-table :test 'equal)
-  "Cache the generated entry buffer lines and such.")
-
 (defvar elfeed-search--offset 2
   "Offset between line numbers and entry list position.")
 
@@ -149,20 +146,17 @@ Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
   :group 'elfeed)
 
 (defcustom elfeed-search-title-max-width 70
-  "Maximum column width for titles in the elfeed-search buffer.
-Clear `elfeed-search-cache' (or restart Emacs) after setting."
+  "Maximum column width for titles in the elfeed-search buffer."
   :group 'elfeed
   :type 'integer)
 
 (defcustom elfeed-search-title-min-width 16
-  "Minimum column width for titles in the elfeed-search buffer.
-Clear `elfeed-search-cache' (or restart Emacs) after setting."
+  "Minimum column width for titles in the elfeed-search buffer."
   :group 'elfeed
   :type 'integer)
 
 (defcustom elfeed-search-trailing-width 30
-  "Space reserved for displaying the feed and tag information.
-Clear `elfeed-search-cache' (or restart Emacs) after setting."
+  "Space reserved for displaying the feed and tag information."
   :group 'elfeed
   :type 'integer)
 
@@ -352,19 +346,9 @@ expression, matching against entry link, title, and feed title."
             (elfeed-search-insert-header)
             (insert "\n")
             (elfeed-search--update-list)
-            (cl-loop for entry in elfeed-search-entries
-                     when (gethash (list (window-width) entry)
-                                   elfeed-search-cache)
-                     do (insert it)
-                     else
-                     do (insert
-                         (with-temp-buffer
-                           (elfeed-search-print entry)
-                           (setf (gethash (list (window-width)
-                                                (copy-sequence entry))
-                                          elfeed-search-cache)
-                                 (buffer-string))))
-                     do (insert "\n"))
+            (dolist (entry elfeed-search-entries)
+              (elfeed-search-print entry)
+              (insert "\n"))
             (insert "End of entries.\n")
             (setf elfeed-search-last-update (float-time))))
       (let ((inhibit-read-only t))
