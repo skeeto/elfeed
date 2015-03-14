@@ -141,15 +141,17 @@
 </opml>")
 
 (ert-deftest elfeed-feed-type ()
-  (with-temp-buffer
-    (insert elfeed-test-rss)
-    (should (eq (elfeed-feed-type (elfeed-xml-parse-region)) :rss)))
-  (with-temp-buffer
-    (insert elfeed-test-atom)
-    (should (eq (elfeed-feed-type (elfeed-xml-parse-region)) :atom)))
-  (with-temp-buffer
-    (insert elfeed-test-rss1.0)
-    (should (eq (elfeed-feed-type (elfeed-xml-parse-region)) :rss1.0))))
+  (mapc (lambda (region-format)
+          (let ((region (symbol-value (car region-format)))
+                (format (cadr region-format)))
+            (with-temp-buffer
+              (insert region)
+              (let ((detected-format
+                      (elfeed-feed-type (elfeed-xml-parse-region))))
+                (should (eq detected-format format))))))
+    '((elfeed-test-rss    :rss)
+      (elfeed-test-atom   :atom)
+      (elfeed-test-rss1.0 :rss1.0))))
 
 (ert-deftest elfeed-entries-from-x ()
   (with-elfeed-test
