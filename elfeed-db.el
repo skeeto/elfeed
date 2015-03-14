@@ -207,6 +207,18 @@ Use `elfeed-db-return' to exit early and optionally return data.
             ,@body))
         elfeed-db-index))))
 
+(defun elfeed-feed-entries (feed-or-id)
+  "Return a list of all entries for a particular feed.
+The FEED-OR-ID may be a feed struct or a feed ID (url)."
+  (let ((feed-id (if (elfeed-feed-p feed-or-id)
+                     (elfeed-feed-id feed-or-id)
+                   feed-or-id)))
+    (let ((entries))
+      (with-elfeed-db-visit (entry feed)
+        (when (equal (elfeed-feed-id feed) feed-id)
+          (push entry entries)))
+      (nreverse entries))))
+
 (defun elfeed-apply-hooks-now ()
   "Apply `elfeed-new-entry-hook' to all entries in the database."
   (interactive)

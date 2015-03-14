@@ -238,6 +238,25 @@
      (should (equal 4 (elfeed-meta entry :rating)))
      (should-error (setf (elfeed-meta entry :rating) (current-buffer))))))
 
+(ert-deftest elfeed-db-feed-entries ()
+  "Test `elfeed-feed-entries'."
+  (with-elfeed-test
+    (cl-flet ((tsort (x) (sort (mapcar #'elfeed-entry-title x) #'string<)))
+      (let* ((feed-a (elfeed-test-generate-feed))
+             (feed-a-entries
+              (cl-loop repeat 10 collect (elfeed-test-generate-entry feed-a)))
+             (feed-b (elfeed-test-generate-feed))
+             (feed-b-id (elfeed-feed-id feed-b))
+             (feed-b-entries
+              (cl-loop repeat 10 collect (elfeed-test-generate-entry feed-b))))
+        (elfeed-db-add feed-a-entries)
+        (elfeed-db-add feed-b-entries)
+        ;; Fetch the entries using `elfeed-feed-entries'
+        (should (equal (tsort (elfeed-feed-entries feed-a))
+                       (tsort feed-a-entries)))
+        (should (equal (tsort (elfeed-feed-entries feed-b-id))
+                       (tsort feed-b-entries)))))))
+
 (provide 'elfeed-db-tests)
 
 ;;; elfeed-db-tests.el ends here
