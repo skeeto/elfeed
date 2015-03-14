@@ -195,8 +195,12 @@ NIL for unknown."
                     (date (or (xml-query '(published *) entry)
                               (xml-query '(updated *) entry)
                               (xml-query '(date *) entry)))
-                    (content (or (xml-query '(content *) entry)
-                                 (xml-query '(summary *) entry)))
+                    (content
+                     (let ((all-content
+                            (or (xml-query-all '(content *) entry)
+                                (xml-query-all '(summary *) entry))))
+                       (when all-content
+                         (apply #'concat all-content))))
                     (id (or (xml-query '(id *) entry) link
                             (elfeed-generate-id content)))
                     (type (or (xml-query '(content :type) entry)
@@ -235,7 +239,8 @@ NIL for unknown."
                     (link (or (xml-query '(link *) item) guid))
                     (date (or (xml-query '(pubDate *) item)
                               (xml-query '(date *) item)))
-                    (description (xml-query '(description *) item))
+                    (description
+                     (apply #'concat (xml-query-all '(description *) item)))
                     (id (or guid link (elfeed-generate-id description)))
                     (full-id (cons feed-id (elfeed-cleanup id)))
                     (original (elfeed-db-get-entry full-id))
@@ -273,7 +278,8 @@ NIL for unknown."
                     (link (xml-query '(link *) item))
                     (date (or (xml-query '(pubDate *) item)
                               (xml-query '(date *) item)))
-                    (description (xml-query '(description *) item))
+                    (description
+                     (apply #'concat (xml-query-all '(description *) item)))
                     (id (or link (elfeed-generate-id description)))
                     (full-id (cons feed-id (elfeed-cleanup id)))
                     (original (elfeed-db-get-entry full-id)))
