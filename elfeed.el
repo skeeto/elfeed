@@ -135,11 +135,15 @@ the failing feed. The second argument is the error message .")
 
 (defun elfeed--wrap-callback (id cb)
   "Return a function that manages the elfeed queue."
-  (lambda (status)
-    (unwind-protect
-        (funcall cb status)
-      (setf elfeed-connections (cl-delete id elfeed-connections :key #'car))
-      (elfeed--check-queue))))
+  (let ((once nil))
+    (lambda (status)
+      (unless once
+        (setf once t) ;; url-retrieve bug#20159 workaround
+        (unwind-protect
+            (funcall cb status)
+          (setf elfeed-connections
+                (cl-delete id elfeed-connections :key #'car))
+          (elfeed--check-queue))))))
 
 (defun elfeed-fetch (url callback)
   "Basically wraps `url-retrieve' but uses the connection limiter."
