@@ -130,7 +130,7 @@ the failing feed. The second argument is the error message .")
       (cl-destructuring-bind (_ url cb) request
         (push request elfeed-connections)
         (condition-case error
-            (url-retrieve url cb nil :silent)
+            (url-retrieve url cb nil :silent :no-cookies)
           (error (with-temp-buffer (funcall cb (list :error error)))))))))
 
 (defun elfeed--wrap-callback (id cb)
