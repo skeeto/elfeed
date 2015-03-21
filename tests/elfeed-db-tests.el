@@ -232,10 +232,13 @@
           (entry (elfeed-test-generate-entry feed)))
      (should (null (elfeed-meta feed :status)))
      (should (null (elfeed-meta entry :rating)))
+     (should (= (elfeed-meta entry :errors 10) 10))
      (setf (elfeed-meta feed :status) 'down
            (elfeed-meta entry :rating) 4)
+     (cl-incf (elfeed-meta entry :errors 0))
      (should (equal 'down (elfeed-meta feed :status)))
      (should (equal 4 (elfeed-meta entry :rating)))
+     (should (= (elfeed-meta entry :errors) 1))
      (should-error (setf (elfeed-meta entry :rating) (current-buffer))))))
 
 (ert-deftest elfeed-db-feed-entries ()

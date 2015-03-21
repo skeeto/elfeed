@@ -320,9 +320,10 @@ This function increases the size of the structs in the database."
            when (not (null v))
            collect k and collect v))
 
-(defun elfeed-meta (thing key)
+(defun elfeed-meta (thing key &optional default)
   "Access metadata for THING (entry, feed) under KEY."
-  (plist-get (elfeed-meta--plist thing) key))
+  (or (plist-get (elfeed-meta--plist thing) key)
+      default))
 
 (defun elfeed-meta--put (thing key value)
   "Set metadata to VALUE on THING under KEY."
@@ -331,7 +332,8 @@ This function increases the size of the structs in the database."
     (prog1 value
       (elfeed-meta--set-plist thing (elfeed-db--plist-fixup new-plist)))))
 
-(gv-define-simple-setter elfeed-meta elfeed-meta--put)
+(gv-define-setter elfeed-meta (value thing key &optional _default)
+  `(elfeed-meta--put ,thing ,key ,value))
 
 ;; Filesystem storage:
 
