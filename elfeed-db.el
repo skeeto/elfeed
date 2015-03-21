@@ -314,6 +314,12 @@ This function increases the size of the structs in the database."
     (elfeed-entry (setf (elfeed-entry-meta thing) plist))
     (otherwise (error "Don't know how to access metadata on %S" thing))))
 
+(defun elfeed-db--plist-fixup (plist)
+  "Remove nil values from PLIST."
+  (cl-loop for (k v) on plist by #'cddr
+           when (not (null v))
+           collect k and collect v))
+
 (defun elfeed-meta (thing key)
   "Access metadata for THING (entry, feed) under KEY."
   (plist-get (elfeed-meta--plist thing) key))
@@ -323,7 +329,7 @@ This function increases the size of the structs in the database."
   (when (not (elfeed-readable-p value)) (error "New value must be readable."))
   (let ((new-plist (plist-put (elfeed-meta--plist thing) key value)))
     (prog1 value
-      (elfeed-meta--set-plist thing new-plist))))
+      (elfeed-meta--set-plist thing (elfeed-db--plist-fixup new-plist)))))
 
 (gv-define-simple-setter elfeed-meta elfeed-meta--put)
 
