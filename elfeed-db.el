@@ -183,6 +183,16 @@ update occurred, not counting content."
   "Return true if ENTRY is tagged by TAG."
   (member tag (elfeed-entry-tags entry)))
 
+(defun elfeed-db-get-all-tags ()
+  "Return a list of all tags currently in the database."
+  (let ((table (make-hash-table :test 'eq)))
+    (with-elfeed-db-visit (e _)
+      (dolist (tag (elfeed-entry-tags e))
+        (setf (gethash tag table) tag)))
+    (let ((tags ()))
+      (maphash (lambda (k _) (push k tags)) table)
+      (cl-sort tags #'string< :key #'symbol-name))))
+
 (defun elfeed-db-last-update ()
   "Return the last database update time in (`float-time') seconds."
   (elfeed-db-ensure)
