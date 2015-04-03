@@ -384,14 +384,19 @@ expression, matching against entry link, title, and feed title."
                collect it into selected
                finally (return (if ignore-region (car selected) selected))))))
 
-(defun elfeed-search-browse-url ()
-  "Visit the current entry in your browser using `browse-url'."
-  (interactive)
+(defun elfeed-search-browse-url (use-generic-p)
+  "Visit the current entry in your browser using `browse-url'.
+
+If there is a prefix argument, visit the current entry in the browser defined by
+  `browse-url-generic-program'."
+  (interactive "P")
   (let ((entries (elfeed-search-selected)))
     (cl-loop for entry in entries
              do (elfeed-untag entry 'unread)
              when (elfeed-entry-link entry)
-             do (browse-url it))
+      do (if use-generic-p
+           (browse-url-generic it)
+           (browse-url it)))
     (mapc #'elfeed-search-update-entry entries)
     (unless (use-region-p) (forward-line))))
 
