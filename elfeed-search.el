@@ -256,6 +256,8 @@ Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
 (defun elfeed-search-set-filter (new-filter)
   "Set a new search filter for the elfeed-search buffer.
 
+When NEW-FILTER is nil, reset the filter to the default value.
+
 When given a prefix argument, the current filter is not displayed
 in the minibuffer when prompting for a new filter.
 
@@ -271,7 +273,8 @@ expression, matching against entry link, title, and feed title."
   (interactive (list (elfeed-search--prompt
                       (if current-prefix-arg "" elfeed-search-filter))))
   (with-current-buffer (elfeed-search-buffer)
-    (setf elfeed-search-filter new-filter)
+    (setf elfeed-search-filter
+          (or new-filter (default-value 'elfeed-search-filter)))
     (elfeed-search-update :force)))
 
 (defun elfeed-search-insert-header-text (text)
