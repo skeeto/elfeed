@@ -31,6 +31,7 @@
       (define-key map "p" 'elfeed-show-prev)
       (define-key map "s" 'elfeed-show-new-live-search)
       (define-key map "b" 'elfeed-show-visit)
+      (define-key map "v" 'elfeed-show-ace-link)
       (define-key map "y" 'elfeed-show-yank)
       (define-key map "u" (elfeed-expose #'elfeed-show-tag 'unread))
       (define-key map "+" 'elfeed-show-tag)
@@ -194,6 +195,31 @@
     (with-current-buffer (elfeed-search-buffer)
       (elfeed-search-update-entry entry))
     (elfeed-show-refresh)))
+
+(defun elfeed-show-ace-link ()
+  "Select a link to visit with ace-jump."
+  (interactive)
+  (noflet ((ace-jump-search-candidate (str va-list)
+             (let ((skip (text-property-any (point-min) (point-max)
+                                            'help-echo nil))
+                   candidates)
+               (save-excursion
+                 (while (setq skip (text-property-not-all skip (point-max)
+                                                          'help-echo nil))
+                   (goto-char skip)
+                   (push (make-aj-position
+                          :offset (1- skip)
+                          :visual-area (car va-list))
+                         candidates)
+                   (setq skip (text-property-any (point) (point-max)
+                                                 'help-echo nil))))
+               (nreverse candidates))))
+    (setq ace-jump-mode-end-hook
+      (list `(lambda ()
+               (setq ace-jump-mode-end-hook)
+               (forward-char 1)
+               (shr-browse-url))))
+    (ace-jump-do "foo")))
 
 (provide 'elfeed-show)
 
