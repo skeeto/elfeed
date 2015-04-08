@@ -133,6 +133,11 @@ Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
   "Face used in search mode for titles."
   :group 'elfeed)
 
+(defface elfeed-search-unread-title-face
+  '((t :inherit elfeed-search-title-face :weight bold))
+  "Face used in search mode for unread entry titles."
+  :group 'elfeed)
+
 (defface elfeed-search-feed-face
   '((((class color) (background light)) (:foreground "#aa0"))
     (((class color) (background dark))  (:foreground "#ff0")))
@@ -164,7 +169,9 @@ Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
   "Print ENTRY to the buffer."
   (let* ((date (elfeed-search-format-date (elfeed-entry-date entry)))
          (title (or (elfeed-meta entry :title) (elfeed-entry-title entry) ""))
-         (title-faces '(elfeed-search-title-face))
+         (title-faces (if (elfeed-tagged-p 'unread entry)
+                          '(elfeed-search-unread-title-face)
+                        '(elfeed-search-title-face)))
          (feed (elfeed-entry-feed entry))
          (feed-title
           (when feed
@@ -180,8 +187,6 @@ Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
                                title-width
                                elfeed-search-title-max-width)
                         :left)))
-    (when (elfeed-tagged-p 'unread entry)
-      (push 'bold title-faces))
     (insert (propertize date 'face 'elfeed-search-date-face) " ")
     (insert (propertize title-column 'face title-faces) " ")
     (when feed-title
