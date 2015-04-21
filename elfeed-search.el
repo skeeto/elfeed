@@ -302,10 +302,12 @@ expression, matching against entry link, title, and feed title."
 
 (defun elfeed-search-insert-header ()
   "Insert a one-line status header."
-  (if (or elfeed-waiting elfeed-connections)
-      (elfeed-search-insert-header-text
-       (format "%d feeds pending, %d in process ..."
-               (length elfeed-waiting) (length elfeed-connections)))
+  (if url-queue
+      (let ((total (length url-queue))
+            (in-process (cl-count-if #'url-queue-buffer url-queue)))
+        (elfeed-search-insert-header-text
+         (format "%d feeds pending, %d in process ..."
+                 (- total in-process) in-process)))
     (let ((time (seconds-to-time (elfeed-db-last-update))))
       (if (zerop (float-time time))
           (elfeed-search-insert-intro-header)

@@ -56,6 +56,7 @@
 (require 'xml)
 (require 'xml-query)
 (require 'url-parse)
+(require 'url-queue)
 
 (defgroup elfeed nil
   "An Emacs web feed reader."
@@ -93,15 +94,8 @@ when they are first discovered."
 
 ;; Fetching:
 
-(defcustom elfeed-max-connections
-  ;; Windows Emacs cannot open many sockets at once.
-  (if (or (not (and (fboundp 'gnutls-available-p) (gnutls-available-p)))
-          (eq system-type 'windows-nt))
-      1
-    4)
-  "The maximum number of feeds to be fetched in parallel."
-  :group 'elfeed
-  :type 'integer)
+(define-obsolete-variable-alias
+  'elfeed-max-connections 'url-queue-parallel-processes nil)
 
 (defvar elfeed-http-error-hooks nil
   "Hooks to run when an http connection error occurs.
@@ -113,61 +107,27 @@ the failing feed. The second argument is the http status code.")
 It is called with 2 arguments. The first argument is the url of
 the failing feed. The second argument is the error message .")
 
-(defvar elfeed-connections nil
-  "List of callbacks awaiting responses.")
+(define-obsolete-variable-alias
+  'elfeed-connections 'url-queue nil)
 
-(defvar elfeed-waiting nil
-  "List of requests awaiting connections.")
+(define-obsolete-variable-alias
+  'elfeed-waiting 'url-queue nil)
 
-(defvar elfeed--connection-counter 0
-  "Provides unique connection identifiers.")
-
-(defun elfeed--check-queue ()
-  "Start waiting connections if connection slots are available."
-  (while (and elfeed-waiting
-              (< (length elfeed-connections) elfeed-max-connections))
-    (let ((request (pop elfeed-waiting)))
-      (cl-destructuring-bind (_ url cb) request
-        (push request elfeed-connections)
-        (condition-case error
-            (url-retrieve url cb nil :silent :no-cookies)
-          (error (with-temp-buffer (funcall cb (list :error error)))))))))
-
-(defun elfeed--wrap-callback (id cb)
-  "Return a function that manages the elfeed queue."
-  (let ((once nil))
-    (lambda (status)
-      (unless once
-        (setf once t) ;; url-retrieve bug#20159 workaround
-        (unwind-protect
-            (funcall cb status)
-          (setf elfeed-connections
-                (cl-delete id elfeed-connections :key #'car))
-          (elfeed--check-queue))))))
-
-(defun elfeed-fetch (url callback)
-  "Basically wraps `url-retrieve' but uses the connection limiter."
-  (let* ((id (cl-incf elfeed--connection-counter))
-         (cb (elfeed--wrap-callback id callback)))
-    (push (list id url cb) elfeed-waiting)
-    (elfeed--check-queue)))
-
-(defmacro with-elfeed-fetch (url &rest body)
+(defmacro elfeed-with-fetch (url &rest body)
   "Asynchronously run BODY in a buffer with the contents from
 URL. This macro is anaphoric, with STATUS referring to the status
 from `url-retrieve'."
   (declare (indent defun))
-  `(elfeed-fetch ,url (lambda (status) ,@body (kill-buffer))))
+  `(url-queue-retrieve ,url (lambda (status) ,@body (kill-buffer)) () t t))
 
 (defun elfeed-unjam ()
   "Manually clear the connection pool when connections fail to timeout.
-This is a short-term workaround for connection handling issues."
+This is a workaround for issues in `url-queue-retrieve'."
   (interactive)
-  (let ((fails (mapcar #'cl-second elfeed-connections)))
+  (let ((fails (mapcar #'url-queue-url elfeed-connections)))
     (when fails
       (message "Elfeed aborted feeds: %s" (mapconcat #'identity fails " ")))
-    (setf elfeed-connections nil)
-    (elfeed--check-queue)))
+    (setf url-queue nil)))
 
 ;; Parsing:
 
@@ -329,7 +289,7 @@ Only a list of strings will be returned."
 (defun elfeed-update-feed (url)
   "Update a specific feed."
   (interactive (list (completing-read "Feed: " (elfeed-feed-list))))
-  (with-elfeed-fetch url
+  (elfeed-with-fetch url
     (if (and status (eq (car status) :error))
         (let ((print-escape-newlines t))
           (elfeed-handle-http-error url status))

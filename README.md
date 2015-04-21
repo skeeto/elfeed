@@ -1,8 +1,8 @@
 # Elfeed Emacs Web Feed Reader
 
 Elfeed is an extensible web feed reader for Emacs, supporting both
-Atom and RSS. It requires Emacs 24 and is available for download from
-[MELPA](http://melpa.milkbox.net/) or
+Atom and RSS. It requires Emacs 24.3 and is available for download
+from [MELPA](http://melpa.milkbox.net/) or
 [el-get](https://github.com/dimitri/el-get). Elfeed was inspired by
 [notmuch](http://notmuchmail.org/).
 
@@ -61,8 +61,8 @@ If there are a lot of feeds, the initial update will take noticeably
 longer than normal operation because of the large amount of
 information being written the database. Future updates will only need
 to write new or changed data. If updating feeds slows down Emacs too
-much on your computer, reduce the value of `elfeed-max-connections`
-(the number of feeds to process at one time).
+much for you, reduce the value of `url-queue-parallel-processes` (the
+number of feeds to process at one time).
 
 From the search buffer there are a number of ways to interact with
 entries. Entries are selected by placing the point over an entry.
