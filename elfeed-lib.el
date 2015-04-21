@@ -223,6 +223,13 @@ If no such line exists, point is left in place."
     (unless (search-forward-regexp "^$" nil t)
       (setf (point) start))))
 
+(defun elfeed--shuffle (seq)
+  "Destructively shuffle SEQ."
+  (let ((n (length seq)))
+    (prog1 seq  ; don't use dotimes result (bug#16206)
+      (dotimes (i n)
+        (cl-rotatef (elt seq i) (elt seq (+ i (cl-random (- n i)))))))))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here

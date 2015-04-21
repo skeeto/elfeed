@@ -365,7 +365,7 @@ Only a list of strings will be returned."
   "Update all the feeds in `elfeed-feeds'."
   (interactive)
   (message "Elfeed update: %s" (format-time-string "%B %e %Y %H:%M:%S %Z"))
-  (mapc #'elfeed-update-feed (elfeed-feed-list))
+  (mapc #'elfeed-update-feed (elfeed--shuffle (elfeed-feed-list)))
   (elfeed-db-save))
 
 ;;;###autoload
