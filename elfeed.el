@@ -97,15 +97,21 @@ when they are first discovered."
 (define-obsolete-variable-alias
   'elfeed-max-connections 'url-queue-parallel-processes nil)
 
-(defvar elfeed-http-error-hooks nil
+(defvar elfeed-http-error-hooks ()
   "Hooks to run when an http connection error occurs.
 It is called with 2 arguments. The first argument is the url of
 the failing feed. The second argument is the http status code.")
 
-(defvar elfeed-parse-error-hooks nil
+(defvar elfeed-parse-error-hooks ()
   "Hooks to run when an error occurs during the parsing of a feed.
 It is called with 2 arguments. The first argument is the url of
 the failing feed. The second argument is the error message .")
+
+(defvar elfeed-update-hooks ()
+  "Hooks to run any time a feed update has completed a request.
+It is called with 1 argument: the URL of the feed that was just
+updated. The hook is called even when no new entries were
+found.")
 
 (define-obsolete-variable-alias
   'elfeed-connections 'url-queue nil)
@@ -118,7 +124,7 @@ the failing feed. The second argument is the error message .")
 URL. This macro is anaphoric, with STATUS referring to the status
 from `url-retrieve'."
   (declare (indent defun))
-  `(url-queue-retrieve ,url (lambda (status) ,@body (kill-buffer)) () t t))
+  `(url-queue-retrieve ,url (lambda (status) ,@body) () t t))
 
 (defun elfeed-unjam ()
   "Manually clear the connection pool when connections fail to timeout.
@@ -306,7 +312,9 @@ Only a list of strings will be returned."
                                (error (elfeed-handle-parse-error
                                        url "Unknown feed type."))))))
               (elfeed-db-add entries)))
-        (error (elfeed-handle-parse-error url error))))))
+        (error (elfeed-handle-parse-error url error))))
+    (kill-buffer)
+    (run-hook-with-args 'elfeed-update-hooks url)))
 
 (defun elfeed-add-feed (url)
   "Manually add a feed to the database."
