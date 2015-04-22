@@ -328,7 +328,8 @@ expression, matching against entry link, title, and feed title."
          (move-to-column column)))))
 
 (defun elfeed-search-update (&optional force)
-  "Update the display to match the database."
+  "Update the elfeed-search buffer listing to match the database.
+When FORCE is non-nil, redraw even when the database hasn't changed."
   (interactive)
   (with-current-buffer (elfeed-search-buffer)
     (if (or force (and (not elfeed-search-live)
