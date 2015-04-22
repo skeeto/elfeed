@@ -24,9 +24,6 @@
 (defvar elfeed-search-last-update 0
   "The last time the buffer was redrawn in epoch seconds.")
 
-(defvar elfeed-search-refresh-timer nil
-  "The timer used to keep things updated as the database updates.")
-
 (defcustom elfeed-search-filter "@6-months-ago +unread"
   "Query string filtering shown entries."
   :group 'elfeed
@@ -36,11 +33,6 @@
   "The order in which entries should be displayed, by time."
   :group 'elfeed
   :type '(choice (const descending) (const ascending)))
-
-(defcustom elfeed-search-refresh-rate 3
-  "How often the buffer should update against the datebase in seconds."
-  :group 'elfeed
-  :type 'number)
 
 (defcustom elfeed-search-clipboard-type 'PRIMARY
   "Selects the clipboard `elfeed-search-yank' should use.
@@ -100,16 +92,8 @@ Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
   (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)
   (make-local-variable 'elfeed-search-filter)
-  (when (null elfeed-search-refresh-timer)
-    (setf elfeed-search-refresh-timer
-          (run-at-time elfeed-search-refresh-rate elfeed-search-refresh-rate
-                       #'elfeed-search-update)))
+  (add-hook 'elfeed-update-hooks #'elfeed-search-update)
   (add-hook 'kill-buffer-hook #'elfeed-db-save t t)
-  (add-hook 'kill-buffer-hook
-            (lambda ()
-              (ignore-errors (cancel-timer elfeed-search-refresh-timer))
-              (setf elfeed-search-refresh-timer nil))
-            t t)
   (elfeed-search-update :force)
   (run-hooks 'elfeed-search-mode-hook))
 
