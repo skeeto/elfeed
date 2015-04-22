@@ -133,7 +133,8 @@ This is a workaround for issues in `url-queue-retrieve'."
   (let ((fails (mapcar #'url-queue-url elfeed-connections)))
     (when fails
       (message "Elfeed aborted feeds: %s" (mapconcat #'identity fails " ")))
-    (setf url-queue nil)))
+    (setf url-queue nil))
+  (elfeed-search-update :force))
 
 ;; Parsing:
 
