@@ -326,7 +326,8 @@ Only a list of strings will be returned."
   (cl-pushnew url elfeed-feeds)
   (when (called-interactively-p 'any)
     (customize-save-variable 'elfeed-feeds elfeed-feeds))
-  (elfeed-update-feed url))
+  (elfeed-update-feed url)
+  (elfeed-search-update :force))
 
 ;;;###autoload
 (defun elfeed-update ()
@@ -334,6 +335,7 @@ Only a list of strings will be returned."
   (interactive)
   (message "Elfeed update: %s" (format-time-string "%B %e %Y %H:%M:%S %Z"))
   (mapc #'elfeed-update-feed (elfeed--shuffle (elfeed-feed-list)))
+  (elfeed-search-update :force)
   (elfeed-db-save))
 
 ;;;###autoload
