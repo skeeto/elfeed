@@ -64,6 +64,14 @@ to write new or changed data. If updating feeds slows down Emacs too
 much for you, reduce the value of `url-queue-parallel-processes` (the
 number of feeds to process at one time).
 
+Elfeed uses Emacs' url-queue package to manage feed fetching.
+Unfortunately it has a very short default value, so if you're getting
+any "Queue timeout exceeded" errors, increase `url-queue-timeout`.
+
+~~~el
+(setf url-queue-timeout 30)
+~~~
+
 From the search buffer there are a number of ways to interact with
 entries. Entries are selected by placing the point over an entry.
 Multiple entries are selected at once by using an active region.
