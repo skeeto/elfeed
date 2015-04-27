@@ -439,9 +439,20 @@ This function increases the size of the structs in the database."
   (ignore-errors
     (delete-file (elfeed-ref--file ref))))
 
+(defun elfeed-db-gc-empty-feeds ()
+  "Remove feeds with no entries from the database."
+  (let ((seen (make-hash-table :test 'equal)))
+    (with-elfeed-db-visit (entry feed)
+      (setf (gethash (elfeed-feed-id feed) seen) feed))
+    (maphash (lambda (id _)
+               (unless (gethash id seen)
+                 (remhash id elfeed-db-feeds)))
+             elfeed-db-feeds)))
+
 (defun elfeed-db-gc (&optional stats-p)
   "Clean up unused content from the content database. If STATS is
 true, return the space cleared in bytes."
+  (elfeed-db-gc-empty-feeds)
   (let* ((data (expand-file-name "data" elfeed-db-directory))
          (dirs (directory-files data t "^[0-9a-z]\\{2\\}$"))
          (ids (cl-mapcan (lambda (d) (directory-files d nil nil t)) dirs))
