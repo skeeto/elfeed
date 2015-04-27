@@ -40,8 +40,9 @@ Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
   :group 'elfeed
   :type '(choice (const PRIMARY) (const SECONDARY) (const CLIPBOARD)))
 
-(defvar elfeed-search-live nil
-  "When true, Elfeed is currently reading a filter from the minibuffer.")
+(defvar elfeed-search-filter-active nil
+  "When non-nil, Elfeed is currently reading a filter from the minibuffer.
+When live editing the filter, it is bound to :live.")
 
 (defvar elfeed-search--offset 2
   "Offset between line numbers and entry list position.")
@@ -259,8 +260,10 @@ than this are allowed. Ex. \"@3-days-ago\" or \"@1-year-old\".
 
 Every other space-seperated element is treated like a regular
 expression, matching against entry link, title, and feed title."
-  (interactive (list (elfeed-search--prompt
-                      (if current-prefix-arg "" elfeed-search-filter))))
+  (interactive
+   (let ((elfeed-search-filter-active :non-interactive))
+     (list (elfeed-search--prompt
+            (if current-prefix-arg "" elfeed-search-filter)))))
   (with-current-buffer (elfeed-search-buffer)
     (setf elfeed-search-filter
           (or new-filter (default-value 'elfeed-search-filter)))
@@ -332,7 +335,7 @@ expression, matching against entry link, title, and feed title."
 When FORCE is non-nil, redraw even when the database hasn't changed."
   (interactive)
   (with-current-buffer (elfeed-search-buffer)
-    (if (or force (and (not elfeed-search-live)
+    (if (or force (and (not elfeed-search-filter-active)
                        (< elfeed-search-last-update (elfeed-db-last-update))))
         (elfeed-save-excursion
           (let ((inhibit-read-only t)
@@ -445,16 +448,26 @@ browser defined by `browse-url-generic-program'."
 
 ;; Live Filters
 
+(defvar elfeed-search-filter-syntax-table
+  (let ((table (make-syntax-table)))
+    (prog1 table
+      (modify-syntax-entry ?+ "w" table)
+      (modify-syntax-entry ?- "w" table)
+      (modify-syntax-entry ?@ "w" table)))
+  "Syntax table active when editing the filter in the minibuffer.")
+
 (defun elfeed-search--minibuffer-setup ()
   "Set up the minibuffer for live filtering."
-  (when elfeed-search-live
-    (add-hook 'post-command-hook 'elfeed-search--live-update nil :local)))
+  (when elfeed-search-filter-active
+    (set-syntax-table elfeed-search-filter-syntax-table)
+    (when (eq :live elfeed-search-filter-active)
+      (add-hook 'post-command-hook 'elfeed-search--live-update nil :local))))
 
 (add-hook 'minibuffer-setup-hook 'elfeed-search--minibuffer-setup)
 
 (defun elfeed-search--live-update ()
   "Update the elfeed-search buffer based on the contents of the minibuffer."
-  (when elfeed-search-live
+  (when (eq :live elfeed-search-filter-active)
     (let ((buffer (elfeed-search-buffer))
           (current-filter (minibuffer-contents-no-properties)))
       (when buffer
@@ -466,7 +479,7 @@ browser defined by `browse-url-generic-program'."
   "Filter the elfeed-search buffer as the filter is written."
   (interactive)
   (unwind-protect
-      (let ((elfeed-search-live t))
+      (let ((elfeed-search-filter-active :live))
         (setq elfeed-search-filter
               (read-from-minibuffer "Filter: " elfeed-search-filter)))
     (elfeed-search-update :force)))
