@@ -210,8 +210,9 @@ NIL for unknown."
                     (link (or (xml-query '(link *) item) guid))
                     (date (or (xml-query '(pubDate *) item)
                               (xml-query '(date *) item)))
-                    (description
-                     (apply #'concat (xml-query-all '(description *) item)))
+                    (content (or (xml-query-all '(encoded *) item)
+                                 (xml-query-all '(description *) item)))
+                    (description (apply #'concat content))
                     (id (or guid link (elfeed-generate-id description)))
                     (full-id (cons feed-id (elfeed-cleanup id)))
                     (original (elfeed-db-get-entry full-id))
