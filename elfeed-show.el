@@ -25,6 +25,7 @@
   (let ((map (make-sparse-keymap)))
     (prog1 map
       (suppress-keymap map)
+      (define-key map "D" 'elfeed-download-all-enclosures)
       (define-key map "q" 'elfeed-kill-buffer)
       (define-key map "g" 'elfeed-show-refresh)
       (define-key map "n" 'elfeed-show-next)
@@ -194,6 +195,17 @@
     (with-current-buffer (elfeed-search-buffer)
       (elfeed-search-update-entry entry))
     (elfeed-show-refresh)))
+
+
+(defun elfeed-download-all-enclosures(output-directory)
+  "Download all enclosures of the displayed entry to a user defined directory."
+  (interactive "DOutput directory:")
+  (cl-loop for enclosure in (elfeed-entry-enclosures elfeed-show-entry)
+           do (let* ((url-enclosure (car enclosure)))
+                (url-copy-file url-enclosure
+                               (format "%s/%s"
+                                       output-directory
+                                       (replace-regexp-in-string ".*/" "" url-enclosure))))))
 
 (provide 'elfeed-show)
 
