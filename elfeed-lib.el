@@ -230,6 +230,29 @@ If no such line exists, point is left in place."
       (dotimes (i n)
         (cl-rotatef (elt seq i) (elt seq (+ i (cl-random (- n i)))))))))
 
+(defun elfeed-split-ranges-to-numbers (str n)
+  "Convert STR containing enclosure numbers into a list of numbers.
+STR is a string; N is the highest possible number in the list.
+This includes expanding e.g. 3-5 into 3,4,5.  If the letter
+\"a\" ('all')) is given, that is expanded to a list with numbers [1..n]."
+  (let ((str-split (split-string str))
+        beg end list)
+    (dolist (elem str-split list)
+      ;; special number "a" converts into all enclosures 1-N.
+      (when (equal elem "a")
+        (setf elem (concat "1-" (int-to-string n))))
+      (if (string-match "\\([0-9]+\\)-\\([0-9]+\\)" elem)
+          ;; we have found a range A-B, which needs converting
+          ;; into the numbers A, A+1, A+2, ... B.
+          (progn
+            (setf beg (string-to-number (match-string 1 elem))
+                  end (string-to-number (match-string 2 elem)))
+            (while (<= beg end)
+              (setf list (nconc list (list beg))
+                    beg (1+ beg))))
+        ;; else just a number
+        (push (string-to-number elem) list)))))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here

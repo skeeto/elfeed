@@ -25,6 +25,7 @@
   (let ((map (make-sparse-keymap)))
     (prog1 map
       (suppress-keymap map)
+      (define-key map "d" 'elfeed-show-save-enclosure)
       (define-key map "q" 'elfeed-kill-buffer)
       (define-key map "g" 'elfeed-show-refresh)
       (define-key map "n" 'elfeed-show-next)
@@ -194,6 +195,140 @@
     (with-current-buffer (elfeed-search-buffer)
       (elfeed-search-update-entry entry))
     (elfeed-show-refresh)))
+
+;; Enclosures:
+
+(defcustom elfeed-enclosure-default-dir (expand-file-name "~")
+  "Default directory for saving enclosures.
+This can be either a string (a file system path), or a function
+that takes a filename and the mime-type as arguments, and returns
+the enclosure dir."
+  :type 'directory
+  :group 'elfeed
+  :safe 'stringp)
+
+(defcustom elfeed-save-multiple-enclosures-without-asking nil
+  "If non-nil, saving multiple enclosures asks once for a
+directory and saves all attachments in the chosen directory."
+  :type 'boolean
+  :group 'elfeed)
+
+(defun elfeed--download-enclosure (url path)
+  "Download asynchronously the enclosure from URL to PATH."
+  (if (fboundp 'async-start)
+      ;; If async is available, don't hang emacs !
+      (async-start
+       (lambda ()
+         (url-copy-file url path t))
+       (lambda (_)
+         (message (format "%s downloaded" url))))
+    (url-copy-file url path t)))
+
+(defun elfeed--get-enclosure-num (prompt entry &optional multi)
+  "Ask the user with PROMPT for an enclosure number for ENTRY.
+The number is [1..n] for enclosures \[0..(n-1)] in the entry. If
+MULTI is nil, return the number for the enclosure;
+otherwise (MULTI is non-nil), accept ranges of enclosure numbers,
+as per `elfeed-split-ranges-to-numbers', and return the
+corresponding string."
+  (let* ((count (length (elfeed-entry-enclosures entry)))
+         def)
+    (when (zerop count)
+      (error "No enclosures to this entry"))
+    (if (not multi)
+        (if (= count 1)
+            (read-number (format "%s: " prompt) 1)
+          (read-number (format "%s (1-%d): " prompt count)))
+      (progn
+        (setq def (if (= count 1) "1" (format "1-%d" count)))
+        (read-string (format "%s (default %s): " prompt def)
+                     nil nil def)))))
+
+(defun elfeed--request-enclosure-path (fname path)
+  "Ask the user where to save FNAME (default is PATH/FNAME)."
+  (let ((fpath (expand-file-name
+                (read-file-name "Save as: " path nil nil fname) path)))
+    (if (file-directory-p fpath)
+        (expand-file-name fname fpath)
+      fpath)))
+
+(defun elfeed--request-enclosures-dir (path)
+  "Ask the user where to save multiple enclosures (default is PATH)."
+  (let ((fpath (expand-file-name
+                (read-directory-name
+                 (format "Save in directory: ") path nil nil nil) path)))
+    (if (file-directory-p fpath)
+        fpath)))
+
+(defun elfeed-show-save-enclosure-single (&optional entry enclosure-index)
+  "Save enclosure number ENCLOSURE-INDEX from ENTRY.
+If ENTRY is nil use the elfeed-show-entry variable.
+If ENCLOSURE-INDEX is nil ask for the enclosure number."
+  (interactive)
+  (let* ((path (concat elfeed-enclosure-default-dir "/"))
+         (entry (or entry elfeed-show-entry))
+         (enclosure-index (or enclosure-index
+                              (elfeed--get-enclosure-num
+                               "Enclosure to save" entry)))
+         (url-enclosure (car (elt (elfeed-entry-enclosures entry)
+                                  (- enclosure-index 1))))
+         (fname (file-name-nondirectory
+                 (url-unhex-string
+                  (car (url-path-and-query (url-generic-parse-url
+                                            url-enclosure))))))
+         (retry t)
+         (fpath))
+    (while retry
+      (setf fpath (elfeed--request-enclosure-path fname path)
+            retry (and (file-exists-p fpath)
+                       (not (y-or-n-p (format "Overwrite '%s'?" fpath))))))
+    (elfeed--download-enclosure url-enclosure fpath)))
+
+(defun elfeed-show-save-enclosure-multi (&optional entry)
+  "Offer to save multiple entry enclosures from the current entry.
+Default is to save all enclosures, [1..n], where n is the number of
+enclosures.  You can type multiple values separated by space, e.g.
+  1 3-6 8
+will save enclosures 1,3,4,5,6 and 8.
+
+Furthermore, there is a shortcut \"a\" which so means all
+enclosures, but as this is the default, you may not need it."
+  (interactive)
+  (let* ((entry (or entry elfeed-show-entry))
+         (attachstr (elfeed--get-enclosure-num
+                     "Enclosure number range (or 'a' for 'all')" entry t))
+         (count (length (elfeed-entry-enclosures entry)))
+         (attachnums (elfeed-split-ranges-to-numbers attachstr count))
+         (fpath))
+    (if elfeed-save-multiple-enclosures-without-asking
+        (let ((attachdir
+               (elfeed--request-enclosures-dir elfeed-enclosure-default-dir)))
+          (dolist (enclosure-index attachnums)
+            (let* ((url-enclosure (aref (elfeed-entry-enclosures entry)
+                                        enclosure-index))
+                   (fname (file-name-nondirectory
+                           (url-unhex-string
+                            (car (url-path-and-query
+                                  (url-generic-parse-url url-enclosure))))))
+                   (retry t))
+              (while retry
+                (setf fpath (expand-file-name (concat attachdir fname) path)
+                      retry
+                      (and (file-exists-p fpath)
+                           (not (y-or-n-p (format "Overwrite '%s'?" fpath))))))
+
+              (elfeed--download-enclosure url-enclosure fpath))))
+      (dolist (enclosure-index attachnums)
+        (elfeed-show-save-enclosure-single entry enclosure-index)))))
+
+(defun elfeed-show-save-enclosure (&optional multi)
+  "Offer to save enclosure(s).
+If MULTI (prefix-argument) is nil, save a single one, otherwise,
+offer to save a range of enclosures."
+  (interactive "P")
+  (if multi
+      (elfeed-show-save-enclosure-multi)
+    (elfeed-show-save-enclosure-single)))
 
 (provide 'elfeed-show)
 
