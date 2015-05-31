@@ -25,7 +25,7 @@
   (let ((map (make-sparse-keymap)))
     (prog1 map
       (suppress-keymap map)
-      (define-key map "D" 'elfeed-download-all-enclosures)
+      (define-key map "d" 'elfeed-show-save-enclosure)
       (define-key map "q" 'elfeed-kill-buffer)
       (define-key map "g" 'elfeed-show-refresh)
       (define-key map "n" 'elfeed-show-next)
@@ -197,15 +197,169 @@
     (elfeed-show-refresh)))
 
 
-(defun elfeed-download-all-enclosures(output-directory)
-  "Download all enclosures of the displayed entry to a user defined directory."
-  (interactive "DOutput directory:")
-  (cl-loop for enclosure in (elfeed-entry-enclosures elfeed-show-entry)
-           do (let* ((url-enclosure (car enclosure)))
-                (url-copy-file url-enclosure
-                               (format "%s/%s"
-                                       output-directory
-                                       (replace-regexp-in-string ".*/" "" url-enclosure))))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; enclosures management (adapted source code from mu4e)
+
+(defcustom elfeed-enclosure-default-dir (expand-file-name "~/")
+  "Default directory for saving enclosures.
+This can be either a string (a file system path), or a function
+that takes a filename and the mime-type as arguments, and returns
+the enclosure dir."
+  :type 'directory
+  :group 'elfeed
+  :safe 'stringp)
+
+(defcustom elfeed-save-multiple-enclosures-without-asking nil
+  "If non-nil, saving multiple enclosures asks once for a
+directory and saves all attachments in the chosen directory."
+  :type 'boolean
+  :group 'elfeed)
+
+
+
+(defun elfeed-split-ranges-to-numbers (str n)
+  "Convert STR containing enclosure numbers into a list of numbers.
+STR is a string; N is the highest possible number in the list.
+This includes expanding e.g. 3-5 into 3,4,5.  If the letter
+\"a\" ('all')) is given, that is expanded to a list with numbers [1..n]."
+  (let ((str-split (split-string str))
+	 beg end list)
+    (dolist (elem str-split list)
+      ;; special number "a" converts into all enclosures 1-N.
+      (when (equal elem "a")
+	(setq elem (concat "1-" (int-to-string n))))
+      (if (string-match "\\([0-9]+\\)-\\([0-9]+\\)" elem)
+	;; we have found a range A-B, which needs converting
+	;; into the numbers A, A+1, A+2, ... B.
+	(progn
+	  (setq beg (string-to-number (match-string 1 elem))
+	    end (string-to-number (match-string 2 elem)))
+	  (while (<= beg end)
+	    (add-to-list 'list beg 'append)
+	    (setq beg (1+ beg))))
+	;; else just a number
+	(add-to-list 'list (string-to-number elem) 'append)))
+    ;; Check that all numbers are valid.
+    (mapc
+      #'(lambda (x)
+	  (cond
+	    ((> x n)
+	      (warn "Enclosure %d bigger than maximum (%d)" x n))
+	    ((< x 1)
+	      (warn "Enclosure number must be greater than 0 (%d)" x))))
+      list)))
+
+
+(defun elfeed-get-enclosure-num (prompt entry &optional multi)
+  "Ask the user with PROMPT for an enclosure number for ENTRY, and
+ensure it is valid. The number is [1..n] for enclosures
+\[0..(n-1)] in the entry. If MULTI is nil, return the number for
+the enclosure; otherwise (MULTI is non-nil), accept ranges of
+enclosure numbers, as per `elfeed-split-ranges-to-numbers', and
+return the corresponding string."
+  (let* ((count (length (elfeed-entry-enclosures entry))) (def))
+    (when (zerop count) (error "No enclosures to this entry"))
+    (if (not multi)
+      (if (= count 1)
+	(read-number (format "%s: " prompt) 1)
+	(read-number (format "%s (1-%d): " prompt count)))
+      (progn
+	(setq def (if (= count 1) "1" (format "1-%d" count)))
+	(read-string (format "%s (default %s): " prompt def)
+                 nil nil def)))))
+
+(defun elfeed-show-request-enclosure-path (fname path)
+  "Ask the user where to save FNAME (default is PATH/FNAME)."
+  (let ((fpath (expand-file-name
+                (read-file-name
+                 "Save as "
+                 path nil nil fname) path)))
+    (if (file-directory-p fpath)
+      (expand-file-name fname fpath)
+      fpath)))
+
+
+(defun elfeed-show-request-enclosures-dir (path)
+  "Ask the user where to save multiple enclosures (default is PATH)."
+  (let ((fpath (expand-file-name
+                (read-directory-name
+                 (format "Save in directory ")
+                 path nil nil nil) path)))
+    (if (file-directory-p fpath)
+        fpath)))
+
+
+(defun elfeed-show-save-enclosure-single (&optional entry enclosure-index)
+  "Save enclosure number ENCLOSURE-INDEX from ENTRY.
+If ENTRY is nil use the elfeed-show-entry variable.
+If ENCLOSURE-INDEX is nil ask for the enclosure number."
+  (interactive)
+  (let* (
+         (path (concat elfeed-enclosure-default-dir "/"))
+         (entry (or entry elfeed-show-entry))
+         (enclosure-index (or enclosure-index
+                              (elfeed-get-enclosure-num "Enclosure to save" entry)))
+         (url-enclosure (car (elt (elfeed-entry-enclosures entry)
+                                  (- enclosure-index 1))))
+         (fname (file-name-nondirectory
+                 (url-unhex-string
+                  (car (url-path-and-query (url-generic-parse-url
+                                            url-enclosure))))))
+         (retry t) (fpath))
+    (while retry
+      (setq fpath (elfeed-show-request-enclosure-path fname path))
+      (setq retry
+	(and (file-exists-p fpath)
+         (not (y-or-n-p (format "Overwrite '%s'?" fpath))))))
+    (url-copy-file url-enclosure
+                   fpath)))
+
+
+(defun elfeed-show-save-enclosure-multi (&optional entry)
+  "Offer to save multiple entry enclosures from the current entry.
+Default is to save all enclosures, [1..n], where n is the number of
+enclosures.  You can type multiple values separated by space, e.g.
+  1 3-6 8
+will save enclosures 1,3,4,5,6 and 8.
+
+Furthermore, there is a shortcut \"a\" which so means all
+enclosures, but as this is the default, you may not need it."
+  (interactive)
+  (let* ((entry (or entry elfeed-show-entry))
+         (attachstr (elfeed-get-enclosure-num
+                     "Enclosure number range (or 'a' for 'all')" entry t))
+         (count (length (elfeed-entry-enclosures entry)))
+         (attachnums (elfeed-split-ranges-to-numbers attachstr count)))
+    (if elfeed-save-multiple-enclosures-without-asking
+        (let* ((path (concat (elfeed~get-default-download-dir) "/"))
+               (attachdir (elfeed-show-request-enclosures-dir path)))
+          (dolist (enclosure-index attachnums)
+            (let* ((url-enclosure (aref (elfeed-entry-enclosures entry)
+                                        enclosure-index))
+                   (fname (file-name-nondirectory
+                           (url-unhex-string
+                            (car (url-path-and-query (url-generic-parse-url url-enclosure))))))
+                   (retry t))
+              (while retry
+                (setq fpath (expand-file-name (concat attachdir fname) path))
+                (setq retry
+                      (and (file-exists-p fpath)
+                           (not (y-or-n-p (format "Overwrite '%s'?" fpath))))))
+              
+              (url-copy-file url-enclosure
+                             fpath))))
+      (dolist (enclosure-index attachnums)
+        (elfeed-show-save-enclosure-single entry enclosure-index)))))
+
+(defun elfeed-show-save-enclosure (&optional multi)
+  "Offer to save enclosure(s).
+If MULTI (prefix-argument) is nil, save a single one, otherwise,
+offer to save a range of enclosures."
+  (interactive "P")
+  (if multi
+      (elfeed-show-save-enclosure-multi)
+    (elfeed-show-save-enclosure-single)))
+
 
 (provide 'elfeed-show)
 
