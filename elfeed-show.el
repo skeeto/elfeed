@@ -216,6 +216,20 @@ directory and saves all attachments in the chosen directory."
   :group 'elfeed)
 
 
+(defun elfeed-download-enclosure (url path)
+  "Download asynchronously the enclosure from URL to PATH"
+  (if (fboundp 'async-start)
+      ;; If async is available, don't hang emacs !
+      (async-start
+       (lambda ()
+         (url-copy-file url path t))
+
+       (lambda (result)
+         (message (format "%s downloaded" url))
+         )
+       )
+
+    (url-copy-file url path t)))
 
 (defun elfeed-split-ranges-to-numbers (str n)
   "Convert STR containing enclosure numbers into a list of numbers.
@@ -311,8 +325,7 @@ If ENCLOSURE-INDEX is nil ask for the enclosure number."
       (setq retry
 	(and (file-exists-p fpath)
          (not (y-or-n-p (format "Overwrite '%s'?" fpath))))))
-    (url-copy-file url-enclosure
-                   fpath)))
+    (elfeed-download-enclosure url-enclosure fpath)))
 
 
 (defun elfeed-show-save-enclosure-multi (&optional entry)
@@ -345,9 +358,8 @@ enclosures, but as this is the default, you may not need it."
                 (setq retry
                       (and (file-exists-p fpath)
                            (not (y-or-n-p (format "Overwrite '%s'?" fpath))))))
-              
-              (url-copy-file url-enclosure
-                             fpath))))
+
+              (elfeed-download-enclosure url-enclosure fpath))))
       (dolist (enclosure-index attachnums)
         (elfeed-show-save-enclosure-single entry enclosure-index)))))
 
