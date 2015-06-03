@@ -62,6 +62,8 @@
   "An Emacs web feed reader."
   :group 'comm)
 
+(defconst elfeed-version "1.1.2")
+
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow. You must add your
 feeds to this list.
