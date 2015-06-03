@@ -265,7 +265,7 @@ corresponding string."
 If ENTRY is nil use the elfeed-show-entry variable.
 If ENCLOSURE-INDEX is nil ask for the enclosure number."
   (interactive)
-  (let* ((path (concat elfeed-enclosure-default-dir "/"))
+  (let* ((path elfeed-enclosure-default-dir)
          (entry (or entry elfeed-show-entry))
          (enclosure-index (or enclosure-index
                               (elfeed--get-enclosure-num
@@ -299,13 +299,13 @@ enclosures, but as this is the default, you may not need it."
                      "Enclosure number range (or 'a' for 'all')" entry t))
          (count (length (elfeed-entry-enclosures entry)))
          (attachnums (elfeed-split-ranges-to-numbers attachstr count))
+         (path elfeed-enclosure-default-dir)
          (fpath))
     (if elfeed-save-multiple-enclosures-without-asking
-        (let ((attachdir
-               (elfeed--request-enclosures-dir elfeed-enclosure-default-dir)))
+        (let ((attachdir (elfeed--request-enclosures-dir path)))
           (dolist (enclosure-index attachnums)
-            (let* ((url-enclosure (aref (elfeed-entry-enclosures entry)
-                                        enclosure-index))
+            (let* ((url-enclosure
+                    (aref (elfeed-entry-enclosures entry) enclosure-index))
                    (fname (file-name-nondirectory
                            (url-unhex-string
                             (car (url-path-and-query
@@ -316,7 +316,6 @@ enclosures, but as this is the default, you may not need it."
                       retry
                       (and (file-exists-p fpath)
                            (not (y-or-n-p (format "Overwrite '%s'?" fpath))))))
-
               (elfeed--download-enclosure url-enclosure fpath))))
       (dolist (enclosure-index attachnums)
         (elfeed-show-save-enclosure-single entry enclosure-index)))))
