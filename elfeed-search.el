@@ -185,7 +185,8 @@ When live editing the filter, it is bound to :live.")
         (must-not-have ())
         (after nil)
         (matches ())
-        (not-matches ()))
+        (not-matches ())
+        (limit nil))
     (cl-loop for element in (split-string filter)
              for type = (aref element 0)
              do (cl-case type
@@ -201,14 +202,18 @@ When live editing the filter, it is bound to :live.")
                   (?! (let ((re (substring element 1)))
                         (when (elfeed-valid-regexp-p re)
                           (push re not-matches))))
+                  (?# (setf limit (string-to-number (substring element 1))))
                   (otherwise (when (elfeed-valid-regexp-p element)
                                (push element matches)))))
-    (list after must-have must-not-have matches not-matches)))
+    (list after must-have must-not-have matches not-matches limit)))
 
-(defun elfeed-search-filter (filter entry feed)
-  "Filter out only entries that match the filter. See
-`elfeed-search-set-filter' for format/syntax documentation."
-  (cl-destructuring-bind (after must-have must-not-have matches not-matches) filter
+(defun elfeed-search-filter (filter entry feed count)
+  "Return non-nil if ENTRY and FEED pass FILTER.
+See `elfeed-search-set-filter' for format/syntax documentation.
+This function must *only* be called within the body of
+`with-elfeed-db-visit' because it may perform a non-local exit."
+  (cl-destructuring-bind
+      (after must-have must-not-have matches not-matches limit) filter
     (let* ((tags (elfeed-entry-tags entry))
            (date (elfeed-entry-date entry))
            (age (- (float-time) date))
@@ -216,7 +221,8 @@ When live editing the filter, it is bound to :live.")
            (link (elfeed-entry-link entry))
            (feed-title
             (or (elfeed-meta feed :title) (elfeed-feed-title feed) "")))
-      (when (and after (> age after))
+      (when (or (and after (> age after))
+                (and limit (>= count limit)))
         (elfeed-db-return))
       (and (cl-every  (lambda (tag) (member tag tags)) must-have)
            (cl-notany (lambda (tag) (member tag tags)) must-not-have)
@@ -257,6 +263,10 @@ present on the entry. Ex. \"+unread\" or \"+unread -comic\".
 
 Any component beginning with an @ is an age limit. No posts older
 than this are allowed. Ex. \"@3-days-ago\" or \"@1-year-old\".
+
+Any component beginning with a # is an entry count maximum. The
+number following # determines the maxiumum number of entries
+to be shown (descending by date). Ex. \"#20\" or \"#100\".
 
 Every other space-seperated element is treated like a regular
 expression, matching against entry link, title, and feed title."
@@ -306,11 +316,13 @@ expression, matching against entry link, title, and feed title."
   "Update `elfeed-search-filter' list."
   (let* ((filter (elfeed-search-parse-filter elfeed-search-filter))
          (head (list nil))
-         (tail head))
+         (tail head)
+         (count 0))
     (with-elfeed-db-visit (entry feed)
-      (when (elfeed-search-filter filter entry feed)
+      (when (elfeed-search-filter filter entry feed count)
         (setf (cdr tail) (list entry)
-              tail (cdr tail))))
+              tail (cdr tail)
+              count (1+ count))))
     (setf elfeed-search-entries
           (if (eq elfeed-sort-order 'ascending)
               (nreverse (cdr head))
