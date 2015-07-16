@@ -484,7 +484,11 @@ browser defined by `browse-url-generic-program'."
           (current-filter (minibuffer-contents-no-properties)))
       (when buffer
         (with-current-buffer buffer
-          (let ((elfeed-search-filter current-filter))
+          (let* ((window (get-buffer-window (elfeed-search-buffer)))
+                 (limiter (if window
+                              (format "#%d " (window-total-height window))
+                            "#1 "))
+                 (elfeed-search-filter (concat limiter current-filter)))
             (elfeed-search-update :force)))))))
 
 (defun elfeed-search-live-filter ()
