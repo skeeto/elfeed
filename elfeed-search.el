@@ -40,6 +40,14 @@ Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
   :group 'elfeed
   :type '(choice (const PRIMARY) (const SECONDARY) (const CLIPBOARD)))
 
+(defcustom elfeed-search-date-format '("%Y-%m-%d" 10 :left)
+  "The `format-time-string' format, target width, and alignment for dates.
+
+This should be (string integer keyword) for (format width alignment).
+Possible alignments are :left and :right."
+  :group 'elfeed
+  :type '(list string integer (choice (const :left) (const :right))))
+
 (defvar elfeed-search-filter-active nil
   "When non-nil, Elfeed is currently reading a filter from the minibuffer.
 When live editing the filter, it is bound to :live.")
@@ -102,9 +110,22 @@ When live editing the filter, it is bound to :live.")
   (get-buffer-create "*elfeed-search*"))
 
 (defun elfeed-search-format-date (date)
-  "Format a date for printing in elfeed-search-mode."
-  (let ((string (format-time-string "%Y-%m-%d" (seconds-to-time date))))
-    (format "%-10.10s" string)))
+  "Format a date for printing in `elfeed-search-mode'.
+The customization `elfeed-search-date-format' sets the formatting."
+  (cl-destructuring-bind (format target alignment) elfeed-search-date-format
+    (let* ((string (format-time-string format (seconds-to-time date)))
+           (width (string-width string)))
+      (cond
+       ((> width target)
+        (if (eq alignment :left)
+            (substring string 0 target)
+          (substring string (- width target) width)))
+       ((< width target)
+        (let ((pad (make-string (- target width) ?\s)))
+          (if (eq alignment :left)
+              (concat string pad)
+            (concat pad string))))
+       (string)))))
 
 (defface elfeed-search-date-face
   '((((class color) (background light)) (:foreground "#aaa"))
