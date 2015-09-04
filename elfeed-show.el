@@ -172,7 +172,10 @@
   (let ((link (elfeed-entry-link elfeed-show-entry)))
     (when link
       (kill-new link)
-      (x-set-selection 'PRIMARY link)
+      (if (fboundp 'gui-set-selection)
+          (gui-set-selection 'PRIMARY link)
+        (with-no-warnings
+          (x-set-selection 'PRIMARY link)))
       (message "Yanked: %s" link))))
 
 (defun elfeed-show-tag (&rest tags)

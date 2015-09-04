@@ -438,7 +438,10 @@ browser defined by `browse-url-generic-program'."
     (when entry
       (elfeed-untag entry 'unread)
       (kill-new link)
-      (x-set-selection elfeed-search-clipboard-type link)
+      (if (fboundp 'gui-set-selection)
+          (gui-set-selection elfeed-search-clipboard-type link)
+        (with-no-warnings
+          (x-set-selection elfeed-search-clipboard-type link)))
       (message "Copied: %s" link)
       (elfeed-search-update-line)
       (forward-line))))
