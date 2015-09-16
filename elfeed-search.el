@@ -40,6 +40,14 @@ Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
   :group 'elfeed
   :type '(choice (const PRIMARY) (const SECONDARY) (const CLIPBOARD)))
 
+(defcustom elfeed-search-date-format '("%Y-%m-%d" 10 :left)
+  "The `format-time-string' format, target width, and alignment for dates.
+
+This should be (string integer keyword) for (format width alignment).
+Possible alignments are :left and :right."
+  :group 'elfeed
+  :type '(list string integer (choice (const :left) (const :right))))
+
 (defvar elfeed-search-filter-active nil
   "When non-nil, Elfeed is currently reading a filter from the minibuffer.
 When live editing the filter, it is bound to :live.")
@@ -102,9 +110,22 @@ When live editing the filter, it is bound to :live.")
   (get-buffer-create "*elfeed-search*"))
 
 (defun elfeed-search-format-date (date)
-  "Format a date for printing in elfeed-search-mode."
-  (let ((string (format-time-string "%Y-%m-%d" (seconds-to-time date))))
-    (format "%-10.10s" string)))
+  "Format a date for printing in `elfeed-search-mode'.
+The customization `elfeed-search-date-format' sets the formatting."
+  (cl-destructuring-bind (format target alignment) elfeed-search-date-format
+    (let* ((string (format-time-string format (seconds-to-time date)))
+           (width (string-width string)))
+      (cond
+       ((> width target)
+        (if (eq alignment :left)
+            (substring string 0 target)
+          (substring string (- width target) width)))
+       ((< width target)
+        (let ((pad (make-string (- target width) ?\s)))
+          (if (eq alignment :left)
+              (concat string pad)
+            (concat pad string))))
+       (string)))))
 
 (defface elfeed-search-date-face
   '((((class color) (background light)) (:foreground "#aaa"))
@@ -185,7 +206,8 @@ When live editing the filter, it is bound to :live.")
         (must-not-have ())
         (after nil)
         (matches ())
-        (not-matches ()))
+        (not-matches ())
+        (limit nil))
     (cl-loop for element in (split-string filter)
              for type = (aref element 0)
              do (cl-case type
@@ -201,14 +223,18 @@ When live editing the filter, it is bound to :live.")
                   (?! (let ((re (substring element 1)))
                         (when (elfeed-valid-regexp-p re)
                           (push re not-matches))))
+                  (?# (setf limit (string-to-number (substring element 1))))
                   (otherwise (when (elfeed-valid-regexp-p element)
                                (push element matches)))))
-    (list after must-have must-not-have matches not-matches)))
+    (list after must-have must-not-have matches not-matches limit)))
 
-(defun elfeed-search-filter (filter entry feed)
-  "Filter out only entries that match the filter. See
-`elfeed-search-set-filter' for format/syntax documentation."
-  (cl-destructuring-bind (after must-have must-not-have matches not-matches) filter
+(defun elfeed-search-filter (filter entry feed count)
+  "Return non-nil if ENTRY and FEED pass FILTER.
+See `elfeed-search-set-filter' for format/syntax documentation.
+This function must *only* be called within the body of
+`with-elfeed-db-visit' because it may perform a non-local exit."
+  (cl-destructuring-bind
+      (after must-have must-not-have matches not-matches limit) filter
     (let* ((tags (elfeed-entry-tags entry))
            (date (elfeed-entry-date entry))
            (age (- (float-time) date))
@@ -216,7 +242,8 @@ When live editing the filter, it is bound to :live.")
            (link (elfeed-entry-link entry))
            (feed-title
             (or (elfeed-meta feed :title) (elfeed-feed-title feed) "")))
-      (when (and after (> age after))
+      (when (or (and after (> age after))
+                (and limit (>= count limit)))
         (elfeed-db-return))
       (and (cl-every  (lambda (tag) (member tag tags)) must-have)
            (cl-notany (lambda (tag) (member tag tags)) must-not-have)
@@ -257,6 +284,10 @@ present on the entry. Ex. \"+unread\" or \"+unread -comic\".
 
 Any component beginning with an @ is an age limit. No posts older
 than this are allowed. Ex. \"@3-days-ago\" or \"@1-year-old\".
+
+Any component beginning with a # is an entry count maximum. The
+number following # determines the maxiumum number of entries
+to be shown (descending by date). Ex. \"#20\" or \"#100\".
 
 Every other space-seperated element is treated like a regular
 expression, matching against entry link, title, and feed title."
@@ -306,11 +337,13 @@ expression, matching against entry link, title, and feed title."
   "Update `elfeed-search-filter' list."
   (let* ((filter (elfeed-search-parse-filter elfeed-search-filter))
          (head (list nil))
-         (tail head))
+         (tail head)
+         (count 0))
     (with-elfeed-db-visit (entry feed)
-      (when (elfeed-search-filter filter entry feed)
+      (when (elfeed-search-filter filter entry feed count)
         (setf (cdr tail) (list entry)
-              tail (cdr tail))))
+              tail (cdr tail)
+              count (1+ count))))
     (setf elfeed-search-entries
           (if (eq elfeed-sort-order 'ascending)
               (nreverse (cdr head))
@@ -405,7 +438,10 @@ browser defined by `browse-url-generic-program'."
     (when entry
       (elfeed-untag entry 'unread)
       (kill-new link)
-      (x-set-selection elfeed-search-clipboard-type link)
+      (if (fboundp 'gui-set-selection)
+          (gui-set-selection elfeed-search-clipboard-type link)
+        (with-no-warnings
+          (x-set-selection elfeed-search-clipboard-type link)))
       (message "Copied: %s" link)
       (elfeed-search-update-line)
       (forward-line))))
@@ -472,7 +508,11 @@ browser defined by `browse-url-generic-program'."
           (current-filter (minibuffer-contents-no-properties)))
       (when buffer
         (with-current-buffer buffer
-          (let ((elfeed-search-filter current-filter))
+          (let* ((window (get-buffer-window (elfeed-search-buffer)))
+                 (limiter (if window
+                              (format "#%d " (window-total-height window))
+                            "#1 "))
+                 (elfeed-search-filter (concat limiter current-filter)))
             (elfeed-search-update :force)))))))
 
 (defun elfeed-search-live-filter ()

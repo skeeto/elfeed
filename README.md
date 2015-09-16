@@ -125,6 +125,10 @@ expression. This means that any entry matching this regular expression
 will be filtered out. The regular expression begins *after* the `!`
 character. You can read this as "entry not matching `foo`".
 
+A component beginning with a `#` limits the total number of entries
+displayed to the number immediately following the symbol. For example,
+to limit the display to 20 entries: `#20`.
+
 All other components are treated as a regular expression, which means
 only entries matching this will be shown.
 
@@ -138,9 +142,10 @@ Only show unread entries of the last six months. This is the default filter.
 
 Only show entries about Linux or Linus from the last year.
 
- * `-unread +youtube`
+ * `-unread +youtube #10`
 
-Only show previously-read entries tagged as `youtube`.
+Only show the most recent 10 previously-read entries tagged as
+`youtube`.
 
  * `+unread !x?emacs`
 
