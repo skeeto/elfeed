@@ -201,7 +201,7 @@
 
 ;; Enclosures:
 
-(defcustom elfeed-enclosure-default-dir (expand-file-name "~")
+(defcustom elfeed-enclosure-default-dir (expand-file-name "~/")
   "Default directory for saving enclosures.
 This can be either a string (a file system path), or a function
 that takes a filename and the mime-type as arguments, and returns
@@ -218,8 +218,7 @@ directory and saves all attachments in the chosen directory."
 
 (defun elfeed--download-enclosure (url path)
   "Download asynchronously the enclosure from URL to PATH."
-  (if (fboundp 'async-start)
-      ;; If async is available, don't hang emacs !
+  (if (require 'async nil t)
       (async-start
        (lambda ()
          (url-copy-file url path t))
