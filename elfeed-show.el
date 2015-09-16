@@ -201,7 +201,7 @@
 
 ;; Enclosures:
 
-(defcustom elfeed-enclosure-default-dir (expand-file-name "~")
+(defcustom elfeed-enclosure-default-dir (expand-file-name "~/")
   "Default directory for saving enclosures.
 This can be either a string (a file system path), or a function
 that takes a filename and the mime-type as arguments, and returns
