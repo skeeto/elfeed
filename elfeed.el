@@ -14,6 +14,16 @@
 
 ;;; History:
 
+;; Version 1.2.0: features and fixes
+;;   * Switched to url-queue (see `url-queue-timeout')
+;;   * New #n filter for limiting results to first n entries
+;;   * Faster live filtering
+;;   * `elfeed-version'
+;;   * Enclosure downloading
+;;   * Database size optimizations
+;;   * Search listing is more responsive to updates
+;;   * `elfeed-http-error-hooks', `elfeed-parse-error-hooks'
+;;   * Various bug fixes
 ;; Version 1.1.2: fixes
 ;;   * Fixed support for non-HTTP protocols
 ;;   * Add ! search syntax
@@ -62,7 +72,7 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "1.1.2")
+(defconst elfeed-version "1.2.0")
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow. You must add your
