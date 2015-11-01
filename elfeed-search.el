@@ -228,8 +228,12 @@ The customization `elfeed-search-date-format' sets the formatting."
                                (push element matches)))))
     (list after must-have must-not-have matches not-matches limit)))
 
-(defun elfeed-search-filter (filter entry feed count)
+(defun elfeed-search-filter (filter entry feed &optional count)
   "Return non-nil if ENTRY and FEED pass FILTER.
+
+COUNT is the total number of entries collected so far, for
+filtering against a limit filter (ex. #10).
+
 See `elfeed-search-set-filter' for format/syntax documentation.
 This function must *only* be called within the body of
 `with-elfeed-db-visit' because it may perform a non-local exit."
@@ -243,7 +247,8 @@ This function must *only* be called within the body of
            (feed-title
             (or (elfeed-meta feed :title) (elfeed-feed-title feed) "")))
       (when (or (and after (> age after))
-                (and limit (>= count limit)))
+                (and limit (<= limit 0))
+                (and limit count (>= count limit)))
         (elfeed-db-return))
       (and (cl-every  (lambda (tag) (member tag tags)) must-have)
            (cl-notany (lambda (tag) (member tag tags)) must-not-have)
