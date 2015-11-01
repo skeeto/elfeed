@@ -125,19 +125,18 @@
 (defservlet* elfeed/search application/json (q)
   "Perform a search operation with Q and return the results."
   (with-elfeed-web
-   (let* ((results (list nil))
-          (tail results)
+   (let* ((results ())
+          (modified-q (format "#%d %s" elfeed-web-limit q))
           (filter (elfeed-search-parse-filter q))
-          (count elfeed-web-limit))
+          (count 0))
      (with-elfeed-db-visit (entry feed)
        (when (elfeed-search-filter filter entry feed count)
-         (setf (cdr tail) (list entry)
-               tail (cdr tail))
-         (when (< (cl-decf count) 0)
-           (elfeed-db-return))))
+         (push entry results)
+         (cl-incf count)))
      (princ
       (json-encode
-       (cl-coerce (mapcar #'elfeed-web-for-json (cdr results)) 'vector))))))
+       (cl-coerce
+        (mapcar #'elfeed-web-for-json (nreverse results)) 'vector))))))
 
 (defvar elfeed-web-waiting ()
   "Clients waiting for an update.")
