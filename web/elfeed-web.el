@@ -130,7 +130,7 @@
           (filter (elfeed-search-parse-filter q))
           (count elfeed-web-limit))
      (with-elfeed-db-visit (entry feed)
-       (when (elfeed-search-filter filter entry feed)
+       (when (elfeed-search-filter filter entry feed count)
          (setf (cdr tail) (list entry)
                tail (cdr tail))
          (when (< (cl-decf count) 0)
