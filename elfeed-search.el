@@ -140,7 +140,7 @@ The customization `elfeed-search-date-format' sets the formatting."
   :group 'elfeed)
 
 (defface elfeed-search-unread-title-face
-  '((t :inherit elfeed-search-title-face :weight bold))
+  '((t :weight bold))
   "Face used in search mode for unread entry titles."
   :group 'elfeed)
 
@@ -171,13 +171,23 @@ The customization `elfeed-search-date-format' sets the formatting."
   :group 'elfeed
   :type 'integer)
 
+(defcustom elfeed-search-face-alist
+  '((unread elfeed-search-unread-title-face))
+  "Mapping of tags to faces in the Elfeed entry listing."
+  :group 'elfeed
+  :type '(alist :key-type symbol :value-type (repeat face)))
+
+(defun elfeed-search--faces (tags)
+  "Return all the faces that apply to an entry with TAGS."
+  (nconc (cl-loop for tag in tags
+                  append (cdr (assoc tag elfeed-search-face-alist)))
+         (list 'elfeed-search-title-face)))
+
 (defun elfeed-search-print (entry)
   "Print ENTRY to the buffer."
   (let* ((date (elfeed-search-format-date (elfeed-entry-date entry)))
          (title (or (elfeed-meta entry :title) (elfeed-entry-title entry) ""))
-         (title-faces (if (elfeed-tagged-p 'unread entry)
-                          '(elfeed-search-unread-title-face)
-                        '(elfeed-search-title-face)))
+         (title-faces (elfeed-search--faces (elfeed-entry-tags entry)))
          (feed (elfeed-entry-feed entry))
          (feed-title
           (when feed

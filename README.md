@@ -195,6 +195,27 @@ Or building your own subset feeds:
                               :remove 'unread))
 ```
 
+### Custom Tag Faces
+
+By default, entries marked `unread` will have bolded titles in the
+`*elfeed-search*` listing. You can customize how tags affect an
+entry's appearance by customizing `elfeed-search-face-alist`. For
+example, this configuration makes entries tagged `important` stand out
+in red.
+
+~~~el
+(defface important-elfeed-entry
+  '((t :foreground "#f77"))
+  "Marks an important Elfeed entry.")
+
+(push '(important important-elfeed-entry)
+      elfeed-search-face-alist)
+~~~
+
+All faces from all tags will be applied to the entry title, though the
+order that faces from different tags is applied is not (currently)
+guaranteed.
+
 ## Web Interface
 
 Elfeed includes a demonstration/toy web interface for remote network
