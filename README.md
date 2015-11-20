@@ -12,9 +12,7 @@ For a longer overview,
  * [Tips and Tricks](http://nullprogram.com/blog/2013/11/26/)
  * [... and more ...](http://nullprogram.com/tags/elfeed/)
 
-[![](http://i.imgur.com/8eTghK8.png)](http://i.imgur.com/l5aVPDc.png)
-
-[![](http://i.imgur.com/3yHGITn.png)](http://i.imgur.com/EfdBKif.png)
+[![](http://i.imgur.com/kxgF5AH.png)](http://i.imgur.com/kxgF5AH.png)
 
 The database format is stable, but there *may* still be an update
 someday that requires migration.
