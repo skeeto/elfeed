@@ -14,6 +14,10 @@
 
 ;;; History:
 
+;; Version 1.3.0: features and fixes
+;;   * `elfeed-search-face-alist' for custom entry faces
+;;   * `display-local-help' (C-h .) support in search
+;;   * Fixes to #n count filter
 ;; Version 1.2.0: features and fixes
 ;;   * Switched to url-queue (see `url-queue-timeout')
 ;;   * New #n filter for limiting results to first n entries
@@ -72,7 +76,7 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "1.2.0")
+(defconst elfeed-version "1.3.0")
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow. You must add your
