@@ -73,7 +73,7 @@ When live editing the filter, it is bound to :live.")
       (suppress-keymap map)
       (define-key map "q" 'quit-window)
       (define-key map "g" 'elfeed-search-update--force)
-      (define-key map "G" 'elfeed-update)
+      (define-key map "G" 'elfeed-search-fetch)
       (define-key map (kbd "RET") 'elfeed-search-show-entry)
       (define-key map "s" 'elfeed-search-live-filter)
       (define-key map "S" 'elfeed-search-set-filter)
@@ -402,6 +402,24 @@ When FORCE is non-nil, redraw even when the database hasn't changed."
           (goto-char (point-min))
           (elfeed-kill-line)
           (elfeed-search-insert-header))))))
+
+(defun elfeed-search-fetch (prefix)
+  "Update all feeds via `elfeed-update', or only visible feeds with PREFIX.
+Given a prefix, this function becomes `elfeed-search-fetch-visible'."
+  (interactive "P")
+  (if prefix
+      (elfeed-search-fetch-visible)
+    (elfeed-update)))
+
+(defun elfeed-search-fetch-visible ()
+  "Update any feed with an entry currently displayed in the search buffer."
+  (interactive)
+  (cl-loop with seen = (make-hash-table :test 'equal)
+           for entry in elfeed-search-entries
+           for feed = (elfeed-entry-feed entry)
+           for url = (elfeed-feed-url feed)
+           when (not (gethash url seen))
+           do (elfeed-update-feed (setf (gethash url seen) url))))
 
 (defun elfeed-search-update-line (&optional n)
   "Redraw the current line."
