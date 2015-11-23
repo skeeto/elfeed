@@ -7,6 +7,7 @@
 (require 'cl-lib)
 (require 'browse-url)
 (require 'wid-edit) ; widget-inactive face
+(require 'bookmark)
 
 (provide 'elfeed-search)
 
@@ -96,7 +97,8 @@ When live editing the filter, it is bound to :live.")
   (setq major-mode 'elfeed-search-mode
         mode-name "elfeed-search"
         truncate-lines t
-        buffer-read-only t)
+        buffer-read-only t
+        bookmark-make-record-function #'elfeed-search-bookmark-make-record)
   (buffer-disable-undo)
   (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)
@@ -556,5 +558,20 @@ browser defined by `browse-url-generic-program'."
         (setq elfeed-search-filter
               (read-from-minibuffer "Filter: " elfeed-search-filter)))
     (elfeed-search-update :force)))
+
+;; Bookmarks
+
+(defun elfeed-search-bookmark-handler (record)
+  "Jump to an elfeed-search bookmarked location."
+  (elfeed)
+  (elfeed-search-set-filter (bookmark-prop-get record 'location)))
+
+(defun elfeed-search-bookmark-make-record ()
+  "Return a bookmark record for the current elfeed-search buffer."
+  (let ((tags (nth 1 (elfeed-search-parse-filter elfeed-search-filter))))
+    `(,(format "elfeed %s" elfeed-search-filter)
+      (location . ,elfeed-search-filter)
+      (tags ,@(mapcar #'symbol-name tags))
+      (handler . elfeed-search-bookmark-handler))))
 
 ;;; elfeed-search.el ends here
