@@ -166,6 +166,23 @@ NIL for unknown."
   "Generate an ID based on CONTENT or from the current time."
   (concat "urn:sha1:" (sha1 (format "%s" (or content (float-time))))))
 
+(defun elfeed--atom-content (entry)
+  "Get content string from ENTRY."
+  (let ((content-type (xml-query '(content :type) entry)))
+    (if (equal content-type "xhtml")
+        (with-temp-buffer
+          (let ((xhtml (cddr (xml-query '(content) entry))))
+            (dolist (element xhtml)
+              (if (stringp element)
+                  (insert element)
+                (elfeed-xml-unparse element))))
+          (buffer-string))
+      (let ((all-content
+             (or (xml-query-all '(content *) entry)
+                 (xml-query-all '(summary *) entry))))
+        (when all-content
+          (apply #'concat all-content))))))
+
 (defun elfeed-entries-from-atom (url xml)
   "Turn parsed Atom content into a list of elfeed-entry structs."
   (let* ((feed-id url)
@@ -182,12 +199,7 @@ NIL for unknown."
                     (date (or (xml-query '(published *) entry)
                               (xml-query '(updated *) entry)
                               (xml-query '(date *) entry)))
-                    (content
-                     (let ((all-content
-                            (or (xml-query-all '(content *) entry)
-                                (xml-query-all '(summary *) entry))))
-                       (when all-content
-                         (apply #'concat all-content))))
+                    (content (elfeed--atom-content entry))
                     (id (or (xml-query '(id *) entry) link
                             (elfeed-generate-id content)))
                     (type (or (xml-query '(content :type) entry)
