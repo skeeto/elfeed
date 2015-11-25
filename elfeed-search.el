@@ -53,7 +53,10 @@ Possible alignments are :left and :right."
   "When non-nil, Elfeed is currently reading a filter from the minibuffer.
 When live editing the filter, it is bound to :live.")
 
-(defvar elfeed-search--offset 2
+(defvar elfeed-search-filter-overflowing nil
+  "When non-nil, the current live filter overflows the window.")
+
+(defvar elfeed-search--offset 1
   "Offset between line numbers and entry list position.")
 
 (defalias 'elfeed-search-tag-all-unread
@@ -88,6 +91,63 @@ When live editing the filter, it is bound to :live.")
       (define-key map "-" 'elfeed-search-untag-all)))
   "Keymap for elfeed-search-mode.")
 
+(defun elfeed-search--intro-header ()
+  "Return the header shown to new users."
+  (with-temp-buffer
+    (cl-flet ((button (f)
+                (insert-button (symbol-name f)
+                               'follow-link t
+                               'action (lambda (_) (call-interactively f)))))
+      (insert "Database empty. Use ")
+      (button 'elfeed-add-feed)
+      (insert ", or ")
+      (button 'elfeed-load-opml)
+      (insert ", or ")
+      (button 'elfeed-update)
+      (insert ".")
+      (buffer-string))))
+
+(defun elfeed-search--count-unread ()
+  "Count the number of entries and feeds being currently displayed."
+  (if (and elfeed-search-filter-active elfeed-search-filter-overflowing)
+      "?/?:?"
+    (cl-loop with feeds = (make-hash-table :test 'equal)
+             for entry in elfeed-search-entries
+             for feed = (elfeed-entry-feed entry)
+             for url = (elfeed-feed-url feed)
+             count entry into entry-count
+             count (elfeed-tagged-p 'unread entry) into unread-count
+             do (puthash url t feeds)
+             finally
+             (cl-return
+              (format "%d/%d:%d"
+                      unread-count entry-count
+                      (hash-table-count feeds))))))
+
+(defun elfeed-search--header ()
+  "Returns the string to be used as the Elfeed header."
+  (cond
+   ((zerop (elfeed-db-last-update))
+    (elfeed-search--intro-header))
+   (url-queue
+    (let ((total (length url-queue))
+          (in-process (cl-count-if #'url-queue-buffer url-queue)))
+      (format "%d feeds pending, %d in process ..."
+              (- total in-process) in-process)))
+   ((let* ((db-time (seconds-to-time (elfeed-db-last-update)))
+           (update (format-time-string "%Y-%m-%d %H:%M:%S %z" db-time))
+           (unread (elfeed-search--count-unread)))
+      (format "Last update %s, %s%s"
+              (propertize update 'face 'elfeed-search-last-update-face)
+              (propertize unread 'face 'elfeed-search-unread-count-face)
+              (propertize (cond
+                           (elfeed-search-filter-active
+                            "")
+                           (elfeed-search-filter
+                            (concat ", " elfeed-search-filter))
+                           (""))
+                          'face 'elfeed-search-filter-face))))))
+
 (defun elfeed-search-mode ()
   "Major mode for listing elfeed feed entries.
 \\{elfeed-search-mode-map}"
@@ -98,7 +158,8 @@ When live editing the filter, it is bound to :live.")
         mode-name "elfeed-search"
         truncate-lines t
         buffer-read-only t
-        bookmark-make-record-function #'elfeed-search-bookmark-make-record)
+        bookmark-make-record-function #'elfeed-search-bookmark-make-record
+        header-line-format '(:eval (elfeed-search--header)))
   (buffer-disable-undo)
   (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)
@@ -156,6 +217,22 @@ The customization `elfeed-search-date-format' sets the formatting."
   '((((class color) (background light)) (:foreground "#070"))
     (((class color) (background dark))  (:foreground "#0f0")))
   "Face used in search mode for tags."
+  :group 'elfeed)
+
+(defface elfeed-search-last-update-face
+  '((t))
+  "Face for showing the date and time the database was last updated."
+  :group 'elfeed)
+
+(defface elfeed-search-unread-count-face
+  '((((class color) (background light)) (:foreground "#000"))
+    (((class color) (background dark))  (:foreground "#fff")))
+  "Face used in search mode for unread entry titles."
+  :group 'elfeed)
+
+(defface elfeed-search-filter-face
+  '((t :inherit mode-line-buffer-id))
+  "Face for showing the current Elfeed search filter."
   :group 'elfeed)
 
 (defcustom elfeed-search-title-max-width 70
@@ -317,39 +394,6 @@ expression, matching against entry link, title, and feed title."
           (or new-filter (default-value 'elfeed-search-filter)))
     (elfeed-search-update :force)))
 
-(defun elfeed-search-insert-header-text (text)
-  "Insert TEXT into buffer using header face."
-  (insert (propertize text 'face '(widget-inactive italic))))
-
-(defun elfeed-search-insert-intro-header ()
-  "Insert the intro header with buttons."
-  (cl-flet ((button (f)
-              (insert-button (symbol-name f)
-                             'follow-link t
-                             'action (lambda (_) (call-interactively f)))))
-    (elfeed-search-insert-header-text "Database empty. Use ")
-    (button 'elfeed-add-feed)
-    (elfeed-search-insert-header-text ", or ")
-    (button 'elfeed-load-opml)
-    (elfeed-search-insert-header-text ", or ")
-    (button 'elfeed-update)
-    (elfeed-search-insert-header-text ".")))
-
-(defun elfeed-search-insert-header ()
-  "Insert a one-line status header."
-  (if url-queue
-      (let ((total (length url-queue))
-            (in-process (cl-count-if #'url-queue-buffer url-queue)))
-        (elfeed-search-insert-header-text
-         (format "%d feeds pending, %d in process ..."
-                 (- total in-process) in-process)))
-    (let ((time (seconds-to-time (elfeed-db-last-update))))
-      (if (zerop (float-time time))
-          (elfeed-search-insert-intro-header)
-        (elfeed-search-insert-header-text
-         (format "Database last updated %s"
-                 (format-time-string "%A, %B %d %Y %H:%M:%S %Z" time)))))))
-
 (defun elfeed-search--update-list ()
   "Update `elfeed-search-filter' list."
   (let* ((filter (elfeed-search-parse-filter elfeed-search-filter))
@@ -391,19 +435,12 @@ When FORCE is non-nil, redraw even when the database hasn't changed."
           (let ((inhibit-read-only t)
                 (standard-output (current-buffer)))
             (erase-buffer)
-            (elfeed-search-insert-header)
-            (insert "\n")
             (elfeed-search--update-list)
             (dolist (entry elfeed-search-entries)
               (elfeed-search-print entry)
               (insert "\n"))
             (insert "End of entries.\n")
-            (setf elfeed-search-last-update (float-time))))
-      (let ((inhibit-read-only t))
-        (elfeed-save-excursion
-          (goto-char (point-min))
-          (elfeed-kill-line)
-          (elfeed-search-insert-header))))))
+            (setf elfeed-search-last-update (float-time)))))))
 
 (defun elfeed-search-fetch (prefix)
   "Update all feeds via `elfeed-update', or only visible feeds with PREFIX.
@@ -544,11 +581,15 @@ browser defined by `browse-url-generic-program'."
       (when buffer
         (with-current-buffer buffer
           (let* ((window (get-buffer-window (elfeed-search-buffer)))
+                 (height (window-total-height window))
                  (limiter (if window
-                              (format "#%d " (window-total-height window))
+                              (format "#%d " height)
                             "#1 "))
                  (elfeed-search-filter (concat limiter current-filter)))
-            (elfeed-search-update :force)))))))
+            (elfeed-search-update :force)
+            (setf elfeed-search-filter-overflowing
+                  (= (length elfeed-search-entries)
+                     height))))))))
 
 (defun elfeed-search-live-filter ()
   "Filter the elfeed-search buffer as the filter is written."
