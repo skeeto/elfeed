@@ -9,6 +9,7 @@
 
 ;;; Code:
 
+(require 'xml)
 (require 'cl-lib)
 (require 'time-date)
 (require 'url-parse)
@@ -123,6 +124,22 @@ XML encoding declaration."
                      (decode-coding-region beg end coding-system))))
       (goto-char beg)))
   (xml-parse-region beg end buffer parse-dtd parse-ns))
+
+(defun elfeed-xml-unparse (element)
+  "Inverse of `elfeed-xml-parse-region', writing XML to the buffer."
+  (cl-destructuring-bind (tag attrs . body) element
+    (insert (format "<%s" tag))
+    (dolist (attr attrs)
+      (cl-destructuring-bind (key . value) attr
+        (insert (format " %s='%s'" key (xml-escape-string value)))))
+    (if (null body)
+        (insert "/>")
+      (insert ">")
+      (dolist (sub body)
+        (if (stringp sub)
+            (insert (xml-escape-string sub))
+          (elfeed-xml-unparse sub)))
+      (insert (format "</%s>" tag)))))
 
 (defun elfeed-directory-empty-p (dir)
   "Return non-nil if DIR is empty."
