@@ -21,6 +21,16 @@
 (defvar elfeed-show-entry nil
   "The entry being displayed in this buffer.")
 
+(defvar elfeed-show-entry-switch #'switch-to-buffer
+  "Function to call to display and switch to the feed entry buffer.
+Defaults to `switch-to-buffer'.")
+
+(defvar elfeed-show-entry-delete #'elfeed-kill-buffer
+  "Function called when quitting from the elfeed-entry
+buffer. Does not take any arguments.
+
+Defaults to `elfeed-kill-buffer'.")
+
 (defvar elfeed-show-mode-map
   (let ((map (make-sparse-keymap)))
     (prog1 map
@@ -129,24 +139,24 @@
 
 (defun elfeed-show-entry (entry)
   "Display ENTRY in the current buffer."
-  (let ((title (elfeed-entry-title entry)))
-    (switch-to-buffer (get-buffer-create (format "*elfeed %s*" title)))
-    (unless (eq major-mode 'elfeed-show-mode)
-      (elfeed-show-mode))
-    (setq elfeed-show-entry entry)
-    (elfeed-show-refresh)))
+  (let ((buff (get-buffer-create "*elfeed-entry*")))
+    (with-current-buffer buff
+      (elfeed-show-mode)
+      (setq elfeed-show-entry entry)
+      (elfeed-show-refresh))
+    (funcall elfeed-show-entry-switch buff)))
 
 (defun elfeed-show-next ()
   "Show the next item in the elfeed-search buffer."
   (interactive)
-  (elfeed-kill-buffer)
+  (funcall elfeed-show-entry-delete)
   (with-current-buffer (elfeed-search-buffer)
     (call-interactively #'elfeed-search-show-entry)))
 
 (defun elfeed-show-prev ()
   "Show the previous item in the elfeed-search buffer."
   (interactive)
-  (elfeed-kill-buffer)
+  (funcall elfeed-show-entry-delete)
   (with-current-buffer (elfeed-search-buffer)
     (forward-line -2)
     (call-interactively #'elfeed-search-show-entry)))
