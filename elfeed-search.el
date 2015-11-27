@@ -59,6 +59,9 @@ When live editing the filter, it is bound to :live.")
 (defvar elfeed-search--offset 1
   "Offset between line numbers and entry list position.")
 
+(defvar elfeed-search-header-function #'elfeed-search--header
+  "Function that returns the string to be used for the Elfeed search header.")
+
 (defalias 'elfeed-search-tag-all-unread
   (elfeed-expose #'elfeed-search-tag-all 'unread)
   "Add the `unread' tag to all selected entries.")
@@ -171,7 +174,7 @@ When live editing the filter, it is bound to :live.")
         truncate-lines t
         buffer-read-only t
         bookmark-make-record-function #'elfeed-search-bookmark-make-record
-        header-line-format '(:eval (elfeed-search--header)))
+        header-line-format '(:eval (funcall elfeed-search-header-function)))
   (buffer-disable-undo)
   (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)
