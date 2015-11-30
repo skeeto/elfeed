@@ -150,9 +150,9 @@ When live editing the filter, it is bound to :live.")
       (format "%d feeds pending, %d in process ..."
               (- total in-process) in-process)))
    ((let* ((db-time (seconds-to-time (elfeed-db-last-update)))
-           (update (format-time-string "%Y-%m-%d %H:%M:%S %z" db-time))
+           (update (format-time-string "%Y-%m-%d %H:%M" db-time))
            (unread (elfeed-search--count-unread)))
-      (format "Last update %s, %s%s"
+      (format "Updated %s, %s%s"
               (propertize update 'face 'elfeed-search-last-update-face)
               (propertize unread 'face 'elfeed-search-unread-count-face)
               (propertize (cond
