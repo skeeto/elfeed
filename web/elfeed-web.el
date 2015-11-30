@@ -150,6 +150,13 @@ advanced past it (long poll)."
         (push (httpd-discard-buffer) elfeed-web-waiting)
       (princ (json-encode update-time)))))
 
+(defservlet* elfeed/mark-all-read application/json ()
+  "Marks all entries in the database as read (quick-and-dirty)."
+  (with-elfeed-web
+   (with-elfeed-db-visit (e _)
+     (elfeed-untag e 'unread))
+   (princ (json-encode t))))
+
 (defservlet elfeed text/plain (uri-path _ request)
   "Serve static files from `elfeed-web-data-root'."
   (if (not elfeed-web-enabled)

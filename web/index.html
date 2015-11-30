@@ -25,6 +25,9 @@
             <input id="query" type="text"
                    ng-model="query" ng-change="update()"/>
           </form>
+          <button class="button small" ng-click="markAllRead()">
+            Mark All As Read
+          </button>
 
           <ul class="no-bullet">
             <li class="entry" ng-repeat="entry in entries">
