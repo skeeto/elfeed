@@ -146,6 +146,20 @@ Defaults to `elfeed-kill-buffer'.")
       (elfeed-show-refresh))
     (funcall elfeed-show-entry-switch buff)))
 
+(defun elfeed-show-entry--switch-pane (buff)
+  "Display BUFF in a popup window."
+  (popwin:popup-buffer buff
+                       :position 'right
+                       :width 0.5))
+
+(defun elfeed-show-entry--delete-pane ()
+  "Delete the *elfeed-entry* split pane."
+  (interactive)
+  (let* ((buff (get-buffer "*elfeed-entry*"))
+         (window (get-buffer-window buff)))
+    (kill-buffer buff)
+    (delete-window window)))
+
 (defun elfeed-show-next ()
   "Show the next item in the elfeed-search buffer."
   (interactive)
