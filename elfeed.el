@@ -148,7 +148,7 @@ This is a workaround for issues in `url-queue-retrieve'."
   (interactive)
   (let ((fails (mapcar #'url-queue-url elfeed-connections)))
     (when fails
-      (message "Elfeed aborted feeds: %s" (mapconcat #'identity fails " ")))
+      (elfeed-log 'warn "Elfeed aborted feeds: %s" (mapconcat #'identity fails " ")))
     (setf url-queue nil))
   (elfeed-search-update :force))
 
@@ -314,13 +314,13 @@ Only a list of strings will be returned."
   "Handle an http error during retrieval of URL with STATUS code."
   (cl-incf (elfeed-meta (elfeed-db-get-feed url) :failures 0))
   (run-hook-with-args 'elfeed-http-error-hooks url status)
-  (message "Elfeed fetch failed for %s: %S" url status))
+  (elfeed-log 'error "Elfeed fetch failed for %s: %S" url status))
 
 (defun elfeed-handle-parse-error (url error)
   "Handle parse error during parsing of URL with ERROR message."
   (cl-incf (elfeed-meta (elfeed-db-get-feed url) :failures 0))
   (run-hook-with-args 'elfeed-parse-error-hooks url error)
-  (message "Elfeed parse failed for %s: %s" url error))
+  (elfeed-log 'error "Elfeed parse failed for %s: %s" url error))
 
 (defun elfeed-update-feed (url)
   "Update a specific feed."
@@ -359,11 +359,20 @@ Only a list of strings will be returned."
   (elfeed-update-feed url)
   (elfeed-search-update :force))
 
+(defun elfeed-log (level fmt &rest objects)
+  (let ((log-buffer (get-buffer-create "*elfeed-log*")))
+    (with-current-buffer log-buffer
+      (goto-char (point-max))
+      (insert (format "[%s] [%s]: %s\n"
+                      (format-time-string "%Y-%m-%d %H:%M:%S")
+                      level
+                      (apply #'format fmt objects))))))
+
 ;;;###autoload
 (defun elfeed-update ()
   "Update all the feeds in `elfeed-feeds'."
   (interactive)
-  (message "Elfeed update: %s" (format-time-string "%B %e %Y %H:%M:%S %Z"))
+  (elfeed-log 'info "Elfeed update: %s" (format-time-string "%B %e %Y %H:%M:%S %Z"))
   (mapc #'elfeed-update-feed (elfeed--shuffle (elfeed-feed-list)))
   (elfeed-search-update :force)
   (elfeed-db-save))
@@ -453,7 +462,7 @@ saved to your customization file."
     (prog1 (setf elfeed-feeds (cl-delete-duplicates full :test #'string=))
       (when (called-interactively-p 'any)
         (customize-save-variable 'elfeed-feeds elfeed-feeds)
-        (message "%d feeds loaded from %s" (length feeds) file)))))
+        (elfeed-log 'notice "%d feeds loaded from %s" (length feeds) file)))))
 
 ;;;###autoload
 (defun elfeed-export-opml (file)
