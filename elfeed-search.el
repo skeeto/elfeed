@@ -62,6 +62,9 @@ When live editing the filter, it is bound to :live.")
 (defvar elfeed-search-header-function #'elfeed-search--header
   "Function that returns the string to be used for the Elfeed search header.")
 
+(defvar elfeed-search-print-entry-function #'elfeed-search-print-entry--default
+  "Function to print entries into the *elfeed-search* buffer.")
+
 (defalias 'elfeed-search-tag-all-unread
   (elfeed-expose #'elfeed-search-tag-all 'unread)
   "Add the `unread' tag to all selected entries.")
@@ -277,7 +280,7 @@ The customization `elfeed-search-date-format' sets the formatting."
                   append (cdr (assoc tag elfeed-search-face-alist)))
          (list 'elfeed-search-title-face)))
 
-(defun elfeed-search-print (entry)
+(defun elfeed-search-print-entry--default (entry)
   "Print ENTRY to the buffer."
   (let* ((date (elfeed-search-format-date (elfeed-entry-date entry)))
          (title (or (elfeed-meta entry :title) (elfeed-entry-title entry) ""))
@@ -452,7 +455,7 @@ When FORCE is non-nil, redraw even when the database hasn't changed."
             (erase-buffer)
             (elfeed-search--update-list)
             (dolist (entry elfeed-search-entries)
-              (elfeed-search-print entry)
+              (funcall elfeed-search-print-entry-function entry)
               (insert "\n"))
             (insert "End of entries.\n")
             (setf elfeed-search-last-update (float-time)))))))
@@ -483,7 +486,7 @@ Given a prefix, this function becomes `elfeed-search-fetch-visible'."
       (let ((entry (elfeed-search-selected :ignore-region)))
         (when entry
           (elfeed-kill-line)
-          (elfeed-search-print entry))))))
+          (funcall elfeed-search-print-entry-function entry))))))
 
 (defun elfeed-search-update-entry (entry)
   "Redraw a specific entry."
