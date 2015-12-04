@@ -276,9 +276,9 @@ The customization `elfeed-search-date-format' sets the formatting."
 
 (defun elfeed-search--faces (tags)
   "Return all the faces that apply to an entry with TAGS."
-  (nconc (cl-loop for tag-and-face in elfeed-search-face-alist
-                  if (member (car tag-and-face) tags)
-                  append (cdr tag-and-face))
+  (nconc (cl-loop for (tag . faces) in elfeed-search-face-alist
+                  when (member tag tags)
+                  append faces)
          (list 'elfeed-search-title-face)))
 
 (defun elfeed-search-print-entry--default (entry)
