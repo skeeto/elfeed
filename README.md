@@ -210,9 +210,8 @@ in red.
       elfeed-search-face-alist)
 ~~~
 
-All faces from all tags will be applied to the entry title, though the
-order that faces from different tags is applied is not (currently)
-guaranteed.
+All faces from all tags will be applied to the entry title. The faces
+will be ordered as they appear in `elfeed-search-face-alist`.
 
 ## Web Interface
 
