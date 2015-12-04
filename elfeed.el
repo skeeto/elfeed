@@ -359,11 +359,35 @@ Only a list of strings will be returned."
   (elfeed-update-feed url)
   (elfeed-search-update :force))
 
+(defface elfeed-log-date-face
+  '((t :inherit font-lock-type-face))
+  "Face for showing the date in the elfeed log buffer."
+  :group 'elfeed)
+
+(defface elfeed-log-error-level-face
+  '((t :foreground "red"))
+  "Face for showing the `error' log level in the elfeed log buffer."
+  :group 'elfeed)
+
+(defface elfeed-log-warn-level-face
+  '((t :foreground "goldenrod"))
+  "Face for showing the `warn' log level in the elfeed log buffer."
+  :group 'elfeed)
+
+(defface elfeed-log-info-level-face
+  '((t :foreground "deep sky blue"))
+  "Face for showing the `info' log level in the elfeed log buffer."
+  :group 'elfeed)
+
 (defun elfeed-log (level fmt &rest objects)
-  (let ((log-buffer (get-buffer-create "*elfeed-log*")))
+  (let ((log-buffer (get-buffer-create "*elfeed-log*"))
+        (log-level-face (cond ((eq level 'info) 'elfeed-log-info-level-face)
+                              ((eq level 'warn) 'elfeed-log-warn-level-face)
+                              ((eq level 'error) 'elfeed-log-error-level-face))))
     (with-current-buffer log-buffer
       (goto-char (point-max))
-      (insert (format "[%s] [%s]: %s\n"
+      (insert (format (concat "[" (propertize "%s" 'face 'elfeed-log-date-face) "] "
+                              "[" (propertize "%s" 'face log-level-face) "]: %s\n")
                       (format-time-string "%Y-%m-%d %H:%M:%S")
                       level
                       (apply #'format fmt objects))))))
