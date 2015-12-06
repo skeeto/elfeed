@@ -280,3 +280,10 @@ extensible, text-file configured, power-user web feed client that can
 handle a reasonable number of feeds. The existing clients I've tried
 are missing some important capability that limits its usefulness to
 me.
+
+## Extensions
+
+These packages extend Elfeed with additional features:
+
+* [elfeed-org](https://github.com/remyhonig/elfeed-org)
+* [elfeed-goodies](https://github.com/algernon/elfeed-goodies)
