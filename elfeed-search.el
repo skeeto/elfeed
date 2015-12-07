@@ -621,6 +621,7 @@ browser defined by `browse-url-generic-program'."
 
 ;; Bookmarks
 
+;;;###autoload
 (defun elfeed-search-bookmark-handler (record)
   "Jump to an elfeed-search bookmarked location."
   (elfeed)
