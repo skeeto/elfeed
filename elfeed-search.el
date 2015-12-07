@@ -176,8 +176,9 @@ When live editing the filter, it is bound to :live.")
         mode-name "elfeed-search"
         truncate-lines t
         buffer-read-only t
-        bookmark-make-record-function #'elfeed-search-bookmark-make-record
         header-line-format '(:eval (funcall elfeed-search-header-function)))
+  (set (make-local-variable 'bookmark-make-record-function)
+       #'elfeed-search-bookmark-make-record)
   (buffer-disable-undo)
   (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)
