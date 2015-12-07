@@ -177,6 +177,7 @@ When live editing the filter, it is bound to :live.")
         truncate-lines t
         buffer-read-only t
         bookmark-make-record-function #'elfeed-search-bookmark-make-record
+        desktop-save-buffer #'elfeed-search-desktop-save
         header-line-format '(:eval (funcall elfeed-search-header-function)))
   (buffer-disable-undo)
   (hl-line-mode)
@@ -633,5 +634,25 @@ browser defined by `browse-url-generic-program'."
       (location . ,elfeed-search-filter)
       (tags ,@(mapcar #'symbol-name tags))
       (handler . elfeed-search-bookmark-handler))))
+
+;; Desktop Save
+
+(defun elfeed-search-desktop-save (_desktop-dirname)
+  "Save the state of the current elfeed-search buffer so that it
+  may be restored as part of a saved desktop. Also save the state
+  of the db for when `desktop-auto-save-timeout' is enabled."
+  (elfeed-db-save)
+  elfeed-search-filter)
+
+;;;###autoload
+(defun elfeed-search-desktop-restore (_file-name _buffer-name search-filter)
+  "Restore the state of an elfeed-search buffer on desktop restore."
+  (elfeed)
+  (elfeed-search-set-filter search-filter)
+  (current-buffer))
+
+;;;###autoload
+(add-to-list 'desktop-buffer-mode-handlers
+             '(elfeed-search-mode . elfeed-search-desktop-restore))
 
 ;;; elfeed-search.el ends here
