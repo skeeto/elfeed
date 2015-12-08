@@ -183,6 +183,13 @@ NIL for unknown."
         (when all-content
           (apply #'concat all-content))))))
 
+(defvar elfeed-new-entry-parse-hook '()
+  "Hook to be called after parsing a new entry.
+
+Take three arguments: the feed TYPE, the XML structure for the
+entry, and the Elfeed ENTRY object. Return value is ignored, and
+is called for side-effects on the ENTRY object.")
+
 (defun elfeed-entries-from-atom (url xml)
   "Turn parsed Atom content into a list of elfeed-entry structs."
   (let* ((feed-id url)
@@ -212,17 +219,20 @@ NIL for unknown."
                               for href = (xml-query '(:href) wrap)
                               for type = (xml-query '(:type) wrap)
                               for length = (xml-query '(:length) wrap)
-                              collect (list href type length))))
-               (elfeed-entry--create
-                :title (elfeed-cleanup title)
-                :feed-id feed-id
-                :id (cons feed-id (elfeed-cleanup id))
-                :link (elfeed-cleanup link)
-                :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
-                :date (elfeed-float-time date)
-                :content content
-                :enclosures enclosures
-                :content-type (if (string-match-p "html" type) 'html nil))))))
+                              collect (list href type length)))
+                    (db-entry (elfeed-entry--create
+                               :title (elfeed-cleanup title)
+                               :feed-id feed-id
+                               :id (cons feed-id (elfeed-cleanup id))
+                               :link (elfeed-cleanup link)
+                               :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
+                               :date (elfeed-float-time date)
+                               :content content
+                               :enclosures enclosures
+                               :content-type (if (string-match-p "html" type) 'html nil))))
+               (cl-loop for hook in elfeed-new-entry-parse-hook
+                        do (funcall hook :atom entry db-entry))
+               db-entry))))
 
 (defun elfeed-entries-from-rss (url xml)
   "Turn parsed RSS content into a list of elfeed-entry structs."
@@ -251,19 +261,22 @@ NIL for unknown."
                               for url = (xml-query '(:url) wrap)
                               for type = (xml-query '(:type) wrap)
                               for length = (xml-query '(:length) wrap)
-                              collect (list url type length))))
-               (elfeed-entry--create
-                :title (elfeed-cleanup title)
-                :id full-id
-                :feed-id feed-id
-                :link (elfeed-cleanup link)
-                :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
-                :date (if (and original (null date))
-                          (elfeed-entry-date original)
-                        (elfeed-float-time date))
-                :enclosures enclosures
-                :content description
-                :content-type 'html)))))
+                              collect (list url type length)))
+                    (db-entry (elfeed-entry--create
+                               :title (elfeed-cleanup title)
+                               :id full-id
+                               :feed-id feed-id
+                               :link (elfeed-cleanup link)
+                               :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
+                               :date (if (and original (null date))
+                                         (elfeed-entry-date original)
+                                       (elfeed-float-time date))
+                               :enclosures enclosures
+                               :content description
+                               :content-type 'html)))
+               (cl-loop for hook in elfeed-new-entry-parse-hook
+                        do (funcall hook :rss item db-entry))
+               db-entry))))
 
 (defun elfeed-entries-from-rss1.0 (url xml)
   "Turn parsed RSS 1.0 content into a list of elfeed-entry structs."
@@ -282,18 +295,21 @@ NIL for unknown."
                      (apply #'concat (xml-query-all '(description *) item)))
                     (id (or link (elfeed-generate-id description)))
                     (full-id (cons feed-id (elfeed-cleanup id)))
-                    (original (elfeed-db-get-entry full-id)))
-               (elfeed-entry--create
-                :title (elfeed-cleanup title)
-                :id full-id
-                :feed-id feed-id
-                :link (elfeed-cleanup link)
-                :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
-                :date (if (and original (null date))
-                          (elfeed-entry-date original)
-                        (elfeed-float-time date))
-                :content description
-                :content-type 'html)))))
+                    (original (elfeed-db-get-entry full-id))
+                    (db-entry (elfeed-entry--create
+                               :title (elfeed-cleanup title)
+                               :id full-id
+                               :feed-id feed-id
+                               :link (elfeed-cleanup link)
+                               :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
+                               :date (if (and original (null date))
+                                         (elfeed-entry-date original)
+                                       (elfeed-float-time date))
+                               :content description
+                               :content-type 'html)))
+               (cl-loop for hook in elfeed-new-entry-parse-hook
+                        do (funcall hook :rss1.0 item db-entry))
+               db-entry))))
 
 (defun elfeed-feed-list ()
   "Return a flat list version of `elfeed-feeds'.
