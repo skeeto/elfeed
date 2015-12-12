@@ -148,7 +148,8 @@ This is a workaround for issues in `url-queue-retrieve'."
   (interactive)
   (let ((fails (mapcar #'url-queue-url elfeed-connections)))
     (when fails
-      (elfeed-log 'warn "Elfeed aborted feeds: %s" (mapconcat #'identity fails " ")))
+      (elfeed-log 'warn "Elfeed aborted feeds: %s"
+                  (mapconcat #'identity fails " ")))
     (setf url-queue nil))
   (elfeed-search-update :force))
 
@@ -212,6 +213,8 @@ is called for side-effects on the ENTRY object.")
                     (type (or (xml-query '(content :type) entry)
                               (xml-query '(summary :type) entry)
                               ""))
+                    (tags (elfeed-normalize-tags autotags elfeed-initial-tags))
+                    (content-type (if (string-match-p "html" type) 'html nil))
                     (etags (xml-query-all '(link [rel "enclosure"]) entry))
                     (enclosures
                      (cl-loop for enclosure in etags
@@ -225,13 +228,13 @@ is called for side-effects on the ENTRY object.")
                                :feed-id feed-id
                                :id (cons feed-id (elfeed-cleanup id))
                                :link (elfeed-cleanup link)
-                               :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
+                               :tags tags
                                :date (elfeed-float-time date)
                                :content content
                                :enclosures enclosures
-                               :content-type (if (string-match-p "html" type) 'html nil))))
-               (cl-loop for hook in elfeed-new-entry-parse-hook
-                        do (funcall hook :atom entry db-entry))
+                               :content-type content-type)))
+               (dolist (hook elfeed-new-entry-parse-hook)
+                 (funcall hook :atom entry db-entry))
                db-entry))))
 
 (defun elfeed-entries-from-rss (url xml)
@@ -254,6 +257,7 @@ is called for side-effects on the ENTRY object.")
                     (id (or guid link (elfeed-generate-id description)))
                     (full-id (cons feed-id (elfeed-cleanup id)))
                     (original (elfeed-db-get-entry full-id))
+                    (tags (elfeed-normalize-tags autotags elfeed-initial-tags))
                     (etags (xml-query-all '(enclosure) item))
                     (enclosures
                      (cl-loop for enclosure in etags
@@ -267,15 +271,15 @@ is called for side-effects on the ENTRY object.")
                                :id full-id
                                :feed-id feed-id
                                :link (elfeed-cleanup link)
-                               :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
+                               :tags tags
                                :date (if (and original (null date))
                                          (elfeed-entry-date original)
                                        (elfeed-float-time date))
                                :enclosures enclosures
                                :content description
                                :content-type 'html)))
-               (cl-loop for hook in elfeed-new-entry-parse-hook
-                        do (funcall hook :rss item db-entry))
+               (dolist (hook elfeed-new-entry-parse-hook)
+                 (funcall hook :rss item db-entry))
                db-entry))))
 
 (defun elfeed-entries-from-rss1.0 (url xml)
@@ -296,19 +300,20 @@ is called for side-effects on the ENTRY object.")
                     (id (or link (elfeed-generate-id description)))
                     (full-id (cons feed-id (elfeed-cleanup id)))
                     (original (elfeed-db-get-entry full-id))
+                    (tags (elfeed-normalize-tags autotags elfeed-initial-tags))
                     (db-entry (elfeed-entry--create
                                :title (elfeed-cleanup title)
                                :id full-id
                                :feed-id feed-id
                                :link (elfeed-cleanup link)
-                               :tags (elfeed-normalize-tags autotags elfeed-initial-tags)
+                               :tags tags
                                :date (if (and original (null date))
                                          (elfeed-entry-date original)
                                        (elfeed-float-time date))
                                :content description
                                :content-type 'html)))
-               (cl-loop for hook in elfeed-new-entry-parse-hook
-                        do (funcall hook :rss1.0 item db-entry))
+               (dolist (hook elfeed-new-entry-parse-hook)
+                 (funcall hook :rss1.0 item db-entry))
                db-entry))))
 
 (defun elfeed-feed-list ()
@@ -397,22 +402,26 @@ Only a list of strings will be returned."
 
 (defun elfeed-log (level fmt &rest objects)
   (let ((log-buffer (get-buffer-create "*elfeed-log*"))
-        (log-level-face (cond ((eq level 'info) 'elfeed-log-info-level-face)
-                              ((eq level 'warn) 'elfeed-log-warn-level-face)
-                              ((eq level 'error) 'elfeed-log-error-level-face))))
+        (log-level-face (cond
+                         ((eq level 'info) 'elfeed-log-info-level-face)
+                         ((eq level 'warn) 'elfeed-log-warn-level-face)
+                         ((eq level 'error) 'elfeed-log-error-level-face))))
     (with-current-buffer log-buffer
       (goto-char (point-max))
-      (insert (format (concat "[" (propertize "%s" 'face 'elfeed-log-date-face) "] "
-                              "[" (propertize "%s" 'face log-level-face) "]: %s\n")
-                      (format-time-string "%Y-%m-%d %H:%M:%S")
-                      level
-                      (apply #'format fmt objects))))))
+      (insert
+       (format
+        (concat "[" (propertize "%s" 'face 'elfeed-log-date-face) "] "
+                "[" (propertize "%s" 'face log-level-face) "]: %s\n")
+        (format-time-string "%Y-%m-%d %H:%M:%S")
+        level
+        (apply #'format fmt objects))))))
 
 ;;;###autoload
 (defun elfeed-update ()
   "Update all the feeds in `elfeed-feeds'."
   (interactive)
-  (elfeed-log 'info "Elfeed update: %s" (format-time-string "%B %e %Y %H:%M:%S %Z"))
+  (elfeed-log 'info "Elfeed update: %s"
+              (format-time-string "%B %e %Y %H:%M:%S %Z"))
   (mapc #'elfeed-update-feed (elfeed--shuffle (elfeed-feed-list)))
   (elfeed-search-update :force)
   (elfeed-db-save))
