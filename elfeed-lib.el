@@ -122,7 +122,7 @@ XML encoding declaration."
           (set-marker mark-beg beg)
           (set-marker mark-end end)
           (set-buffer-multibyte t)
-          (recode-region beg end coding-system 'raw-text)
+          (recode-region mark-beg mark-end coding-system 'raw-text)
           (setf beg (marker-position mark-beg)
                 end (marker-position mark-end))))))
   (xml-parse-region beg end buffer parse-dtd parse-ns))

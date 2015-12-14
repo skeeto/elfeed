@@ -90,6 +90,7 @@
       "</rss>"))
     (elfeed-xml-parse-region))
   (with-temp-buffer
+    (set-buffer-multibyte nil)
     (insert "<?xml version='1.0' encoding='gb2312'?>"
             "<x>\xb0\xd9\xb6\xc8\xbf\xc6\xbc\xbc"
             "\xbd\xb9\xb5\xe3\xd0\xc2\xce\xc5</x>")
