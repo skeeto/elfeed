@@ -88,7 +88,12 @@
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss>"
       (mapconcat (lambda (i) " ") (number-sequence 1 100000) "")
       "</rss>"))
-    (elfeed-xml-parse-region)))
+    (elfeed-xml-parse-region))
+  (with-temp-buffer
+    (insert "<?xml version='1.0' encoding='gb2312'?>"
+            "<x>\xb0\xd9\xb6\xc8\xbf\xc6\xbc\xbc"
+            "\xbd\xb9\xb5\xe3\xd0\xc2\xce\xc5</x>")
+    (should (equal (elfeed-xml-parse-region) '((x nil "百度科技焦点新闻"))))))
 
 (ert-deftest elfeed-directory-empty-p ()
   (let ((empty (make-temp-file "empty" t))

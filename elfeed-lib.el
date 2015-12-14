@@ -109,20 +109,22 @@ is allowed to be relative to now (`elfeed-time-duration')."
 (defun elfeed-xml-parse-region (&optional beg end buffer parse-dtd parse-ns)
   "Decode (if needed) and parse XML file. Uses coding system from
 XML encoding declaration."
-  (let ((coding-system nil))
-    (progn
-      (unless beg (setq beg (point-min)))
-      (unless end (setq end (point-max)))
-      (goto-char beg)
-      (if (re-search-forward
-           "<\\?xml.*?encoding=[\"']\\([^\"']+\\)[\"'].*?\\?>" nil t)
-          (setq coding-system
-                (ignore-errors (check-coding-system
-                                (intern (downcase (match-string 1)))))))
-      (when coding-system
-        (setq end (+ beg
-                     (decode-coding-region beg end coding-system))))
-      (goto-char beg)))
+  (unless beg (setq beg (point-min)))
+  (unless end (setq end (point-max)))
+  (setf (point) beg)
+  (when (re-search-forward
+         "<\\?xml.*?encoding=[\"']\\([^\"']+\\)[\"'].*?\\?>" nil t)
+    (let ((coding-system (intern-soft (downcase (match-string 1)))))
+      (when (ignore-errors (check-coding-system coding-system))
+        (let ((mark-beg (make-marker))
+              (mark-end (make-marker)))
+          ;; Region changes with encoding, so use markers to track it.
+          (set-marker mark-beg beg)
+          (set-marker mark-end end)
+          (set-buffer-multibyte t)
+          (recode-region beg end coding-system 'raw-text)
+          (setf beg (marker-position mark-beg)
+                end (marker-position mark-end))))))
   (xml-parse-region beg end buffer parse-dtd parse-ns))
 
 (defun elfeed-xml-unparse (element)
