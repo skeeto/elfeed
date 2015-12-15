@@ -158,13 +158,12 @@ When live editing the filter, it is bound to :live.")
       (format "Updated %s, %s%s"
               (propertize update 'face 'elfeed-search-last-update-face)
               (propertize unread 'face 'elfeed-search-unread-count-face)
-              (propertize (cond
-                           (elfeed-search-filter-active
-                            "")
-                           (elfeed-search-filter
-                            (concat ", " elfeed-search-filter))
-                           (""))
-                          'face 'elfeed-search-filter-face))))))
+              (cond
+               (elfeed-search-filter-active "")
+               ((string-match-p "[^ ]" elfeed-search-filter)
+                (concat ", " (propertize elfeed-search-filter
+                                         'face 'elfeed-search-filter-face)))
+               ("")))))))
 
 (defun elfeed-search-mode ()
   "Major mode for listing elfeed feed entries.
