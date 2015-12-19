@@ -16,7 +16,7 @@
 (defcustom elfeed-show-truncate-long-urls t
   "When non-nil, use an ellipsis to shorten very long displayed URLs."
   :group 'elfeed
-  :type 'bool)
+  :type 'boolean)
 
 (defvar elfeed-show-entry nil
   "The entry being displayed in this buffer.")
