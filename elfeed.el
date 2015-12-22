@@ -14,6 +14,16 @@
 
 ;;; History:
 
+;; Version 1.4.0: features and fixes
+;;   * New header built on Emacs' built-in buffer headers
+;;   * New hook: `elfeed-new-entry-parse-hook'
+;;   * Emacs' bookmark support (`bookmark-set', `bookmark-jump')
+;;   * Emacs' desktop support (save/restore windows)
+;;   * Custom faces in search listing via `elfeed-search-face-alist'
+;;   * Dedicated log buffer, *elfeed-log*
+;;   * Scoped updates with prefix argument to `elfeed-search-fetch'
+;;   * Various bug fixes
+;;   * Fixes to feed Unicode decoding
 ;; Version 1.3.0: features and fixes
 ;;   * `elfeed-search-face-alist' for custom entry faces
 ;;   * `display-local-help' (C-h .) support in search
@@ -76,7 +86,7 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "1.3.0")
+(defconst elfeed-version "1.4.0")
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow. You must add your
