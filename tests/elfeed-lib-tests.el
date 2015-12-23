@@ -63,7 +63,8 @@
     (test "Mon,  5 May 1986 15:16:09 GMT" 515690169.0)
     (test "2015-02-20" 1424390400.0)
     (test "20150220" 1424390400.0)
-    (test "2015-02" 1422748800.0)))
+    (test "2015-02" 1422748800.0)
+    (should (null (elfeed-float-time "notadate")))))
 
 (ert-deftest elfeed-xml-parse-region ()
   (with-temp-buffer
