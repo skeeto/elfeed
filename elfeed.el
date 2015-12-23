@@ -267,6 +267,7 @@ is called for side-effects on the ENTRY object.")
                     (id (or guid link (elfeed-generate-id description)))
                     (full-id (cons feed-id (elfeed-cleanup id)))
                     (original (elfeed-db-get-entry full-id))
+                    (original-date (and original (elfeed-entry-date original)))
                     (tags (elfeed-normalize-tags autotags elfeed-initial-tags))
                     (etags (xml-query-all '(enclosure) item))
                     (enclosures
@@ -282,9 +283,8 @@ is called for side-effects on the ENTRY object.")
                                :feed-id feed-id
                                :link (elfeed-cleanup link)
                                :tags tags
-                               :date (if (and original (null date))
-                                         (elfeed-entry-date original)
-                                       (elfeed-float-time date))
+                               :date (elfeed-new-date-for-entry
+                                      original-date date)
                                :enclosures enclosures
                                :content description
                                :content-type 'html)))
@@ -310,6 +310,7 @@ is called for side-effects on the ENTRY object.")
                     (id (or link (elfeed-generate-id description)))
                     (full-id (cons feed-id (elfeed-cleanup id)))
                     (original (elfeed-db-get-entry full-id))
+                    (original-date (and original (elfeed-entry-date original)))
                     (tags (elfeed-normalize-tags autotags elfeed-initial-tags))
                     (db-entry (elfeed-entry--create
                                :title (elfeed-cleanup title)
@@ -317,9 +318,8 @@ is called for side-effects on the ENTRY object.")
                                :feed-id feed-id
                                :link (elfeed-cleanup link)
                                :tags tags
-                               :date (if (and original (null date))
-                                         (elfeed-entry-date original)
-                                       (elfeed-float-time date))
+                               :date (elfeed-new-date-for-entry
+                                      original-date date)
                                :content description
                                :content-type 'html)))
                (dolist (hook elfeed-new-entry-parse-hook)
