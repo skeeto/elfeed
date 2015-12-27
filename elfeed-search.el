@@ -575,8 +575,26 @@ browser defined by `browse-url-generic-program'."
     (elfeed-show-entry entry)))
 
 (defun elfeed-search-next-entry ()
-  "Move point to the next entry after performing an action."
-  (forward-line))
+  "Move point to the next entry after performing an action.
+If the entry on the next line is unread, move to that. If the
+entry on the previous line is unread, move to that. Otherwise, just
+move to the next line."
+  (let* ((prev-entry (save-excursion
+                       (forward-line -1)
+                       (elfeed-search-selected :ignore-region)))
+         (next-entry (save-excursion
+                       (forward-line 1)
+                       (elfeed-search-selected :ignore-region)))
+         (prev-unread-p (and prev-entry
+                             (elfeed-tagged-p 'unread prev-entry)))
+         (next-unread-p (and next-entry
+                             (elfeed-tagged-p 'unread next-entry))))
+    (cond (next-unread-p
+           (next-line))
+          (prev-unread-p
+           (previous-line))
+          (t
+           (next-line)))))
 
 ;; Live Filters
 
