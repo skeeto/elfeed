@@ -520,7 +520,7 @@ browser defined by `browse-url-generic-program'."
                     (browse-url-generic it)
                   (browse-url it)))
     (mapc #'elfeed-search-update-entry entries)
-    (unless (use-region-p) (forward-line))))
+    (unless (use-region-p) (elfeed-search-next-entry))))
 
 (defun elfeed-search-yank ()
   "Copy the selected feed item to clipboard and kill-ring."
@@ -536,7 +536,7 @@ browser defined by `browse-url-generic-program'."
           (x-set-selection elfeed-search-clipboard-type link)))
       (message "Copied: %s" link)
       (elfeed-search-update-line)
-      (forward-line))))
+      (elfeed-search-next-entry))))
 
 (defun elfeed-search-tag-all (tag)
   "Apply TAG to all selected entries."
@@ -544,7 +544,7 @@ browser defined by `browse-url-generic-program'."
   (let ((entries (elfeed-search-selected)))
     (cl-loop for entry in entries do (elfeed-tag entry tag))
     (mapc #'elfeed-search-update-entry entries)
-    (unless (use-region-p) (forward-line))))
+    (unless (use-region-p) (elfeed-search-next-entry))))
 
 (defun elfeed-search-untag-all (tag)
   "Remove TAG from all selected entries."
@@ -552,7 +552,7 @@ browser defined by `browse-url-generic-program'."
   (let ((entries (elfeed-search-selected)))
     (cl-loop for entry in entries do (elfeed-untag entry tag))
     (mapc #'elfeed-search-update-entry entries)
-    (unless (use-region-p) (forward-line))))
+    (unless (use-region-p) (elfeed-search-next-entry))))
 
 (defun elfeed-search-toggle-all (tag)
   "Toggle TAG on all selected entries."
@@ -563,7 +563,7 @@ browser defined by `browse-url-generic-program'."
              do (elfeed-untag entry tag)
              else do (elfeed-tag entry tag))
     (mapc #'elfeed-search-update-entry entries)
-    (unless (use-region-p) (forward-line))))
+    (unless (use-region-p) (elfeed-search-next-entry))))
 
 (defun elfeed-search-show-entry (entry)
   "Display the currently selected item in a buffer."
@@ -571,8 +571,30 @@ browser defined by `browse-url-generic-program'."
   (when (elfeed-entry-p entry)
     (elfeed-untag entry 'unread)
     (elfeed-search-update-entry entry)
-    (forward-line)
+    (elfeed-search-next-entry)
     (elfeed-show-entry entry)))
+
+(defun elfeed-search-next-entry ()
+  "Move point to the next entry after performing an action.
+If the entry on the next line is unread, move to that. If the
+entry on the previous line is unread, move to that. Otherwise, just
+move to the next line."
+  (let* ((prev-entry (save-excursion
+                       (forward-line -1)
+                       (elfeed-search-selected :ignore-region)))
+         (next-entry (save-excursion
+                       (forward-line 1)
+                       (elfeed-search-selected :ignore-region)))
+         (prev-unread-p (and prev-entry
+                             (elfeed-tagged-p 'unread prev-entry)))
+         (next-unread-p (and next-entry
+                             (elfeed-tagged-p 'unread next-entry))))
+    (cond (next-unread-p
+           (next-line))
+          (prev-unread-p
+           (previous-line))
+          (t
+           (next-line)))))
 
 ;; Live Filters
 
