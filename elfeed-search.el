@@ -574,6 +574,28 @@ browser defined by `browse-url-generic-program'."
     (forward-line)
     (elfeed-show-entry entry)))
 
+(defun elfeed-search-set-entry-title (title)
+  "Manually set the title for the entry under point.
+Sets the :title key of the entry's metadata. See `elfeed-meta'."
+  (interactive "sTitle: ")
+  (let ((entry (elfeed-search-selected :ignore-region)))
+    (unless entry
+      (error "No entry selected!"))
+    (setf (elfeed-meta entry :title) title)
+    (elfeed-search-update-entry entry)))
+
+(defun elfeed-search-set-feed-title (title)
+  "Manually set the title for the feed belonging to the entry under point.
+Sets the :title key of the feed's metadata. See `elfeed-meta'."
+  (interactive "sTitle: ")
+  (let ((entry (elfeed-search-selected :ignore-region)))
+    (unless entry
+      (error "No entry selected!"))
+    (let ((feed (elfeed-entry-feed entry)))
+      (setf (elfeed-meta feed :title) title)
+      (dolist (to-fix elfeed-search-entries)
+        (elfeed-search-update-entry to-fix)))))
+
 ;; Live Filters
 
 (defvar elfeed-search-filter-syntax-table
