@@ -237,13 +237,10 @@ a time on this platform.
 
 [files]: http://msdn.microsoft.com/en-us/library/kdfaxaay%28vs.71%29.aspx
 
-The GNU-provided W32 build of Emacs doesn't include any of the
-libraries needed to actually view entries within Emacs, but you can
-still see the entry listing and visit entries in your browser. For
-full support, you'll either have to track down and install the missing
-DLLs, or use [a build that includes it][w64].
-
-[w64]: http://semantic.supelec.fr/popineau/programming-emacs.html#sec-2
+If you plan on fetching from HTTPS feeds on *any* platform, **it's
+essential that Emacs is built with the `--with-gnu-tls` option
+enabled**. Otherwise Emacs will run gnutls in an inferior process,
+which rarely works well.
 
 ## Database Management
 
