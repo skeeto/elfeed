@@ -238,7 +238,7 @@ a time on this platform.
 [files]: http://msdn.microsoft.com/en-us/library/kdfaxaay%28vs.71%29.aspx
 
 If you plan on fetching from HTTPS feeds on *any* platform, **it's
-essential that Emacs is built with the `--with-gnu-tls` option
+essential that Emacs is built with the `--with-gnutls` option
 enabled**. Otherwise Emacs will run gnutls in an inferior process,
 which rarely works well.
 
