@@ -206,9 +206,11 @@ is called for side-effects on the ENTRY object.")
   (let* ((feed-id url)
          (feed (elfeed-db-get-feed feed-id))
          (title (elfeed-cleanup (xml-query '(feed title *) xml)))
+         (author (elfeed-cleanup (xml-query '(feed author name *) xml)))
          (autotags (elfeed-feed-autotags url)))
     (setf (elfeed-feed-url feed) url
-          (elfeed-feed-title feed) title)
+          (elfeed-feed-title feed) title
+          (elfeed-feed-author feed) author)
     (cl-loop for entry in (xml-query-all '(feed entry) xml) collect
              (let* ((title (or (xml-query '(title *) entry) ""))
                     (anylink (xml-query '(link :href) entry))

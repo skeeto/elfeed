@@ -48,6 +48,10 @@
   <link href=\"http://example.org/\"/>
   <id>urn:uuid:60a76c80-d399-11d9-b91C-0003939e0af6</id>
   <updated>2003-12-13T18:30:02Z</updated>
+  <author>
+    <name>Test Feed Author</name>
+    <email>johndoe@example.com</email>
+  </author>
 
   <entry>
     <title>Atom-Powered Robots Run Amok</title>
@@ -172,9 +176,11 @@
     (with-temp-buffer
       (insert elfeed-test-atom)
       (goto-char (point-min))
-      (let ((url (elfeed-test-generate-url))
-            (xml (elfeed-xml-parse-region)))
+      (let* ((url (elfeed-test-generate-url))
+             (xml (elfeed-xml-parse-region))
+             (feed (elfeed-db-get-feed url)))
         (cl-destructuring-bind (a b) (elfeed-entries-from-atom url xml)
+          (should (string= (elfeed-feed-author feed) "Test Feed Author"))
           (should (string= (elfeed-feed-title (elfeed-db-get-feed url))
                            "Example Feed"))
           (should (string= (elfeed-entry-title a)
