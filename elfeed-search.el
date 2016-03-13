@@ -523,20 +523,21 @@ browser defined by `browse-url-generic-program'."
     (unless (use-region-p) (forward-line))))
 
 (defun elfeed-search-yank ()
-  "Copy the selected feed item to clipboard and kill-ring."
+  "Copy the selected feed items to clipboard and kill-ring."
   (interactive)
-  (let* ((entry (elfeed-search-selected :ignore-region))
-         (link (and entry (elfeed-entry-link entry))))
-    (when entry
-      (elfeed-untag entry 'unread)
-      (kill-new link)
+  (let* ((entries (elfeed-search-selected))
+         (links (mapcar 'elfeed-entry-link entries))
+         (links-str (mapconcat 'identity links " ")))
+    (when entries
+      (cl-loop for entry in entries do (elfeed-untag entry 'unread))
+      (kill-new links-str)
       (if (fboundp 'gui-set-selection)
-          (gui-set-selection elfeed-search-clipboard-type link)
+          (gui-set-selection elfeed-search-clipboard-type links-str)
         (with-no-warnings
-          (x-set-selection elfeed-search-clipboard-type link)))
-      (message "Copied: %s" link)
-      (elfeed-search-update-line)
-      (forward-line))))
+          (x-set-selection elfeed-search-clipboard-type links-str)))
+      (message "Copied: %s" links-str)
+      (mapc #'elfeed-search-update-entry entries)
+      (unless (use-region-p) (forward-line)))))
 
 (defun elfeed-search-tag-all (tag)
   "Apply TAG to all selected entries."
