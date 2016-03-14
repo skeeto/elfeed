@@ -526,8 +526,8 @@ browser defined by `browse-url-generic-program'."
   "Copy the selected feed items to clipboard and kill-ring."
   (interactive)
   (let* ((entries (elfeed-search-selected))
-         (links (mapcar 'elfeed-entry-link entries))
-         (links-str (mapconcat 'identity links " ")))
+         (links (mapcar #'elfeed-entry-link entries))
+         (links-str (mapconcat #'identity links " ")))
     (when entries
       (cl-loop for entry in entries do (elfeed-untag entry 'unread))
       (kill-new links-str)
