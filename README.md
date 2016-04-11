@@ -193,6 +193,10 @@ Or building your own subset feeds:
                               :remove 'unread))
 ```
 
+Use `M-x elfeed-apply-hooks-now` to apply `elfeed-new-entry-hook` to
+all existing entries. Otherwise hooks will only apply to new entries
+on discovery.
+
 ### Custom Tag Faces
 
 By default, entries marked `unread` will have bolded titles in the
