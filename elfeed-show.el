@@ -350,6 +350,52 @@ offer to save a range of enclosures."
       (elfeed-show-save-enclosure-multi)
     (elfeed-show-save-enclosure-single)))
 
+(when (require 'emms nil t)
+  (progn
+    (defun elfeed-show-play-enclosure-single (&optional entry enclosure-index)
+      "Play enclosure number ENCLOSURE-INDEX from ENTRY using emms.
+If ENTRY is nil use the elfeed-show-entry variable.
+If ENCLOSURE-INDEX is nil ask for the enclosure number."
+      (interactive)
+      (let* ((path elfeed-enclosure-default-dir)
+             (entry (or entry elfeed-show-entry))
+             (enclosure-index (or enclosure-index
+                                  (elfeed--get-enclosure-num
+                                   "Enclosure to play" entry)))
+             (url-enclosure (car (elt (elfeed-entry-enclosures entry)
+                                      (- enclosure-index 1)))))
+        (emms-play-url url-enclosure)))
+
+    (defun elfeed-show-play-enclosure-multi (&optional entry)
+      "Offer to play multiple entry enclosures from the current entry.
+Default is to play all enclosures, [1..n], where n is the number of
+enclosures. You can type multiple values separated by space, e.g.
+  1 3-6 8
+will save enclosures 1,3,4,5,6 and 8.
+
+Furthermore, there is a shortcut \"a\" which so means all
+enclosures, but as this is the default, you may not need it."
+      (interactive)
+      (let* ((entry (or entry elfeed-show-entry))
+             (attachstr (elfeed--get-enclosure-num
+                         "Enclosure number range (or 'a' for 'all')" entry t))
+             (count (length (elfeed-entry-enclosures entry)))
+             (attachnums (elfeed-split-ranges-to-numbers attachstr count)))
+        (dolist (enclosure-index attachnums)
+          (elfeed-show-save-enclosure-single entry enclosure-index))))
+
+    (defun elfeed-show-play-enclosure (&optional multi)
+      "Offer to save enclosure(s).
+If MULTI (prefix-argument) is nil, save a single one, otherwise,
+offer to save a range of enclosures."
+      (interactive "P")
+      (if multi
+          (elfeed-show-play-enclosure-multi)
+        (elfeed-show-play-enclosure-single)))
+
+    (define-key elfeed-show-mode-map "P" 'elfeed-show-play-enclosure)
+    ))
+
 (provide 'elfeed-show)
 
 ;;; elfeed-show.el ends here
