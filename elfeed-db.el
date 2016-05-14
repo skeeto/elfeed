@@ -277,7 +277,8 @@ This function increases the size of the structs in the database."
 
 (defun elfeed-db-load ()
   "Load the database index from the filesystem."
-  (let ((index (expand-file-name "index" elfeed-db-directory)))
+  (let ((index (expand-file-name "index" elfeed-db-directory))
+        (enable-local-variables nil)) ; don't set local variables from index!
     (if (not (file-exists-p index))
         (let ((db (setf elfeed-db (list :version elfeed-db-version))))
           (plist-put db :feeds (make-hash-table :test 'equal))
