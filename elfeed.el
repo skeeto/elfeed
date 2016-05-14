@@ -412,12 +412,29 @@ Only a list of strings will be returned."
   "Face for showing the `info' log level in the elfeed log buffer."
   :group 'elfeed)
 
+(defvar elfeed-log-buffer-name "*elfeed-log*"
+  "Name of buffer used for logging Elfeed events.")
+
+(defun elfeed-log-buffer ()
+  "Returns the buffer for `elfeed-log', creating it as needed."
+  (let ((buffer (get-buffer elfeed-log-buffer-name)))
+    (if buffer
+        buffer
+      (with-current-buffer (generate-new-buffer elfeed-log-buffer-name)
+        (special-mode)
+        (current-buffer)))))
+
 (defun elfeed-log (level fmt &rest objects)
-  (let ((log-buffer (get-buffer-create "*elfeed-log*"))
+  "Write log message FMT at LEVEL to Elfeed's log buffer.
+
+LEVEL should be a symbol: info, warn, error.
+FMT must be a string suitable for `format' given OBJECTS as arguments."
+  (let ((log-buffer (elfeed-log-buffer))
         (log-level-face (cond
                          ((eq level 'info) 'elfeed-log-info-level-face)
                          ((eq level 'warn) 'elfeed-log-warn-level-face)
-                         ((eq level 'error) 'elfeed-log-error-level-face))))
+                         ((eq level 'error) 'elfeed-log-error-level-face)))
+        (inhibit-read-only t))
     (with-current-buffer log-buffer
       (goto-char (point-max))
       (insert
