@@ -177,13 +177,17 @@ Defaults to `elfeed-kill-buffer'.")
   (elfeed)
   (elfeed-search-live-filter))
 
-(defun elfeed-show-visit ()
-  "Visit the current entry in the browser."
-  (interactive)
+(defun elfeed-show-visit (&optional use-generic-p)
+  "Visit the current entry in your browser using `browse-url'.
+If there is a prefix argument, visit the current entry in the
+browser defined by `browse-url-generic-program'."
+  (interactive "P")
   (let ((link (elfeed-entry-link elfeed-show-entry)))
     (when link
       (message "Sent to browser: %s" link)
-      (browse-url link))))
+      (if use-generic-p
+          (browse-url-generic link)
+        (browse-url link)))))
 
 (defun elfeed-show-yank ()
   "Copy the current entry link URL to the clipboard."
