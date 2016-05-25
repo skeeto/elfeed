@@ -14,6 +14,15 @@
 
 ;;; History:
 
+;; Version 1.4.1: features and fixes
+;;   * Major bug fix: disable local variables when loading the index
+;;   * New command `elfeed-show-play-enclosure' (requires emms)
+;;   * Yank now works on regions in the search buffer
+;;   * Feed structs now have author field filled out
+;;   * New command `elfeed-search-set-feed-title'
+;;   * New command `elfeed-search-set-entry-title'
+;;   * Smarter handling of invalid timestamps
+;;   * Following links in show mode (`elfeed-show-visit') takes a prefix arg
 ;; Version 1.4.0: features and fixes
 ;;   * New header built on Emacs' built-in buffer headers
 ;;   * New hook: `elfeed-new-entry-parse-hook'
@@ -86,7 +95,7 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "1.4.0")
+(defconst elfeed-version "1.4.1")
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow. You must add your
