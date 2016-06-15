@@ -175,7 +175,15 @@ from `url-retrieve'."
   `(let* ((use-curl elfeed-use-curl) ; capture current value in closure
           (cb (lambda (status) ,@body)))
      (if elfeed-use-curl
-         (elfeed-curl-enqueue ,url cb `(("User-Agent" . ,elfeed-user-agent)))
+         (let* ((feed (elfeed-db-get-feed url))
+                (last-modified (elfeed-meta feed :last-modified))
+                (etag (elfeed-meta feed :etag))
+                (headers `(("User-Agent" . ,elfeed-user-agent))))
+           (when etag
+             (push `("If-None-Match" . ,etag) headers))
+           (when last-modified
+             (push `("If-Modified-Since" . ,last-modified) headers))
+           (elfeed-curl-enqueue ,url cb headers))
        (url-queue-retrieve ,url cb () t t))))
 
 (defun elfeed-unjam ()
@@ -385,19 +393,25 @@ Only a list of strings will be returned."
           (elfeed-handle-http-error
            url (if use-curl "curl fetch failure" status)))
       (condition-case error
-          (progn
+          (let ((feed (elfeed-db-get-feed url)))
             (unless use-curl
               (elfeed-move-to-first-empty-line)
               (set-buffer-multibyte t))
-            (let* ((xml (elfeed-xml-parse-region (point) (point-max)))
-                   (entries (cl-case (elfeed-feed-type xml)
-                              (:atom (elfeed-entries-from-atom url xml))
-                              (:rss (elfeed-entries-from-rss url xml))
-                              (:rss1.0 (elfeed-entries-from-rss1.0 url xml))
-                              (otherwise
-                               (error (elfeed-handle-parse-error
-                                       url "Unknown feed type."))))))
-              (elfeed-db-add entries)))
+            (unless (eql elfeed-curl-status-code 304)
+              ;; Update Last-Modified and Etag
+              (setf (elfeed-meta feed :last-modified)
+                    (cdr (assoc "Last-Modified" elfeed-curl-headers))
+                    (elfeed-meta feed :etag)
+                    (cdr (assoc "ETag" elfeed-curl-headers)))
+              (let* ((xml (elfeed-xml-parse-region (point) (point-max)))
+                     (entries (cl-case (elfeed-feed-type xml)
+                                (:atom (elfeed-entries-from-atom url xml))
+                                (:rss (elfeed-entries-from-rss url xml))
+                                (:rss1.0 (elfeed-entries-from-rss1.0 url xml))
+                                (otherwise
+                                 (error (elfeed-handle-parse-error
+                                         url "Unknown feed type."))))))
+                (elfeed-db-add entries))))
         (error (elfeed-handle-parse-error url error))))
     (kill-buffer)
     (run-hook-with-args 'elfeed-update-hooks url)))
