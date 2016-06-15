@@ -41,6 +41,7 @@
   "Numeric HTTP response code, nil for non-HTTP protocols.")
 
 (defun elfeed-curl--parse-headers ()
+  "Parse the HTTP response headers, setting `elfeed-curl-headers'."
   (prog1
       (cl-loop until (looking-at "\r\n")
                do (re-search-forward "\\([^:]+\\): +\\([^\r]+\\)")
@@ -50,11 +51,13 @@
     (delete-region (point-min) (point))))
 
 (defun elfeed-curl--parse-response ()
+  "Parse the HTTP response status, setting `elfeed-curl-status-code'."
   (re-search-forward "HTTP/1.[0-9] +\\([0-9]+\\)")
   (forward-line 1)
   (string-to-number (match-string 1)))
 
 (defun elfeed-curl--parse-http ()
+  "Parse HTTP headers, setting the appropriate local variables."
   (setf elfeed-curl-status-code nil)
   (while (null elfeed-curl-status-code)
     (setf (point) (point-min)
@@ -66,10 +69,12 @@
       (setf elfeed-curl-status-code nil))))
 
 (defun elfeed-curl--url-is-http (url)
+  "Return non-nil if URL it HTTP or HTTPS."
   (let ((type (url-type (url-generic-parse-url url))))
     (not (null (member type '("http" "https"))))))
 
 (defun elfeed-curl--args (is-http url headers)
+  "Build an argument list for curl."
   (let ((args (list "-sL")))
     (push "-m" args)
     (push (format "%s" elfeed-curl-timeout) args)
@@ -86,7 +91,18 @@
           (push (format "%s: %s" key value) args))))
     (nreverse (cons url args))))
 
+(defun elfeed-curl--decode ()
+  "Try to decode the buffer based on the headers."
+  (let ((content-type (cdr (assoc "Content-Type" elfeed-curl-headers))))
+    (when (and content-type
+               (string-match "charset=\\(.+\\)" content-type))
+      (decode-coding-region (point-min) (point-max)
+                            (coding-system-from-name (match-string 1 content-type))))
+    (set-buffer-multibyte t)))
+
 (defun elfeed-curl-retrieve-synchronously (url &optional headers)
+  "Retrieve the contents for URL and return a new buffer with them.
+HEADERS is an alist of additional headers to add to the HTTP request."
   (let ((is-http (elfeed-curl--url-is-http url)))
     (with-current-buffer (generate-new-buffer (format "*curl %s*" url))
       (set-buffer-multibyte nil)
@@ -95,10 +111,11 @@
       (if is-http
           (elfeed-curl--parse-http))
       (setf (point) (point-min))
-      ;; TODO: decode-coding-region
+      (elfeed-curl--decode)
       (current-buffer))))
 
 (defun elfeed-curl--cb-wrapper (process status)
+  "Adapts a elfeed-curl callback into a process sentinel."
   (let ((buffer (process-buffer process))
         (cb (process-get process :cb))
         (is-http (process-get process :is-http)))
@@ -108,10 +125,15 @@
         (when is-http
           (elfeed-curl--parse-http))
         (setf (point) (point-min))
-        ;; TODO: decode-coding-region
+        (elfeed-curl--decode)
         (funcall cb t)))))
 
 (defun elfeed-curl-retrieve (url cb &optional headers)
+  "Retrieve contents from URL asynchronously, calling CB with one status argument.
+The destination buffer is set at the current buffer for the
+callback, which is responsible for killing the buffer. HEADERS is
+an alist of additional headers to add to the HTTP request. This
+function returns the destination buffer."
   (let* ((buffer (generate-new-buffer (format "*curl %s*" url)))
          (is-http (elfeed-curl--url-is-http url))
          (args (elfeed-curl--args is-http url headers)))
@@ -125,8 +147,9 @@
               (process-get process :is-http) is-http)))))
 
 (defun elfeed-curl--run-queue ()
-  (when (and (< elfeed-curl-queue-active elfeed-curl-max-connections)
-             (> (length elfeed-curl-queue) 0))
+  "Possibly fire off some new requests."
+  (while (and (< elfeed-curl-queue-active elfeed-curl-max-connections)
+              (> (length elfeed-curl-queue) 0))
     (cl-destructuring-bind (url cb headers) (pop elfeed-curl-queue)
       (cl-incf elfeed-curl-queue-active)
       (elfeed-curl-retrieve url
@@ -137,6 +160,7 @@
                             headers))))
 
 (defun elfeed-curl-enqueue (url cb &optional headers)
+  "Just like `elfeed-curl-retrieve', but restricts concurrent fetches."
   (let ((entry (list url cb headers)))
     (setf elfeed-curl-queue (nconc elfeed-curl-queue (list entry)))
     (elfeed-curl--run-queue)))
