@@ -89,7 +89,7 @@
 (require 'xml)
 (require 'xml-query)
 (require 'url-parse)
-(require 'url-queue)
+(require 'elfeed-curl)
 
 (defgroup elfeed nil
   "An Emacs web feed reader."
@@ -129,8 +129,8 @@ when they are first discovered."
 
 ;; Fetching:
 
-(define-obsolete-variable-alias
-  'elfeed-max-connections 'url-queue-parallel-processes nil)
+(defvaralias
+  'elfeed-max-connections 'elfeed-curl-max-connections)
 
 (defvar elfeed-http-error-hooks ()
   "Hooks to run when an http connection error occurs.
@@ -148,28 +148,23 @@ It is called with 1 argument: the URL of the feed that was just
 updated. The hook is called even when no new entries were
 found.")
 
-(define-obsolete-variable-alias
-  'elfeed-connections 'url-queue nil)
+(defvaralias
+  'elfeed-connections 'elfeed-curl-queue-active)
 
 (define-obsolete-variable-alias
-  'elfeed-waiting 'url-queue nil)
+  'elfeed-waiting 'elfeed-curl-queue nil)
 
 (defmacro elfeed-with-fetch (url &rest body)
   "Asynchronously run BODY in a buffer with the contents from
 URL. This macro is anaphoric, with STATUS referring to the status
 from `url-retrieve'."
   (declare (indent defun))
-  `(url-queue-retrieve ,url (lambda (status) ,@body) () t t))
+  `(elfeed-curl-enqueue ,url (lambda (status) ,@body)
+                        '(("User-Agent" . "Emacs Elfeed"))))
 
 (defun elfeed-unjam ()
-  "Manually clear the connection pool when connections fail to timeout.
-This is a workaround for issues in `url-queue-retrieve'."
+  "Manually clear the connection pool when connections fail to timeout."
   (interactive)
-  (let ((fails (mapcar #'url-queue-url elfeed-connections)))
-    (when fails
-      (elfeed-log 'warn "Elfeed aborted feeds: %s"
-                  (mapconcat #'identity fails " ")))
-    (setf url-queue nil))
   (elfeed-search-update :force))
 
 ;; Parsing:
@@ -368,13 +363,11 @@ Only a list of strings will be returned."
   "Update a specific feed."
   (interactive (list (completing-read "Feed: " (elfeed-feed-list))))
   (elfeed-with-fetch url
-    (if (and status (eq (car status) :error))
+    (if (null status)
         (let ((print-escape-newlines t))
           (elfeed-handle-http-error url status))
       (condition-case error
           (progn
-            (elfeed-move-to-first-empty-line)
-            (set-buffer-multibyte t)
             (let* ((xml (elfeed-xml-parse-region (point) (point-max)))
                    (entries (cl-case (elfeed-feed-type xml)
                               (:atom (elfeed-entries-from-atom url xml))
