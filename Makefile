@@ -9,6 +9,7 @@ EL += elfeed-lib.el
 EL += elfeed-db.el
 EL += elfeed-search.el
 EL += elfeed-show.el
+EL += elfeed-curl.el
 
 ELC = $(EL:.el=.elc)
 
