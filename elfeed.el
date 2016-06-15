@@ -89,6 +89,7 @@
 (require 'xml)
 (require 'xml-query)
 (require 'url-parse)
+(require 'url-queue)
 (require 'elfeed-curl)
 
 (defgroup elfeed nil
@@ -115,6 +116,12 @@ when they are first discovered."
   :group 'elfeed
   :type '(repeat (choice string
                          (cons string (repeat symbol)))))
+
+(defcustom elfeed-use-curl (not (null (executable-find "curl")))
+  "If non-nil, fetch feeds using curl instead of `url-retrieve'.")
+
+(defcustom elfeed-user-agent (format "Emacs Elfeed %s" elfeed-version)
+  "User agent string to use for Elfeed (requires `elfeed-use-curl').")
 
 (provide 'elfeed)
 
@@ -148,19 +155,28 @@ It is called with 1 argument: the URL of the feed that was just
 updated. The hook is called even when no new entries were
 found.")
 
-(defvaralias
-  'elfeed-connections 'elfeed-curl-queue-active)
+(defun elfeed-queue-count-active ()
+  "Return the number of items in process."
+  (if elfeed-use-curl
+      elfeed-curl-queue-active
+    (cl-count-if #'url-queue-buffer url-queue)))
 
-(define-obsolete-variable-alias
-  'elfeed-waiting 'elfeed-curl-queue nil)
+(defun elfeed-queue-count-total ()
+  "Return the number of items in process."
+  (if elfeed-use-curl
+      (+ (length elfeed-curl-queue) elfeed-curl-queue-active)
+    (length url-queue)))
 
 (defmacro elfeed-with-fetch (url &rest body)
   "Asynchronously run BODY in a buffer with the contents from
 URL. This macro is anaphoric, with STATUS referring to the status
 from `url-retrieve'."
   (declare (indent defun))
-  `(elfeed-curl-enqueue ,url (lambda (status) ,@body)
-                        '(("User-Agent" . "Emacs Elfeed"))))
+  `(let* ((use-curl elfeed-use-curl) ; capture current value in closure
+          (cb (lambda (status) ,@body)))
+     (if elfeed-use-curl
+         (elfeed-curl-enqueue ,url cb `(("User-Agent" . ,elfeed-user-agent)))
+       (url-queue-retrieve ,url cb () t t))))
 
 (defun elfeed-unjam ()
   "Manually clear the connection pool when connections fail to timeout."
@@ -363,11 +379,16 @@ Only a list of strings will be returned."
   "Update a specific feed."
   (interactive (list (completing-read "Feed: " (elfeed-feed-list))))
   (elfeed-with-fetch url
-    (if (null status)
+    (if (or (and use-curl (null status)) ; nil = error
+            (and (not use-curl) (eq (car status) :error)))
         (let ((print-escape-newlines t))
-          (elfeed-handle-http-error url status))
+          (elfeed-handle-http-error
+           url (if use-curl "curl fetch failure" status)))
       (condition-case error
           (progn
+            (unless use-curl
+              (elfeed-move-to-first-empty-line)
+              (set-buffer-multibyte t))
             (let* ((xml (elfeed-xml-parse-region (point) (point-max)))
                    (entries (cl-case (elfeed-feed-type xml)
                               (:atom (elfeed-entries-from-atom url xml))
