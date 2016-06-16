@@ -11,11 +11,12 @@
 ;; * `elfeed-curl-retrieve-synchronously'
 ;; * `elfeed-curl-enqueue'
 
-;; And has three buffer-local variables for use in callbacks:
+;; And has four buffer-local variables for use in callbacks:
 
 ;; * `elfeed-curl-headers'
 ;; * `elfeed-curl-status-code'
 ;; * `elfeed-curl-error-message'
+;; * `elfeed-curl-location'
 
 ;;; Code:
 
@@ -48,6 +49,9 @@
 
 (defvar-local elfeed-curl-error-message nil
   "Human-friendly message describing the error.")
+
+(defvar-local elfeed-curl-location nil
+  "Actual URL fetched (after any redirects).")
 
 (defvar elfeed-curl--error-codes
   '((1 . "Unsupported protocol.")
@@ -144,6 +148,31 @@
   (forward-line 1)
   (string-to-number (match-string 1)))
 
+(defun elfeed-curl--adjust-location (old-url new-url)
+  "Return full URL for maybe-relative NEW-URL from full URL old-url."
+  (let ((old (url-generic-parse-url old-url))
+        (new (url-generic-parse-url new-url)))
+    (cond
+     ;; Is new URL absolute already?
+     ((url-type new) new-url)
+     ;; Does it start with //? Append the old protocol.
+     ((url-fullness new) (concat (url-type old) new-url))
+     ;; Is it a relative path?
+     ((not (string-match-p "^/" new-url))
+      (let* ((old-dir (or (file-name-directory (url-filename old)) "/"))
+             (new-file (concat old-dir new-url)))
+        (setf (url-filename old) nil
+              (url-target old) nil
+              (url-attributes old) nil
+              (url-filename old) new-file)
+        (url-recreate-url old)))
+     ;; Replace the relative part.
+     ((progn
+        (setf (url-filename old) new-url
+              (url-target old) nil
+              (url-attributes old) nil)
+        (url-recreate-url old))))))
+
 (defun elfeed-curl--parse-http ()
   "Parse HTTP headers, setting the appropriate local variables."
   (setf elfeed-curl-status-code nil)
@@ -151,10 +180,13 @@
     (setf (point) (point-min)
           elfeed-curl-status-code (elfeed-curl--parse-response)
           elfeed-curl-headers (elfeed-curl--parse-headers))
-    (when (and (>= elfeed-curl-status-code 300)
-               (< elfeed-curl-status-code 400)
-               (assoc "location" elfeed-curl-headers))
-      (setf elfeed-curl-status-code nil))))
+    (let ((location (cdr (assoc "location" elfeed-curl-headers))))
+      (when (and (>= elfeed-curl-status-code 300)
+                 (< elfeed-curl-status-code 400)
+                 location)
+        (setf elfeed-curl-status-code nil
+              elfeed-curl-location
+              (elfeed-curl--adjust-location elfeed-curl-location location))))))
 
 (defun elfeed-curl--url-is-http (url)
   "Return non-nil if URL it HTTP or HTTPS."
@@ -197,6 +229,7 @@
 HEADERS is an alist of additional headers to add to the HTTP request."
   (let ((is-http (elfeed-curl--url-is-http url)))
     (with-current-buffer (generate-new-buffer (format "*curl %s*" url))
+      (setf elfeed-curl-location url)
       (buffer-disable-undo)
       (set-buffer-multibyte nil)
       (let ((args (elfeed-curl--args is-http url headers))
@@ -253,6 +286,7 @@ function returns the destination buffer."
     (prog1 buffer
       (buffer-disable-undo buffer)
       (with-current-buffer buffer
+        (setf elfeed-curl-location url)
         (set-buffer-multibyte nil))
       (let* ((coding-system-for-read 'raw-text)
              (process (apply #'start-process "elfeed-curl" buffer
