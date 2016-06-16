@@ -128,7 +128,9 @@ HEADERS is an alist of additional headers to add to the HTTP request."
       (if (not (equal status "finished\n"))
           (funcall cb nil)
         (when is-http
-          (elfeed-curl--parse-http))
+          (condition-case _
+              (elfeed-curl--parse-http)
+            (error (funcall cb nil))))
         (setf (point) (point-min))
         (elfeed-curl--decode)
         (funcall cb t)))))
