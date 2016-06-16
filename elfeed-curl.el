@@ -75,7 +75,9 @@
 
 (defun elfeed-curl--args (is-http url headers)
   "Build an argument list for curl."
-  (let ((args (list "-sL")))
+  (let ((args ()))
+    (push "--compressed" args)
+    (push  "-sL" args)
     (push "-m" args)
     (push (format "%s" elfeed-curl-timeout) args)
     (when is-http
