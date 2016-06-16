@@ -190,10 +190,10 @@ from `url-retrieve'."
   "Manually clear the connection pool when connections fail to timeout.
 This is a workaround for issues in `url-queue-retrieve'."
   (interactive)
-  (if use-curl
+  (if elfeed-use-curl
       (setf elfeed-curl-queue nil
             elfeed-curl-queue-active 0)
-    (let ((fails (mapcar #'url-queue-url elfeed-connections)))
+    (let ((fails (mapcar #'url-queue-url url-queue)))
       (when fails
         (elfeed-log 'warn "Elfeed aborted feeds: %s"
                     (mapconcat #'identity fails " ")))
