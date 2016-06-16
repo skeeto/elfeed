@@ -20,7 +20,7 @@
   "Name/path by which to invoke the curl program."
   :group 'elfeed)
 
-(defcustom elfeed-curl-max-connections 16
+(defcustom elfeed-curl-max-connections 8
   "Maximum number of concurrent fetches."
   :group 'elfeed)
 
