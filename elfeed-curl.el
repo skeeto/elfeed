@@ -109,7 +109,8 @@ HEADERS is an alist of additional headers to add to the HTTP request."
     (with-current-buffer (generate-new-buffer (format "*curl %s*" url))
       (buffer-disable-undo)
       (set-buffer-multibyte nil)
-      (let ((args (elfeed-curl--args is-http url headers)))
+      (let ((args (elfeed-curl--args is-http url headers))
+            (coding-system-for-read 'raw-text))
         (apply #'call-process elfeed-curl-program-name nil t nil args))
       (if is-http
           (elfeed-curl--parse-http))
@@ -144,8 +145,9 @@ function returns the destination buffer."
       (buffer-disable-undo buffer)
       (with-current-buffer buffer
         (set-buffer-multibyte nil))
-      (let ((process (apply #'start-process "elfeed-curl" buffer
-                            elfeed-curl-program-name args)))
+      (let* ((coding-system-for-read 'raw-text)
+             (process (apply #'start-process "elfeed-curl" buffer
+                             elfeed-curl-program-name args)))
         (setf (process-sentinel process) #'elfeed-curl--cb-wrapper
               (process-get process :cb) cb
               (process-get process :is-http) is-http)))))
