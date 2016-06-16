@@ -11,6 +11,12 @@
 ;; * `elfeed-curl-retrieve-synchronously'
 ;; * `elfeed-curl-enqueue'
 
+;; And has three buffer-local variables for use in callbacks:
+
+;; * `elfeed-curl-headers'
+;; * `elfeed-curl-status-code'
+;; * `elfeed-curl-error-message'
+
 ;;; Code:
 
 (require 'url)
