@@ -165,6 +165,30 @@ found.")
       (+ (length elfeed-curl-queue) elfeed-curl-queue-active)
     (length url-queue)))
 
+(defun elfeed-set-max-connections (n)
+  "Limit the maximum number of concurrent connections to N."
+  (if elfeed-use-curl
+      (setf elfeed-curl-max-connections n)
+    (setf url-queue-parallel-processes n)))
+
+(defun elfeed-get-max-connections ()
+  "Get the maximum number of concurrent connections."
+  (if elfeed-use-curl
+      elfeed-curl-max-connections
+    url-queue-parallel-processes))
+
+(defun elfeed-set-timeout (seconds)
+  "Limit the time for fetching a feed to SECONDS."
+  (if elfeed-use-curl
+      (setf elfeed-curl-timeout seconds)
+    (setf url-queue-timeout seconds)))
+
+(defun elfeed-get-timeout ()
+  "Get the time limit for fetching feeds in SECONDS."
+  (if elfeed-use-curl
+      elfeed-curl-timeout
+    url-queue-timeout))
+
 (defmacro elfeed-with-fetch (url &rest body)
   "Asynchronously run BODY in a buffer with the contents from
 URL. This macro is anaphoric, with STATUS referring to the status
