@@ -182,7 +182,8 @@
     (when (and content-type
                (string-match "charset=\\(.+\\)" content-type))
       (decode-coding-region (point-min) (point-max)
-                            (coding-system-from-name (match-string 1 content-type))))
+                            (coding-system-from-name
+                             (match-string 1 content-type))))
     (set-buffer-multibyte t)))
 
 (defun elfeed-curl-retrieve-synchronously (url &optional headers)
