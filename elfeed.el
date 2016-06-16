@@ -434,6 +434,8 @@ Only a list of strings will be returned."
                     (cdr (assoc "last-modified" elfeed-curl-headers))
                     (elfeed-meta feed :etag)
                     (cdr (assoc "etag" elfeed-curl-headers)))
+              (unless (equal url elfeed-curl-location)
+                (setf (elfeed-meta feed :canonical-url) elfeed-curl-location))
               (let* ((xml (elfeed-xml-parse-region (point) (point-max)))
                      (entries (cl-case (elfeed-feed-type xml)
                                 (:atom (elfeed-entries-from-atom url xml))
