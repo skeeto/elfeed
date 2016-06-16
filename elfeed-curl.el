@@ -65,7 +65,7 @@
           elfeed-curl-headers (elfeed-curl--parse-headers))
     (when (and (>= elfeed-curl-status-code 300)
                (< elfeed-curl-status-code 400)
-               (assoc "Location" elfeed-curl-headers))
+               (assoc "location" elfeed-curl-headers))
       (setf elfeed-curl-status-code nil))))
 
 (defun elfeed-curl--url-is-http (url)
