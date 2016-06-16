@@ -77,6 +77,7 @@
   "Build an argument list for curl."
   (let ((args ()))
     (push "--compressed" args)
+    (push "--http1.1" args) ; too many broken HTTP/2 servers
     (push  "-sL" args)
     (push "-m" args)
     (push (format "%s" elfeed-curl-timeout) args)
