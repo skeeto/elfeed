@@ -117,7 +117,8 @@ when they are first discovered."
   :type '(repeat (choice string
                          (cons string (repeat symbol)))))
 
-(defcustom elfeed-use-curl (not (null (executable-find "curl")))
+(defcustom elfeed-use-curl
+  (not (null (executable-find elfeed-curl-program-name)))
   "If non-nil, fetch feeds using curl instead of `url-retrieve'.")
 
 (defcustom elfeed-user-agent (format "Emacs Elfeed %s" elfeed-version)
