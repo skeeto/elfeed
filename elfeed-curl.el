@@ -105,6 +105,7 @@
 HEADERS is an alist of additional headers to add to the HTTP request."
   (let ((is-http (elfeed-curl--url-is-http url)))
     (with-current-buffer (generate-new-buffer (format "*curl %s*" url))
+      (buffer-disable-undo)
       (set-buffer-multibyte nil)
       (let ((args (elfeed-curl--args is-http url headers)))
         (apply #'call-process elfeed-curl-program-name nil t nil args))
@@ -129,7 +130,7 @@ HEADERS is an alist of additional headers to add to the HTTP request."
         (funcall cb t)))))
 
 (defun elfeed-curl-retrieve (url cb &optional headers)
-  "Retrieve contents from URL asynchronously, calling CB with one status argument.
+  "Retrieve URL contents asynchronously, calling CB with one status argument.
 The destination buffer is set at the current buffer for the
 callback, which is responsible for killing the buffer. HEADERS is
 an alist of additional headers to add to the HTTP request. This
@@ -138,6 +139,7 @@ function returns the destination buffer."
          (is-http (elfeed-curl--url-is-http url))
          (args (elfeed-curl--args is-http url headers)))
     (prog1 buffer
+      (buffer-disable-undo buffer)
       (with-current-buffer buffer
         (set-buffer-multibyte nil))
       (let ((process (apply #'start-process "elfeed-curl" buffer
