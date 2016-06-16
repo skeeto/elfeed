@@ -43,16 +43,16 @@
 (defun elfeed-curl--parse-headers ()
   "Parse the HTTP response headers, setting `elfeed-curl-headers'."
   (prog1
-      (cl-loop until (looking-at "\r\n")
-               do (re-search-forward "\\([^:]+\\): +\\([^\r]+\\)")
+      (cl-loop until (looking-at "\r?\n")
+               do (re-search-forward "\\([^:]+\\): +\\([^\r\n]+\\)")
                collect (cons (downcase (match-string 1)) (match-string 2))
                do (forward-line))
-    (forward-char 2)
+    (forward-line 1)
     (delete-region (point-min) (point))))
 
 (defun elfeed-curl--parse-response ()
   "Parse the HTTP response status, setting `elfeed-curl-status-code'."
-  (re-search-forward "HTTP/[0-9].[0-9] +\\([0-9]+\\)")
+  (re-search-forward "HTTP/[.0-9]+ +\\([0-9]+\\)")
   (forward-line 1)
   (string-to-number (match-string 1)))
 
