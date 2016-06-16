@@ -120,10 +120,14 @@ when they are first discovered."
 (defcustom elfeed-use-curl
   nil ; disabled temporarily for initial release
   ;;(not (null (executable-find elfeed-curl-program-name)))
-  "If non-nil, fetch feeds using curl instead of `url-retrieve'.")
+  "If non-nil, fetch feeds using curl instead of `url-retrieve'."
+  :group 'elfeed
+  :type 'bool)
 
 (defcustom elfeed-user-agent (format "Emacs Elfeed %s" elfeed-version)
-  "User agent string to use for Elfeed (requires `elfeed-use-curl').")
+  "User agent string to use for Elfeed (requires `elfeed-use-curl')."
+  :group 'elfeed
+  :type 'string)
 
 (provide 'elfeed)
 

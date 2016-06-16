@@ -25,15 +25,18 @@
 
 (defcustom elfeed-curl-program-name "curl"
   "Name/path by which to invoke the curl program."
-  :group 'elfeed)
+  :group 'elfeed
+  :type 'string)
 
 (defcustom elfeed-curl-max-connections 16
   "Maximum number of concurrent fetches."
-  :group 'elfeed)
+  :group 'elfeed
+  :type 'integer)
 
 (defcustom elfeed-curl-timeout 30
   "Maximum number of seconds a fetch is allowed to take once started."
-  :group 'elfeed)
+  :group 'elfeed
+  :type 'integer)
 
 (defvar elfeed-curl-queue ()
   "List of pending curl requests.")
