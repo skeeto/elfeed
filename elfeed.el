@@ -137,9 +137,6 @@ when they are first discovered."
 
 ;; Fetching:
 
-(defvaralias
-  'elfeed-max-connections 'elfeed-curl-max-connections)
-
 (defvar elfeed-http-error-hooks ()
   "Hooks to run when an http connection error occurs.
 It is called with 2 arguments. The first argument is the url of
