@@ -14,8 +14,19 @@ For a longer overview,
 
 [![](http://i.imgur.com/kxgF5AH.png)](http://i.imgur.com/kxgF5AH.png)
 
-The database format is stable, but there *may* still be an update
-someday that requires migration.
+The database format is stable and is never expected to change.
+
+## Prerequisites
+
+**It is *strongly* recommended you have cURL installed**, either in
+your PATH or configured via `elfeed-curl-program-name`. Elfeed will
+prefer it to Emacs' own URL-fetching mechanism, `url-retrieve`. It's
+also essential for running Elfeed on Windows, where `url-retrieve` is
+broken. Updates using cURL are significantly faster than the built-in
+method, both for you and the feed hosts.
+
+If this is giving you problems, fetching with cURL can be disabled by
+setting `elfeed-use-curl` to nil.
 
 ## Getting Started
 
@@ -59,12 +70,11 @@ If there are a lot of feeds, the initial update will take noticeably
 longer than normal operation because of the large amount of
 information being written the database. Future updates will only need
 to write new or changed data. If updating feeds slows down Emacs too
-much for you, reduce the value of `url-queue-parallel-processes` (the
-number of feeds to process at one time).
+much for you, reduce the number of concurrent fetches via
+`elfeed-set-max-connections`.
 
-Elfeed uses Emacs' url-queue package to manage feed fetching.
-Unfortunately it has a very short default value, so if you're getting
-any "Queue timeout exceeded" errors, increase `url-queue-timeout`.
+If you're getting many "Queue timeout exceeded" errors, increase the
+fetch timeout via `elfeed-set-timeout`.
 
 ~~~el
 (setf url-queue-timeout 30)
@@ -233,18 +243,20 @@ authentication, and a narrow entry viewer. This is basically Elfeed's
 
 ## Platform Support
 
+Summary: Install cURL and most problems disappear for all platforms.
+
 I personally only use Elfeed on Linux, but it's occasionally tested on
 Windows. Unfortunately the Windows port of Emacs is a bit too unstable
-for parallel feed downloads, not to mention the [tiny, hard-coded, 512
-open descriptor limitation][files], so it limits itself to one feed at
-a time on this platform.
+for parallel feed downloads with `url-retrieve`, not to mention the
+[tiny, hard-coded, 512 open descriptor limitation][files], so it
+limits itself to one feed at a time on this platform.
 
 [files]: http://msdn.microsoft.com/en-us/library/kdfaxaay%28vs.71%29.aspx
 
-If you plan on fetching from HTTPS feeds on *any* platform, **it's
-essential that Emacs is built with the `--with-gnutls` option
-enabled**. Otherwise Emacs will run gnutls in an inferior process,
-which rarely works well.
+If you fetch HTTPS feeds without cURL on *any* platform, it's
+essential that Emacs is built with the `--with-gnutls` option.
+Otherwise Emacs runs gnutls in an inferior process, which rarely works
+well.
 
 ## Database Management
 
