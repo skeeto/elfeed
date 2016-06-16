@@ -422,7 +422,7 @@ Only a list of strings will be returned."
             (and (not use-curl) (eq (car status) :error)))
         (let ((print-escape-newlines t))
           (elfeed-handle-http-error
-           url (if use-curl "curl fetch failure" status)))
+           url (if use-curl elfeed-curl-error-message status)))
       (condition-case error
           (let ((feed (elfeed-db-get-feed url)))
             (unless use-curl

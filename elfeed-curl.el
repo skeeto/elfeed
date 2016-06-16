@@ -40,6 +40,9 @@
 (defvar-local elfeed-curl-status-code nil
   "Numeric HTTP response code, nil for non-HTTP protocols.")
 
+(defvar-local elfeed-curl-error-message nil
+  "Human-friendly message describing the error.")
+
 (defun elfeed-curl--parse-headers ()
   "Parse the HTTP response headers, setting `elfeed-curl-headers'."
   (prog1
@@ -130,10 +133,18 @@ HEADERS is an alist of additional headers to add to the HTTP request."
         (when is-http
           (condition-case _
               (elfeed-curl--parse-http)
-            (error (funcall cb nil))))
+            (error (setf elfeed-curl-error-message
+                         "Unable to parse response.")
+                   (funcall cb nil))))
         (setf (point) (point-min))
         (elfeed-curl--decode)
-        (funcall cb t)))))
+        (if (and (>= elfeed-curl-status-code 400)
+                 (<= elfeed-curl-status-code 599))
+            (progn
+              (setf elfeed-curl-error-message
+                    (format "HTTP %d" elfeed-curl-status-code))
+              (funcall cb nil))
+          (funcall cb t))))))
 
 (defun elfeed-curl-retrieve (url cb &optional headers)
   "Retrieve URL contents asynchronously, calling CB with one status argument.
