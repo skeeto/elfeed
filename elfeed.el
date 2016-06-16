@@ -187,8 +187,17 @@ from `url-retrieve'."
        (url-queue-retrieve ,url cb () t t))))
 
 (defun elfeed-unjam ()
-  "Manually clear the connection pool when connections fail to timeout."
+  "Manually clear the connection pool when connections fail to timeout.
+This is a workaround for issues in `url-queue-retrieve'."
   (interactive)
+  (if use-curl
+      (setf elfeed-curl-queue nil
+            elfeed-curl-queue-active 0)
+    (let ((fails (mapcar #'url-queue-url elfeed-connections)))
+      (when fails
+        (elfeed-log 'warn "Elfeed aborted feeds: %s"
+                    (mapconcat #'identity fails " ")))
+      (setf url-queue nil)))
   (elfeed-search-update :force))
 
 ;; Parsing:
