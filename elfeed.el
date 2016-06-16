@@ -409,9 +409,9 @@ Only a list of strings will be returned."
             (unless (eql elfeed-curl-status-code 304)
               ;; Update Last-Modified and Etag
               (setf (elfeed-meta feed :last-modified)
-                    (cdr (assoc "Last-Modified" elfeed-curl-headers))
+                    (cdr (assoc "last-modified" elfeed-curl-headers))
                     (elfeed-meta feed :etag)
-                    (cdr (assoc "ETag" elfeed-curl-headers)))
+                    (cdr (assoc "etag" elfeed-curl-headers)))
               (let* ((xml (elfeed-xml-parse-region (point) (point-max)))
                      (entries (cl-case (elfeed-feed-type xml)
                                 (:atom (elfeed-entries-from-atom url xml))

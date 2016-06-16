@@ -45,7 +45,7 @@
   (prog1
       (cl-loop until (looking-at "\r\n")
                do (re-search-forward "\\([^:]+\\): +\\([^\r]+\\)")
-               collect (cons (match-string 1) (match-string 2))
+               collect (cons (downcase (match-string 1)) (match-string 2))
                do (forward-line))
     (forward-char 2)
     (delete-region (point-min) (point))))
@@ -83,7 +83,7 @@
       (push "-" args))
     (dolist (header headers)
       (cl-destructuring-bind (key . value) header
-        (if (equal key "User-Agent")
+        (if (equal (downcase key) "user-agent")
             (progn
               (push "-A" args)
               (push value args))
