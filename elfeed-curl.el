@@ -52,7 +52,7 @@
 
 (defun elfeed-curl--parse-response ()
   "Parse the HTTP response status, setting `elfeed-curl-status-code'."
-  (re-search-forward "HTTP/1.[0-9] +\\([0-9]+\\)")
+  (re-search-forward "HTTP/[0-9].[0-9] +\\([0-9]+\\)")
   (forward-line 1)
   (string-to-number (match-string 1)))
 
