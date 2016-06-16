@@ -406,13 +406,13 @@ Only a list of strings will be returned."
   "Handle an http error during retrieval of URL with STATUS code."
   (cl-incf (elfeed-meta (elfeed-db-get-feed url) :failures 0))
   (run-hook-with-args 'elfeed-http-error-hooks url status)
-  (elfeed-log 'error "Elfeed fetch failed for %s: %S" url status))
+  (elfeed-log 'error "%s: %S" url status))
 
 (defun elfeed-handle-parse-error (url error)
   "Handle parse error during parsing of URL with ERROR message."
   (cl-incf (elfeed-meta (elfeed-db-get-feed url) :failures 0))
   (run-hook-with-args 'elfeed-parse-error-hooks url error)
-  (elfeed-log 'error "Elfeed parse failed for %s: %s" url error))
+  (elfeed-log 'error "%s: %s" url error))
 
 (defun elfeed-update-feed (url)
   "Update a specific feed."
