@@ -286,20 +286,24 @@ HEADERS is an alist of additional headers to add to the HTTP request."
 
 (defun elfeed-curl--call-callback (buffer n url cb)
   "Prepare the buffer for callback N and call it."
-  (with-current-buffer buffer
-    (elfeed-curl--prepare-response url n)
-    (if (not (and (>= elfeed-curl-status-code 400)
-                  (<= elfeed-curl-status-code 599)))
-        (unwind-protect
-            (funcall cb t)
-          (when (zerop (cl-decf elfeed-curl--refcount))
-            (kill-buffer)))
-      (setf elfeed-curl-error-message
-            (format "HTTP %d" elfeed-curl-status-code))
+  (let ((result nil))
+    (with-current-buffer buffer
+      (setf elfeed-curl-error-message "unable to parse curl response")
       (unwind-protect
-          (funcall cb nil)
-        (when (zerop (cl-decf elfeed-curl--refcount))
-          (kill-buffer))))))
+          (progn
+            (elfeed-curl--prepare-response url n)
+            (if (and (>= elfeed-curl-status-code 400)
+                     (<= elfeed-curl-status-code 599))
+                (setf elfeed-curl-error-message
+                      (format "HTTP %d" elfeed-curl-status-code))
+              (setf result t
+                    elfeed-curl-error-message nil)))
+        ;; Always call callback
+        (unwind-protect
+            (funcall cb result)
+          ;; Always clean up
+          (when (zerop (cl-decf elfeed-curl--refcount))
+            (kill-buffer)))))))
 
 (defun elfeed-curl--fail-callback (buffer cb)
   "Inform the callback the request failed."
