@@ -408,7 +408,10 @@ curl invocation."
   (while (and (< elfeed-curl-queue-active elfeed-curl-max-connections)
               (> (length elfeed-curl-queue) 0))
     (cl-destructuring-bind (url cb headers) (pop elfeed-curl-queue)
-      (cl-incf elfeed-curl-queue-active)
+      (cl-incf elfeed-curl-queue-active
+               (if (listp url)
+                   (length url)
+                 1))
       (elfeed-curl-retrieve
        url
        (if (functionp cb)
