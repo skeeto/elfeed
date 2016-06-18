@@ -157,7 +157,10 @@
     (t "https://foo.example/a/b/c" "d" "https://foo.example/a/b/d")
     (t "http://foo.example/a/b/c" "/x/x" "http://foo.example/x/x")
     (t "http://foo.example/a/b/c" nil "http://foo.example/a/b/c")
-    (t "http://foo.example/a/b/c#foo" "" "http://foo.example/a/b/c")))
+    (t "http://foo.example/a/b/c#foo" "" "http://foo.example/a/b/c")
+    (t "http://foo.example/a/b/" "../c" "http://foo.example/a/c")
+    (t "http://foo.example/a/b/" ".././c" "http://foo.example/a/c")
+    (t "http://foo.example/a/b/" "../c/../../d" "http://foo.example/d")))
 
 (provide 'elfeed-lib-tests)
 
