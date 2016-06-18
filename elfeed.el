@@ -14,6 +14,14 @@
 
 ;;; History:
 
+;; Version 2.0.0: new cURL fetching backend
+;;   * Elfeed now uses cURL when available (`elfeed-use-curl')
+;;   * Windows OS now supported when using cURL
+;;   * Conditional GET (ETag, If-Modified-Since) when using cURL
+;;   * Support for xml:base in Atom feeds
+;;   * New options: `elfeed-set-max-connections', `elfeed-set-timeout'
+;;   * New feed metadata: :canonical-url, :etag, :last-modified
+;;   * New variable: `elfeed-log-level'
 ;; Version 1.4.1: features and fixes
 ;;   * Major bug fix: disable local variables when loading the index
 ;;   * New command `elfeed-show-play-enclosure' (requires emms)
