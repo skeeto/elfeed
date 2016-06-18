@@ -71,6 +71,9 @@
 (defvar-local elfeed-curl--requests ()
   "List of URL / callback pairs for the current buffer.")
 
+(defvar-local elfeed-curl--refcount nil
+  "Number of callbacks waiting on the current buffer.")
+
 (defvar elfeed-curl--error-codes
   '((1 . "Unsupported protocol.")
     (2 . "Failed to initialize.")
@@ -279,15 +282,24 @@ HEADERS is an alist of additional headers to add to the HTTP request."
     (elfeed-curl--prepare-response url n)
     (if (not (and (>= elfeed-curl-status-code 400)
                   (<= elfeed-curl-status-code 599)))
-        (funcall cb t)
+        (unwind-protect
+            (funcall cb t)
+          (when (zerop (cl-decf elfeed-curl--refcount))
+            (kill-buffer)))
       (setf elfeed-curl-error-message
             (format "HTTP %d" elfeed-curl-status-code))
-      (funcall cb nil))))
+      (unwind-protect
+          (funcall cb nil)
+        (when (zerop (cl-decf elfeed-curl--refcount))
+          (kill-buffer))))))
 
 (defun elfeed-curl--fail-callback (buffer cb)
   "Inform the callback the request failed."
   (with-current-buffer buffer
-    (funcall cb nil)))
+    (unwind-protect
+        (funcall cb nil)
+      (when (zerop (cl-decf elfeed-curl--refcount))
+        (kill-buffer)))))
 
 (defun elfeed-curl--sentinel (process status)
   "Manage the end of a curl process' life."
@@ -300,8 +312,7 @@ HEADERS is an alist of additional headers to add to the HTTP request."
                    initially do (elfeed-curl--parse-write-out)
                    for (url . cb) in elfeed-curl--requests
                    for n upfrom 0
-                   do (run-at-time 0 nil handler buffer n url cb)
-                   finally (run-at-time 0 nil #'kill-buffer buffer))
+                   do (run-at-time 0 nil handler buffer n url cb))
         (if (string-match "exited abnormally with code \\([0-9]+\\)" status)
             (let* ((code (string-to-number (match-string 1 status)))
                    (message (cdr (assoc code elfeed-curl--error-codes))))
@@ -311,8 +322,7 @@ HEADERS is an alist of additional headers to add to the HTTP request."
           (setf elfeed-curl-error-message status))
         (cl-loop with handler = #'elfeed-curl--fail-callback
                  for (_ . cb) in elfeed-curl--requests
-                 do (run-at-time 0 nil handler buffer cb)
-                 finally (run-at-time 0 nil #'kill-buffer buffer))))))
+                 do (run-at-time 0 nil handler buffer cb))))))
 
 (defun elfeed-curl-retrieve (url cb &optional headers)
   "Retrieve URL contents asynchronously, calling CB with one status argument.
@@ -340,8 +350,10 @@ results will not."
             (progn
               (when (functionp cb)
                 (setf cb (make-list (length url) cb)))
-              (setf elfeed-curl--requests (cl-mapcar #'cons url cb)))
-          (push (cons url cb) elfeed-curl--requests))
+              (setf elfeed-curl--requests (cl-mapcar #'cons url cb)
+                    elfeed-curl--refcount (length url)))
+          (push (cons url cb) elfeed-curl--requests)
+          (setf elfeed-curl--refcount 1))
         (setf (process-sentinel process) #'elfeed-curl--sentinel)))))
 
 (defun elfeed-curl--request-key (url headers)
