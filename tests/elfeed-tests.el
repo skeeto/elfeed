@@ -41,7 +41,7 @@
 
 (defvar elfeed-test-atom
 "<?xml version=\"1.0\" encoding=\"utf-8\"?>
-<feed xmlns=\"http://www.w3.org/2005/Atom\">
+<feed xmlns=\"http://www.w3.org/2005/Atom\" xml:base=\"http://example.org/\">
   <title>Example Feed</title>
   <subtitle>A subtitle.</subtitle>
   <link href=\"http://example.org/feed/\" rel=\"self\"/>
@@ -53,12 +53,12 @@
     <email>johndoe@example.com</email>
   </author>
 
-  <entry>
+  <entry xml:base=\"/2003/12/13/\">
     <title>Atom-Powered Robots Run Amok</title>
-    <link href=\"http://example.org/2003/12/13/atom03\"/>
+    <link href=\"atom03\"/>
     <link rel=\"alternate\" type=\"text/html\"
-          href=\"http://example.org/2003/12/13/atom03.html\"/>
-    <link rel=\"edit\" href=\"http://example.org/2003/12/13/atom03/edit\"/>
+          href=\"/2003/atom03.html\"/>
+    <link rel=\"edit\" href=\"atom03/edit\"/>
     <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
     <updated>2003-12-13T18:30:02Z</updated>
     <summary>Some text.</summary>
@@ -124,6 +124,45 @@
   </item>
 </rdf:RDF>")
 
+(defvar elfeed-test-xml-base
+  "<?xml version='1.0' encoding='utf-8'?>
+<feed xml:base='http://foo.example.org/'>
+  <title>xml:base test</title>
+  <subtitle>xml:base is complicated</subtitle>
+  <link href='/feed/' rel='self'/>
+  <link href='/'/>
+  <id>urn:uuid:1edeb49c-1f0a-3de3-9a37-9802ef5c0add</id>
+  <updated>2015-12-13T18:30:02Z</updated>
+  <author>
+    <name>xml:base</name>
+    <email>xml@base.example.com</email>
+  </author>
+
+  <entry xml:base='/entry0/'>
+    <title>Entry 0</title>
+    <link rel='alternate' type='text/html' href='content0.html'/>
+    <id>urn:uuid:b42c623a-fbf0-31c8-3d54-1a56ee88e6a4</id>
+    <updated>2015-12-13T18:30:02Z</updated>
+    <content>Content 0</content>
+  </entry>
+
+  <entry>
+    <title>Entry 1</title>
+    <link rel='alternate' type='text/html' href='/entry1/content1.html'/>
+    <id>urn:uuid:bdc21cd1-ceac-3439-ea05-3a1d34796dd2</id>
+    <updated>2016-12-13T18:30:02Z</updated>
+    <summary>Content 1</summary>
+  </entry>
+
+  <entry xml:base='https://entry2.example.com/entry2/'>
+    <title>Entry 1</title>
+    <link rel='alternate' type='text/html' href='content2.html'/>
+    <id>urn:uuid:bdc21cd1-ceac-3439-ea05-3a1d34796dd2</id>
+    <updated>2016-12-13T18:30:02Z</updated>
+    <summary>Content 1</summary>
+  </entry>
+</feed>")
+
 (defvar elfeed-test-opml
   "<?xml version=\"1.0\"?>
 <opml version=\"1.0\">
@@ -185,12 +224,16 @@
                            "Example Feed"))
           (should (string= (elfeed-entry-title a)
                            "Atom-Powered Robots Run Amok"))
+          (should (string= (elfeed-entry-link a)
+                           "http://example.org/2003/atom03.html"))
           (should (= (elfeed-entry-date a) 1071340202.0))
           (should
            (equal (elfeed-entry-id a)
                   (cons url "urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a")))
           (should (string= (elfeed-entry-title b)
                            "It's Raining Cats and Dogs"))
+          (should (string= (elfeed-entry-link b)
+                           "http://example.org/2004/12/13/atom03.html"))
           (should (= (elfeed-entry-date b) 1102962602.0))
           (should
            (equal (elfeed-entry-id b)
@@ -215,6 +258,25 @@
            (equal (elfeed-entry-id b)
                   (cons url
                         "http://xml.com/pub/2000/08/09/rdfdb/index.html"))))))))
+
+(ert-deftest elfeed-xml-base ()
+  (with-elfeed-test
+    (with-temp-buffer
+      (insert elfeed-test-xml-base)
+      (goto-char (point-min))
+      (let* ((url "http://bar.example.org/")
+             (xml (elfeed-xml-parse-region))
+             (feed (elfeed-db-get-feed url)))
+        (cl-destructuring-bind (a b c) (elfeed-entries-from-atom url xml)
+          (should (string=
+                   (elfeed-entry-link a)
+                   "http://foo.example.org/entry0/content0.html"))
+          (should (string=
+                   (elfeed-entry-link b)
+                   "http://foo.example.org/entry1/content1.html"))
+          (should (string=
+                   (elfeed-entry-link c)
+                   "https://entry2.example.com/entry2/content2.html")))))))
 
 (ert-deftest elfeed-tagger ()
   (with-elfeed-test

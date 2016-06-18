@@ -272,15 +272,19 @@ is called for side-effects on the ENTRY object.")
          (feed (elfeed-db-get-feed feed-id))
          (title (elfeed-cleanup (xml-query '(feed title *) xml)))
          (author (elfeed-cleanup (xml-query '(feed author name *) xml)))
+         (xml-base (or (xml-query '(feed :xml:base) xml) url))
          (autotags (elfeed-feed-autotags url)))
     (setf (elfeed-feed-url feed) url
           (elfeed-feed-title feed) title
           (elfeed-feed-author feed) author)
     (cl-loop for entry in (xml-query-all '(feed entry) xml) collect
              (let* ((title (or (xml-query '(title *) entry) ""))
+                    (xml-base (elfeed-update-location
+                               xml-base (xml-query '(:xml:base) (list entry))))
                     (anylink (xml-query '(link :href) entry))
                     (altlink (xml-query '(link [rel "alternate"] :href) entry))
-                    (link (or altlink anylink))
+                    (link (elfeed-update-location
+                           xml-base (or altlink anylink)))
                     (date (or (xml-query '(published *) entry)
                               (xml-query '(updated *) entry)
                               (xml-query '(date *) entry)))
