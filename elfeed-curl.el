@@ -166,6 +166,22 @@
     (89 . "No connection available, the session will be queued")
     (90 . "SSL public key does not matched pinned public key")))
 
+(defvar elfeed-curl--version-cache
+  (make-hash-table :test 'eq :weakness 'key)
+  "Used to avoid invoking curl more than once for version info.")
+
+(defun elfeed-curl-get-version ()
+  "Return the version of curl for `elfeed-curl-program-name'."
+  (let* ((cache elfeed-curl--version-cache)
+         (cache-value (gethash elfeed-curl-program-name cache)))
+    (if cache-value
+        cache-value
+      (with-temp-buffer
+        (call-process elfeed-curl-program-name nil t nil "--version")
+        (setf (point) (point-min))
+        (when (re-search-forward "[.0-9]+" nil t)
+          (setf (gethash elfeed-curl-program-name cache) (match-string 0)))))))
+
 (defun elfeed-curl--token ()
   "Return a unique, random string that prints as a symbol without escapes.
 This token is used to split requests. The % is excluded since
