@@ -39,6 +39,7 @@
 
 (require 'url)
 (require 'cl-lib)
+(require 'elfeed-log)
 
 (defcustom elfeed-curl-program-name "curl"
   "Name/path by which to invoke the curl program."
@@ -420,6 +421,7 @@ curl invocation."
   (while (and (< elfeed-curl-queue-active elfeed-curl-max-connections)
               (> (length elfeed-curl-queue) 0))
     (cl-destructuring-bind (url cb headers) (pop elfeed-curl-queue)
+      (elfeed-log 'debug "retrieve %s" url)
       (cl-incf elfeed-curl-queue-active 1)
       (elfeed-curl-retrieve
        url
