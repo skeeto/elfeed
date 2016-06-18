@@ -289,6 +289,10 @@ This includes expanding e.g. 3-5 into 3,4,5.  If the letter
       (cond
        ;; Is new URL absolute already?
        ((url-type new) new-url)
+       ;; Empty is a special case (clear fragment)
+       ((equal new-url "")
+        (setf (url-target old) nil)
+        (url-recreate-url old))
        ;; Does it start with //? Append the old protocol.
        ((url-fullness new) (concat (url-type old) ":" new-url))
        ;; Is it a relative path?
