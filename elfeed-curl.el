@@ -26,14 +26,14 @@
 ;; Callbacks should also avoid editing the buffer, though this
 ;; generally shouldn't impact other requests.
 
-;; Remaining issues:
-
-;; Can't make use of --compressed (i.e. all transfers are
-;; uncompressed) because this package relies on size_download being
-;; accurate for the uncompressed data. Unfortunately there's no way to
-;; 100% reliable way to get the content size from curl. HTTP/1.0
-;; doesn't include the Content-Length and we won't know it's a
-;; HTTP/1.0 response until it's too late.
+;; Sometimes Elfeed asks curl to retrieve multiple requests and
+;; deliver them concatenated. Due to the possibility of HTTP/1.0 being
+;; involved — and other ambiguous-length protocols — there's no
+;; perfectly unambiguous way to split the output. To work around this,
+;; I use curl's --write-out to insert a randomly-generated token after
+;; each request. It's highly unlikely (1 in ~1e38) that this token
+;; will appear in content, so I can use it to identify the end of each
+;; request.
 
 ;;; Code:
 
@@ -76,10 +76,13 @@
   "Actual URL fetched (after any redirects).")
 
 (defvar-local elfeed-curl--regions ()
-  "List of curl's reported size_header size_download values.")
+  "List of markers bounding separate requests.")
 
 (defvar-local elfeed-curl--requests ()
   "List of URL / callback pairs for the current buffer.")
+
+(defvar-local elfeed-curl--token nil
+  "Unique token that splits requests.")
 
 (defvar-local elfeed-curl--refcount nil
   "Number of callbacks waiting on the current buffer.")
@@ -163,26 +166,42 @@
     (89 . "No connection available, the session will be queued")
     (90 . "SSL public key does not matched pinned public key")))
 
+(defun elfeed-curl--token ()
+  "Return a unique, random string that prints as a symbol without escapes.
+This token is used to split requests. The % is excluded since
+it's special to --write-out."
+  (let* ((token (make-string 22 ?=))
+         (set "!$&*+-/0123456789:<>@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_\
+abcdefghijklmnopqrstuvwxyz|~"))
+    (prog1 token
+      (dotimes (i (- (length token) 2))
+        (setf (aref token (1+ i)) (aref set (cl-random (length set))))))))
+
 (defun elfeed-curl--parse-write-out ()
   "Parse curl's write-out (-w) messages into `elfeed-curl--regions'."
   (widen)
   (setf (point) (point-max)
         elfeed-curl--regions ())
   (while (> (point) (point-min))
-    (re-search-backward "(")
+    (search-backward elfeed-curl--token)
+    (cl-decf (point))
     (let ((end (point)))
-      (cl-destructuring-bind (header . download) (read (current-buffer))
-        (let* ((header-start (- end (+ header download)))
-               (header-end (- end download))
-               (content-start (- end download))
+      (cl-destructuring-bind (_ . header) (read (current-buffer))
+        (setf (point) end)
+        ;; Find next sentinel token
+        (if (search-backward elfeed-curl--token nil t)
+            (search-forward ")" nil t)
+          (setf (point) (point-min)))
+        (let* ((header-start (point))
+               (header-end (+ (point) header))
+               (content-start (+ (point) header))
                (content-end end)
                (regions (list header-start header-end
                               content-start content-end))
                (markers (cl-loop for p in regions
                                  for marker = (make-marker)
                                  collect (set-marker marker p))))
-          (push markers elfeed-curl--regions)
-          (setf (point) (- end (+ header download))))))))
+          (push markers elfeed-curl--regions))))))
 
 (defun elfeed-curl--narrow (kind n)
   "Narrow to Nth region of KIND (:header, :content)."
@@ -223,14 +242,15 @@ Use `elfeed-curl--narrow' to select a header."
            do (setf location (elfeed-update-location location value))
            finally return location))
 
-(defun elfeed-curl--args (url &optional headers)
+(defun elfeed-curl--args (url token &optional headers)
   "Build an argument list for curl for URL.
 URL can be a string or a list of URL strings."
   (let ((args ()))
     (push "--http1.1" args) ; too many broken HTTP/2 servers
+    (push "--compressed" args)
     (push "--silent" args)
     (push "--location" args)
-    (push "-w(%{size_header} . %{size_download})" args)
+    (push (format "-w(%s . %%{size_header})" token) args)
     (push (format "-m%s" elfeed-curl-timeout) args)
     (push "-D-" args)
     (dolist (header headers)
@@ -255,7 +275,8 @@ URL can be a string or a list of URL strings."
 HEADERS is an alist of additional headers to add to the HTTP request."
   (with-current-buffer (generate-new-buffer "*curl*")
     (buffer-disable-undo)
-    (let ((args (elfeed-curl--args url headers))
+    (setf elfeed-curl--token (elfeed-curl--token))
+    (let ((args (elfeed-curl--args url elfeed-curl--token headers))
           (coding-system-for-read 'raw-text-unix))
       (apply #'call-process elfeed-curl-program-name nil t nil args))
     (elfeed-curl--parse-write-out)
@@ -330,8 +351,9 @@ DNS failure in one will cause all to fail, but 4xx and 5xx
 results will not."
   (with-current-buffer (generate-new-buffer "*curl*")
     (buffer-disable-undo)
+    (setf elfeed-curl--token (elfeed-curl--token))
     (let* ((coding-system-for-read 'raw-text-unix)
-           (args (elfeed-curl--args url headers))
+           (args (elfeed-curl--args url elfeed-curl--token headers))
            (process (apply #'start-process "elfeed-curl" (current-buffer)
                            elfeed-curl-program-name args)))
       (prog1 process
