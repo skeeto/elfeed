@@ -6,6 +6,7 @@ VERSION := $(word 1,$(subst -, ,$(shell git describe)))
 EL  = elfeed.el
 EL += xml-query.el
 EL += elfeed-lib.el
+EL += elfeed-log.el
 EL += elfeed-db.el
 EL += elfeed-search.el
 EL += elfeed-show.el
