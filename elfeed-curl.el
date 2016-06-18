@@ -18,6 +18,15 @@
 ;; * `elfeed-curl-error-message'
 ;; * `elfeed-curl-location'
 
+;; Remaining issues:
+
+;; Can't make use of --compressed (i.e. all transfers are
+;; uncompressed) because this package relies on size_download being
+;; accurate for the uncompressed data. Unfortunately there's no way to
+;; 100% reliable way to get the content size from curl. HTTP/1.0
+;; doesn't include the Content-Length and we won't know it's a
+;; HTTP/1.0 response until it's too late.
+
 ;;; Code:
 
 (require 'url)
@@ -55,6 +64,12 @@
 
 (defvar-local elfeed-curl-location nil
   "Actual URL fetched (after any redirects).")
+
+(defvar-local elfeed-curl--regions ()
+  "List of curl's reported size_header size_download values.")
+
+(defvar-local elfeed-curl--requests ()
+  "List of URL / callback pairs for the current buffer.")
 
 (defvar elfeed-curl--error-codes
   '((1 . "Unsupported protocol.")
@@ -135,21 +150,58 @@
     (89 . "No connection available, the session will be queued")
     (90 . "SSL public key does not matched pinned public key")))
 
-(defun elfeed-curl--parse-headers ()
-  "Parse the HTTP response headers, setting `elfeed-curl-headers'."
-  (prog1
-      (cl-loop until (looking-at "\r?\n")
-               do (re-search-forward "\\([^:]+\\): +\\([^\r\n]+\\)")
-               collect (cons (downcase (match-string 1)) (match-string 2))
-               do (forward-line))
-    (forward-line 1)
-    (delete-region (point-min) (point))))
+(defun elfeed-curl--parse-write-out ()
+  "Parse curl's write-out (-w) messages into `elfeed-curl--regions'."
+  (widen)
+  (setf (point) (point-max)
+        elfeed-curl--regions ())
+  (while (> (point) (point-min))
+    (re-search-backward "(")
+    (let ((end (point)))
+      (cl-destructuring-bind (header . download) (read (current-buffer))
+        (let* ((header-start (- end (+ header download)))
+               (header-end (- end download))
+               (content-start (- end download))
+               (content-end end)
+               (regions (list header-start header-end
+                              content-start content-end))
+               (markers (cl-loop for p in regions
+                                 for marker = (make-marker)
+                                 collect (set-marker marker p))))
+          (push markers elfeed-curl--regions)
+          (setf (point) (- end (+ header download))))))))
 
-(defun elfeed-curl--parse-response ()
-  "Parse the HTTP response status, setting `elfeed-curl-status-code'."
-  (re-search-forward "HTTP/[.0-9]+ +\\([0-9]+\\)")
-  (forward-line 1)
-  (string-to-number (match-string 1)))
+(defun elfeed-curl--narrow (kind n)
+  "Narrow to Nth region of KIND (:header, :content)."
+  (let ((region (nth n elfeed-curl--regions)))
+    (cl-destructuring-bind (h-start h-end c-start c-end) region
+      (cl-ecase kind
+        (:header (narrow-to-region h-start h-end))
+        (:content (narrow-to-region c-start c-end))))))
+
+(defun elfeed-curl--parse-headers ()
+  "Parse the current HTTP response headers into buffer-locals.
+Sets `elfeed-curl-headers'and `elfeed-curl-status-code'.
+Use `elfeed-curl--narrow' to select a header."
+  (when (> (- (point-max) (point-min)) 0)
+    (setf (point) (point-max))
+    (re-search-backward "HTTP/[.0-9]+ +\\([0-9]+\\)")
+    (setf elfeed-curl-status-code (string-to-number (match-string 1)))
+    (cl-loop initially (setf (point) (point-max))
+             while (re-search-backward "^\\([^:]+\\): +\\([^\r\n]+\\)" nil t)
+             for key = (downcase (match-string 1))
+             for value = (match-string 2)
+             collect (cons key value) into headers
+             finally (setf elfeed-curl-headers headers))))
+
+(defun elfeed-curl--decode ()
+  "Try to decode the buffer based on the headers."
+  (let ((content-type (cdr (assoc "Content-Type" elfeed-curl-headers))))
+    (if (and content-type (string-match "charset=\\(.+\\)" content-type))
+        (decode-coding-region (point-min) (point-max)
+                              (coding-system-from-name
+                               (match-string 1 content-type)))
+      (decode-coding-region (point-min) (point-max) 'utf-8))))
 
 (defun elfeed-curl--adjust-location (old-url new-url)
   "Return full URL for maybe-relative NEW-URL from full URL old-url."
@@ -159,7 +211,7 @@
      ;; Is new URL absolute already?
      ((url-type new) new-url)
      ;; Does it start with //? Append the old protocol.
-     ((url-fullness new) (concat (url-type old) new-url))
+     ((url-fullness new) (concat (url-type old) ":" new-url))
      ;; Is it a relative path?
      ((not (string-match-p "^/" new-url))
       (let* ((old-dir (or (file-name-directory (url-filename old)) "/"))
@@ -176,146 +228,189 @@
               (url-attributes old) nil)
         (url-recreate-url old))))))
 
-(defun elfeed-curl--parse-http ()
-  "Parse HTTP headers, setting the appropriate local variables."
-  (setf elfeed-curl-status-code nil)
-  (while (null elfeed-curl-status-code)
-    (setf (point) (point-min)
-          elfeed-curl-status-code (elfeed-curl--parse-response)
-          elfeed-curl-headers (elfeed-curl--parse-headers))
-    (let ((location (cdr (assoc "location" elfeed-curl-headers))))
-      (when (and (>= elfeed-curl-status-code 300)
-                 (< elfeed-curl-status-code 400)
-                 location)
-        (setf elfeed-curl-status-code nil
-              elfeed-curl-location
-              (elfeed-curl--adjust-location elfeed-curl-location location))))))
+(defun elfeed-curl--final-location (location headers)
+  "Given start LOCATION and HEADERS, find the final location."
+  (cl-loop for (key . value) in headers
+           when (equal key "location")
+           do (setf location (elfeed-curl--adjust-location location value))
+           finally return location))
 
-(defun elfeed-curl--url-is-http (url)
-  "Return non-nil if URL it HTTP or HTTPS."
-  (let ((type (url-type (url-generic-parse-url url))))
-    (not (null (member type '("http" "https"))))))
-
-(defun elfeed-curl--args (is-http url headers)
-  "Build an argument list for curl."
+(defun elfeed-curl--args (url &optional headers)
+  "Build an argument list for curl for URL.
+URL can be a string or a list of URL strings."
   (let ((args ()))
-    (push "--compressed" args)
     (push "--http1.1" args) ; too many broken HTTP/2 servers
-    (push  "-sL" args)
-    (push "-m" args)
-    (push (format "%s" elfeed-curl-timeout) args)
-    (when is-http
-      (push "-D" args)
-      (push "-" args))
+    (push "--silent" args)
+    (push "--location" args)
+    (push "-w(%{size_header} . %{size_download})" args)
+    (push (format "-m%s" elfeed-curl-timeout) args)
+    (push "-D-" args)
     (dolist (header headers)
       (cl-destructuring-bind (key . value) header
-        (if (equal (downcase key) "user-agent")
-            (progn
-              (push "-A" args)
-              (push value args))
-          (push "-H" args)
-          (push (format "%s: %s" key value) args))))
-    (nreverse (cons url args))))
+        (push (format "-H%s: %s" key value) args)))
+    (if (listp url)
+        (nconc (nreverse args) url)
+      (nreverse (cons url args)))))
 
-(defun elfeed-curl--decode ()
-  "Try to decode the buffer based on the headers."
-  (let ((content-type (cdr (assoc "Content-Type" elfeed-curl-headers))))
-    (when (and content-type
-               (string-match "charset=\\(.+\\)" content-type))
-      (decode-coding-region (point-min) (point-max)
-                            (coding-system-from-name
-                             (match-string 1 content-type))))
-    (set-buffer-multibyte t)))
+(defun elfeed-curl--prepare-response (url n)
+  "Prepare response N for delivery to user."
+  (elfeed-curl--narrow :header n)
+  (elfeed-curl--parse-headers)
+  (setf elfeed-curl-location
+        (elfeed-curl--final-location url elfeed-curl-headers))
+  (elfeed-curl--narrow :content n)
+  (elfeed-curl--decode)
+  (current-buffer))
 
 (defun elfeed-curl-retrieve-synchronously (url &optional headers)
   "Retrieve the contents for URL and return a new buffer with them.
 HEADERS is an alist of additional headers to add to the HTTP request."
-  (let ((is-http (elfeed-curl--url-is-http url)))
-    (with-current-buffer (generate-new-buffer (format "*curl %s*" url))
-      (setf elfeed-curl-location url)
-      (buffer-disable-undo)
-      (set-buffer-multibyte nil)
-      (let ((args (elfeed-curl--args is-http url headers))
-            (coding-system-for-read 'raw-text))
-        (apply #'call-process elfeed-curl-program-name nil t nil args))
-      (if is-http
-          (elfeed-curl--parse-http))
-      (setf (point) (point-min))
-      (elfeed-curl--decode)
-      (current-buffer))))
+  (with-current-buffer (generate-new-buffer "*curl*")
+    (buffer-disable-undo)
+    (let ((args (elfeed-curl--args url headers))
+          (coding-system-for-read 'raw-text-unix))
+      (apply #'call-process elfeed-curl-program-name nil t nil args))
+    (elfeed-curl--parse-write-out)
+    (elfeed-curl--prepare-response url 0)))
 
-(defun elfeed-curl--cb-wrapper (process status)
-  "Adapts a elfeed-curl callback into a process sentinel."
-  (let ((buffer (process-buffer process))
-        (cb (process-get process :cb))
-        (is-http (process-get process :is-http)))
+(defun elfeed-curl--call-callback (buffer n url cb)
+  "Prepare the buffer for callback N and call it."
+  (with-current-buffer buffer
+    (elfeed-curl--prepare-response url n)
+    (if (not (and (>= elfeed-curl-status-code 400)
+                  (<= elfeed-curl-status-code 599)))
+        (funcall cb t)
+      (setf elfeed-curl-error-message
+            (format "HTTP %d" elfeed-curl-status-code))
+      (funcall cb nil))))
+
+(defun elfeed-curl--fail-callback (buffer cb)
+  "Inform the callback the request failed."
+  (with-current-buffer buffer
+    (funcall cb nil)))
+
+(defun elfeed-curl--sentinel (process status)
+  "Manage the end of a curl process' life."
+  (let ((buffer (process-buffer process)))
     (with-current-buffer buffer
-      (if (not (equal status "finished\n"))
-          ;; process abnormal exit
-          (if (string-match "exited abnormally with code \\([0-9]+\\)" status)
-              (let* ((code (string-to-number (match-string 1 status)))
-                     (message (cdr (assoc code elfeed-curl--error-codes))))
-                (setf elfeed-curl-error-message
-                      (format "(%d) %s"
-                              code (or message "Unknown curl error!")))
-                (funcall cb nil))
-            (setf elfeed-curl-error-message status)
-            (funcall cb nil))
-        (when is-http
-          (condition-case _
-              (elfeed-curl--parse-http)
-            (error (setf elfeed-curl-error-message
-                         "Unable to parse response.")
-                   (funcall cb nil))))
-        (setf (point) (point-min))
-        (elfeed-curl--decode)
-        (if (and (>= elfeed-curl-status-code 400)
-                 (<= elfeed-curl-status-code 599))
-            (progn
+      ;; Fire off callbacks in separate interpreter turns so they can
+      ;; each fail in isolation from each other.
+      (if (equal status "finished\n")
+          (cl-loop with handler = #'elfeed-curl--call-callback
+                   initially do (elfeed-curl--parse-write-out)
+                   for (url . cb) in elfeed-curl--requests
+                   for n upfrom 0
+                   do (run-at-time 0 nil handler buffer n url cb)
+                   finally (run-at-time 0 nil #'kill-buffer buffer))
+        (if (string-match "exited abnormally with code \\([0-9]+\\)" status)
+            (let* ((code (string-to-number (match-string 1 status)))
+                   (message (cdr (assoc code elfeed-curl--error-codes))))
               (setf elfeed-curl-error-message
-                    (format "HTTP %d" elfeed-curl-status-code))
-              (funcall cb nil))
-          (funcall cb t))))))
+                    (format "(%d) %s" code
+                            (or message "Unknown curl error!"))))
+          (setf elfeed-curl-error-message status))
+        (cl-loop with handler = #'elfeed-curl--fail-callback
+                 for (_ . cb) in elfeed-curl--requests
+                 do (run-at-time 0 nil handler buffer cb)
+                 finally (run-at-time 0 nil #'kill-buffer buffer))))))
 
 (defun elfeed-curl-retrieve (url cb &optional headers)
   "Retrieve URL contents asynchronously, calling CB with one status argument.
+
+The callback must *not* kill the buffer!
+
 The destination buffer is set at the current buffer for the
-callback, which is responsible for killing the buffer. HEADERS is
-an alist of additional headers to add to the HTTP request. This
-function returns the destination buffer."
-  (let* ((buffer (generate-new-buffer (format "*curl %s*" url)))
-         (is-http (elfeed-curl--url-is-http url))
-         (args (elfeed-curl--args is-http url headers)))
-    (prog1 buffer
-      (buffer-disable-undo buffer)
-      (with-current-buffer buffer
-        (setf elfeed-curl-location url)
-        (set-buffer-multibyte nil))
-      (let* ((coding-system-for-read 'raw-text)
-             (process (apply #'start-process "elfeed-curl" buffer
-                             elfeed-curl-program-name args)))
-        (setf (process-sentinel process) #'elfeed-curl--cb-wrapper
-              (process-get process :cb) cb
-              (process-get process :is-http) is-http)))))
+callback. HEADERS is an alist of additional headers to add to
+HTTP requests.
+
+URL can be a list of URLs, which will fetch them all in the same
+curl process. In this case, CB can also be either a list of the
+same length, or just a single function to be called once for each
+URL in the list. Headers will be common to all requests. A TCP or
+DNS failure in one will cause all to fail, but 4xx and 5xx
+results will not."
+  (with-current-buffer (generate-new-buffer "*curl*")
+    (buffer-disable-undo)
+    (let* ((coding-system-for-read 'raw-text-unix)
+           (args (elfeed-curl--args url headers))
+           (process (apply #'start-process "elfeed-curl" (current-buffer)
+                           elfeed-curl-program-name args)))
+      (prog1 process
+        (if (listp url)
+            (progn
+              (when (functionp cb)
+                (setf cb (make-list (length url) cb)))
+              (setf elfeed-curl--requests (cl-mapcar #'cons url cb)))
+          (push (cons url cb) elfeed-curl--requests))
+        (setf (process-sentinel process) #'elfeed-curl--sentinel)))))
+
+(defun elfeed-curl--request-key (url headers)
+  "Try to fetch URLs with matching keys at the same time."
+  (unless (listp url)
+    (let* ((urlobj (url-generic-parse-url url)))
+      (list (url-type urlobj)
+            (url-host urlobj)
+            (url-portspec urlobj)
+            headers))))
+
+(defun elfeed-curl--queue-consolidate (queue-in)
+  "Group compatible requests together and return a new queue.
+Compatible means the requests have the same protocol, domain,
+port, and headers, allowing them to be used safely in the same
+curl invocation."
+  (let ((table (make-hash-table :test 'equal))
+        (keys ())
+        (queue-out ()))
+    (dolist (entry queue-in)
+      (cl-destructuring-bind (url _ headers) entry
+        (let* ((key (elfeed-curl--request-key url headers)))
+          (push key keys)
+          (push entry (gethash key table nil)))))
+    (dolist (key (nreverse keys))
+      (let ((entry (gethash key table)))
+        (when entry
+          (let ((rotated (list (nreverse (cl-mapcar #'car entry))
+                               (nreverse (cl-mapcar #'cadr entry))
+                               (cl-caddar entry))))
+            (push rotated queue-out)
+            (setf (gethash key table) nil)))))
+    (nreverse queue-out)))
+
+(defun elfeed-curl--queue-wrap (cb)
+  "Wrap the curl CB so that it operates the queue."
+  (lambda (status)
+    (cl-decf elfeed-curl-queue-active)
+    (elfeed-curl--run-queue)
+    (funcall cb status)))
+
+(defvar elfeed-curl--run-queue-queued nil
+  "Non-nil if run-queue has already been queued for the next turn.")
 
 (defun elfeed-curl--run-queue ()
   "Possibly fire off some new requests."
+  (when elfeed-curl--run-queue-queued
+    (setf elfeed-curl--run-queue-queued nil
+          ;; Try to consolidate the new requests.
+          elfeed-curl-queue
+          (elfeed-curl--queue-consolidate elfeed-curl-queue)))
   (while (and (< elfeed-curl-queue-active elfeed-curl-max-connections)
               (> (length elfeed-curl-queue) 0))
     (cl-destructuring-bind (url cb headers) (pop elfeed-curl-queue)
       (cl-incf elfeed-curl-queue-active)
-      (elfeed-curl-retrieve url
-                            (lambda (status)
-                              (cl-decf elfeed-curl-queue-active)
-                              (elfeed-curl--run-queue)
-                              (funcall cb status))
-                            headers))))
+      (elfeed-curl-retrieve
+       url
+       (if (functionp cb)
+           (elfeed-curl--queue-wrap cb)
+         (mapcar #'elfeed-curl--queue-wrap cb))
+       headers))))
 
 (defun elfeed-curl-enqueue (url cb &optional headers)
   "Just like `elfeed-curl-retrieve', but restricts concurrent fetches."
   (let ((entry (list url cb headers)))
     (setf elfeed-curl-queue (nconc elfeed-curl-queue (list entry)))
-    (elfeed-curl--run-queue)))
+    (unless elfeed-curl--run-queue-queued
+      (run-at-time 0 nil #'elfeed-curl--run-queue)
+      (setf elfeed-curl--run-queue-queued t))))
 
 (provide 'elfeed-curl)
 

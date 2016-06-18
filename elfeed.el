@@ -452,7 +452,8 @@ Only a list of strings will be returned."
                                          url "Unknown feed type."))))))
                 (elfeed-db-add entries))))
         (error (elfeed-handle-parse-error url error))))
-    (kill-buffer)
+    (unless use-curl
+      (kill-buffer))
     (run-hook-with-args 'elfeed-update-hooks url)))
 
 (defun elfeed-add-feed (url)
