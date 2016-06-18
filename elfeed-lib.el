@@ -280,6 +280,31 @@ This includes expanding e.g. 3-5 into 3,4,5.  If the letter
         ;; else just a number
         (push (string-to-number elem) list)))))
 
+(defun elfeed-update-location (old-url new-url)
+  "Return full URL for maybe-relative NEW-URL based on full OLD-URL."
+  (let ((old (url-generic-parse-url old-url))
+        (new (url-generic-parse-url new-url)))
+    (cond
+     ;; Is new URL absolute already?
+     ((url-type new) new-url)
+     ;; Does it start with //? Append the old protocol.
+     ((url-fullness new) (concat (url-type old) ":" new-url))
+     ;; Is it a relative path?
+     ((not (string-match-p "^/" new-url))
+      (let* ((old-dir (or (file-name-directory (url-filename old)) "/"))
+             (new-file (concat old-dir new-url)))
+        (setf (url-filename old) nil
+              (url-target old) nil
+              (url-attributes old) nil
+              (url-filename old) new-file)
+        (url-recreate-url old)))
+     ;; Replace the relative part.
+     ((progn
+        (setf (url-filename old) new-url
+              (url-target old) nil
+              (url-attributes old) nil)
+        (url-recreate-url old))))))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here

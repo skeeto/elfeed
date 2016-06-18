@@ -39,6 +39,7 @@
 
 (require 'url)
 (require 'cl-lib)
+(require 'elfeed-lib)
 (require 'elfeed-log)
 
 (defcustom elfeed-curl-program-name "curl"
@@ -215,36 +216,11 @@ Use `elfeed-curl--narrow' to select a header."
                                (match-string 1 content-type)))
       (decode-coding-region (point-min) (point-max) 'utf-8))))
 
-(defun elfeed-curl--adjust-location (old-url new-url)
-  "Return full URL for maybe-relative NEW-URL from full URL old-url."
-  (let ((old (url-generic-parse-url old-url))
-        (new (url-generic-parse-url new-url)))
-    (cond
-     ;; Is new URL absolute already?
-     ((url-type new) new-url)
-     ;; Does it start with //? Append the old protocol.
-     ((url-fullness new) (concat (url-type old) ":" new-url))
-     ;; Is it a relative path?
-     ((not (string-match-p "^/" new-url))
-      (let* ((old-dir (or (file-name-directory (url-filename old)) "/"))
-             (new-file (concat old-dir new-url)))
-        (setf (url-filename old) nil
-              (url-target old) nil
-              (url-attributes old) nil
-              (url-filename old) new-file)
-        (url-recreate-url old)))
-     ;; Replace the relative part.
-     ((progn
-        (setf (url-filename old) new-url
-              (url-target old) nil
-              (url-attributes old) nil)
-        (url-recreate-url old))))))
-
 (defun elfeed-curl--final-location (location headers)
   "Given start LOCATION and HEADERS, find the final location."
   (cl-loop for (key . value) in headers
            when (equal key "location")
-           do (setf location (elfeed-curl--adjust-location location value))
+           do (setf location (elfeed-update-location location value))
            finally return location))
 
 (defun elfeed-curl--args (url &optional headers)

@@ -149,6 +149,14 @@
     (elfeed-move-to-first-empty-line)
     (should (= (point) 5))))
 
+(ert-deftest elfeed-update-location ()
+  (cl-macrolet ((t (o n e)
+                   `(should (equal (elfeed-update-location ,o ,n) ,e))))
+    (t "http://foo.example/" "/foo" "http://foo.example/foo")
+    (t "ftp://foo.example/" "//bar.com/ok" "ftp://bar.com/ok")
+    (t "https://foo.example/a/b/c" "d" "https://foo.example/a/b/d")
+    (t "http://foo.example/a/b/c" "/x/x" "http://foo.example/x/x")))
+
 (provide 'elfeed-lib-tests)
 
 ;;; elfeed-lib-tests.el ends here
