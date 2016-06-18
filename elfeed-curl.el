@@ -18,6 +18,14 @@
 ;; * `elfeed-curl-error-message'
 ;; * `elfeed-curl-location'
 
+;; The buffer delivered to callbacks may contain multiple requests. It
+;; will be narrowed to the specific content for the current request.
+;; It's vitally important that callbacks do not kill the buffer
+;; because it may be needed for other callbacks. It also means the
+;; buffer won't necessarily be around when the callback returns.
+;; Callbacks should also avoid editing the buffer, though this
+;; generally shouldn't impact other requests.
+
 ;; Remaining issues:
 
 ;; Can't make use of --compressed (i.e. all transfers are
