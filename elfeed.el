@@ -408,6 +408,13 @@ is called for side-effects on the ENTRY object.")
 (defun elfeed-feed-list ()
   "Return a flat list version of `elfeed-feeds'.
 Only a list of strings will be returned."
+  ;; Validate elfeed-feeds and fail early rather than asynchronously later.
+  (dolist (feed elfeed-feeds)
+    (unless (cl-typecase feed
+              (list (and (stringp (car feed))
+                         (cl-every #'symbolp (cdr feed))))
+              (string t))
+      (error "elfeed-feeds malformed, bad entry: %S" feed)))
   (cl-loop for feed in elfeed-feeds
            when (listp feed) collect (car feed)
            else collect feed))
