@@ -448,6 +448,10 @@ curl invocation."
 
 (defun elfeed-curl-enqueue (url cb &optional headers)
   "Just like `elfeed-curl-retrieve', but restricts concurrent fetches."
+  (unless (or (stringp url)
+              (and (listp url) (cl-every #'stringp url)))
+    ;; Signal error synchronously instead of asynchronously in the timer
+    (signal 'wrong-type-argument (list 'string-p-or-string-list-p url)))
   (let ((entry (list url cb headers)))
     (setf elfeed-curl-queue (nconc elfeed-curl-queue (list entry)))
     (unless elfeed-curl--run-queue-queued
