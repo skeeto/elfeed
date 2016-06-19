@@ -189,7 +189,7 @@ it's special to --write-out."
   (let* ((token (make-string 22 ?=))
          (set "!$&*+-/0123456789:<>@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_\
 abcdefghijklmnopqrstuvwxyz|~"))
-    (prog1 token
+    (prog1 token ; workaround bug#16206
       (dotimes (i (- (length token) 2))
         (setf (aref token (1+ i)) (aref set (cl-random (length set))))))))
 
