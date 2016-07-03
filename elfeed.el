@@ -127,8 +127,7 @@ when they are first discovered."
                          (cons string (repeat symbol)))))
 
 (defcustom elfeed-use-curl
-  nil ; disabled temporarily for initial release
-  ;;(not (null (executable-find elfeed-curl-program-name)))
+  (not (null (executable-find elfeed-curl-program-name)))
   "If non-nil, fetch feeds using curl instead of `url-retrieve'."
   :group 'elfeed
   :type 'bool)
