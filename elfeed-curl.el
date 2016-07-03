@@ -290,8 +290,7 @@ URL can be a string or a list of URL strings."
 (defun elfeed-curl-retrieve-synchronously (url &optional headers)
   "Retrieve the contents for URL and return a new buffer with them.
 HEADERS is an alist of additional headers to add to the HTTP request."
-  (with-current-buffer (generate-new-buffer "*curl*")
-    (buffer-disable-undo)
+  (with-current-buffer (generate-new-buffer " *curl*")
     (setf elfeed-curl--token (elfeed-curl--token))
     (let ((args (elfeed-curl--args url elfeed-curl--token headers))
           (coding-system-for-read 'binary))
@@ -366,8 +365,7 @@ same length, or just a single function to be called once for each
 URL in the list. Headers will be common to all requests. A TCP or
 DNS failure in one will cause all to fail, but 4xx and 5xx
 results will not."
-  (with-current-buffer (generate-new-buffer "*curl*")
-    (buffer-disable-undo)
+  (with-current-buffer (generate-new-buffer " *curl*")
     (setf elfeed-curl--token (elfeed-curl--token))
     (let* ((coding-system-for-read 'binary)
            (args (elfeed-curl--args url elfeed-curl--token headers))
