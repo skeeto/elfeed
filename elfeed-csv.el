@@ -1,4 +1,4 @@
-;;; elfeed-csv.el --- export database to CSV files -*- lexical-binding:: t; -*-
+;;; elfeed-csv.el --- export database to CSV files -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 
