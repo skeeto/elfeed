@@ -11,6 +11,7 @@ EL += elfeed-db.el
 EL += elfeed-search.el
 EL += elfeed-show.el
 EL += elfeed-curl.el
+EL += elfeed-csv.el
 
 ELC = $(EL:.el=.elc)
 
