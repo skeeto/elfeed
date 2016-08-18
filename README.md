@@ -10,6 +10,8 @@ For a longer overview,
 
  * [Introducing Elfeed, an Emacs Web Feed Reader](http://nullprogram.com/blog/2013/09/04/).
  * [Tips and Tricks](http://nullprogram.com/blog/2013/11/26/)
+ * [Read your RSS feeds in Emacs with Elfeed
+](http://pragmaticemacs.com/emacs/read-your-rss-feeds-in-emacs-with-elfeed/)
  * [... and more ...](http://nullprogram.com/tags/elfeed/)
 
 [![](http://i.imgur.com/kxgF5AH.png)](http://i.imgur.com/kxgF5AH.png)
