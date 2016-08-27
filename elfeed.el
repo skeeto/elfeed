@@ -20,6 +20,8 @@
 ;;   * New options: `elfeed-set-max-connections', `elfeed-set-timeout'
 ;;   * New feed metadata: :canonical-url, :etag, :last-modified
 ;;   * New variable: `elfeed-log-level'
+;;   * New database export option: `elfeed-csv-export'
+;;   * Additional validation for `elfeed-feeds'
 ;; Version 1.4.1: features and fixes
 ;;   * Major bug fix: disable local variables when loading the index
 ;;   * New command `elfeed-show-play-enclosure' (requires emms)
@@ -103,7 +105,7 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "1.4.1")
+(defconst elfeed-version "2.0.0")
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow. You must add your
