@@ -140,6 +140,7 @@ when they are first discovered."
 (require 'elfeed-search)
 (require 'elfeed-lib)
 (require 'elfeed-db)
+(require 'elfeed-csv)
 
 (defcustom elfeed-initial-tags '(unread)
   "Initial tags for new entries."
