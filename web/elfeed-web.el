@@ -150,6 +150,19 @@ advanced past it (long poll)."
         (push (httpd-discard-buffer) elfeed-web-waiting)
       (princ (json-encode update-time)))))
 
+(defservlet* elfeed/mark-read application/json (webid)
+  "Mark entry as read"
+  (with-elfeed-web
+   (let ((read-entry (with-elfeed-db-visit (e _)
+		       (when (string= webid (elfeed-web-make-webid e))
+			 (progn
+			   (elfeed-untag e 'unread)
+			   (elfeed-db-return e))))))
+     (if read-entry
+	 (princ (json-encode t))
+       (princ (json-encode '(:error 404)))
+       (httpd-send-header t "application/json" 404)))))
+
 (defservlet* elfeed/mark-all-read application/json ()
   "Marks all entries in the database as read (quick-and-dirty)."
   (with-elfeed-web
