@@ -25,7 +25,7 @@
 ;; /elfeed/content/<ref-id>
 ;;     Serves content from the content database (`elfeed-deref').
 
-;; /elfeed/thing/<webid>
+;; /elfeed/things/<webid>
 ;;     Serve up an elfeed-feed or elfeed-entry in JSON format.
 
 ;; /elfeed/search
