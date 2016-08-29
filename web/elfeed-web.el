@@ -63,7 +63,8 @@
   "Compute a unique web ID for THING."
   (let* ((thing-id (prin1-to-string (aref thing 1)))
          (hash (base64-encode-string (secure-hash 'sha1 thing-id nil nil t)))
-         (webid (substring hash 0 8)))
+         (no-slash (replace-regexp-in-string "/" "-" hash))
+         (webid (substring no-slash 0 8)))
     (setf (gethash webid elfeed-web-webid-map) thing)
     webid))
 
