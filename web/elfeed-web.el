@@ -102,6 +102,7 @@
 
 (defmacro with-elfeed-web (&rest body)
   "Only execute BODY if `elfeed-web-enabled' is true."
+  (declare (indent 0))
   `(if (not elfeed-web-enabled)
        (progn
          (princ (json-encode '(:error 403)))
@@ -111,32 +112,32 @@
 (defservlet* elfeed/things/:webid application/json ()
   "Return a requested thing (entry or feed)."
   (with-elfeed-web
-   (princ (json-encode (elfeed-web-for-json (elfeed-web-lookup webid))))))
+    (princ (json-encode (elfeed-web-for-json (elfeed-web-lookup webid))))))
 
 (defservlet* elfeed/content/:ref text/html ()
   "Serve content-addressable content at REF."
   (with-elfeed-web
-   (let ((content (elfeed-deref (elfeed-ref--create :id ref))))
-     (if content
-         (princ content)
-       (princ (json-encode '(:error 404)))
-       (httpd-send-header t "application/json" 404)))))
+    (let ((content (elfeed-deref (elfeed-ref--create :id ref))))
+      (if content
+          (princ content)
+        (princ (json-encode '(:error 404)))
+        (httpd-send-header t "application/json" 404)))))
 
 (defservlet* elfeed/search application/json (q)
   "Perform a search operation with Q and return the results."
   (with-elfeed-web
-   (let* ((results ())
-          (modified-q (format "#%d %s" elfeed-web-limit q))
-          (filter (elfeed-search-parse-filter q))
-          (count 0))
-     (with-elfeed-db-visit (entry feed)
-       (when (elfeed-search-filter filter entry feed count)
-         (push entry results)
-         (cl-incf count)))
-     (princ
-      (json-encode
-       (cl-coerce
-        (mapcar #'elfeed-web-for-json (nreverse results)) 'vector))))))
+    (let* ((results ())
+           (modified-q (format "#%d %s" elfeed-web-limit q))
+           (filter (elfeed-search-parse-filter q))
+           (count 0))
+      (with-elfeed-db-visit (entry feed)
+        (when (elfeed-search-filter filter entry feed count)
+          (push entry results)
+          (cl-incf count)))
+      (princ
+       (json-encode
+        (cl-coerce
+         (mapcar #'elfeed-web-for-json (nreverse results)) 'vector))))))
 
 (defvar elfeed-web-waiting ()
   "Clients waiting for an update.")
@@ -153,9 +154,9 @@ advanced past it (long poll)."
 (defservlet* elfeed/mark-all-read application/json ()
   "Marks all entries in the database as read (quick-and-dirty)."
   (with-elfeed-web
-   (with-elfeed-db-visit (e _)
-     (elfeed-untag e 'unread))
-   (princ (json-encode t))))
+    (with-elfeed-db-visit (e _)
+      (elfeed-untag e 'unread))
+    (princ (json-encode t))))
 
 (defservlet elfeed text/plain (uri-path _ request)
   "Serve static files from `elfeed-web-data-root'."
