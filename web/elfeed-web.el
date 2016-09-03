@@ -59,10 +59,16 @@
 (defvar elfeed-web-webid-map (make-hash-table :test 'equal)
   "Track the mapping between entries and IDs.")
 
+(defvar elfeed-web-webid-seed
+  (let ((items (list (random) (float-time) (emacs-pid) (system-name))))
+    (secure-hash 'sha1 (format "%S" items)))
+  "Used to make webids less predictable.")
+
 (defun elfeed-web-make-webid (thing)
   "Compute a unique web ID for THING."
   (let* ((thing-id (prin1-to-string (aref thing 1)))
-         (hash (base64-encode-string (secure-hash 'sha1 thing-id nil nil t)))
+         (keyed (concat thing-id elfeed-web-webid-seed))
+         (hash (base64-encode-string (secure-hash 'sha1 keyed nil nil t)))
          (no-slash (replace-regexp-in-string "/" "-" hash))
          (no-plus (replace-regexp-in-string "\\+" "_" no-slash))
          (webid (substring no-plus 0 8)))
