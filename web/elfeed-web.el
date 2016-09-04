@@ -136,7 +136,7 @@
   (with-elfeed-web
     (let* ((results ())
            (modified-q (format "#%d %s" elfeed-web-limit q))
-           (filter (elfeed-search-parse-filter q))
+           (filter (elfeed-search-parse-filter modified-q))
            (count 0))
       (with-elfeed-db-visit (entry feed)
         (when (elfeed-search-filter filter entry feed count)
