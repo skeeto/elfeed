@@ -32,9 +32,9 @@
 ;;     Accepts a q parameter which is an filter string to be parsed
 ;;     and handled by `elfeed-search-parse-filter'.
 
-;; /elfeed/tags/<webid>
-;;     Accepts a PUT request to modify the tags of an entry based on a
-;;     JSON entry passed as the content.
+;; /elfeed/tags
+;;     Accepts a PUT request to modify the tags of zero or more
+;;     entries based on a JSON entry passed as the content.
 
 ;; /elfeed/update
 ;;     Accepts a time parameter. If time < `elfeed-db-last-update',
@@ -164,31 +164,40 @@ advanced past it (long poll)."
       (elfeed-untag e 'unread))
     (princ (json-encode t))))
 
-(defservlet* elfeed/tags/:webid application/json ()
-  "Endpoint for adding and removing tags on a single entry.
+(defservlet* elfeed/tags application/json ()
+  "Endpoint for adding and removing tags on zero or more entries.
 Only PUT requests are accepted, and the content must be a JSON
-object. Tags to add are in an array on the 'add' property, and
-tags to remove are in an array on the 'remove' property."
+object with any of these properties:
+
+  add     : an array of tags to be added
+  remove  : an array of tags to be removed
+  entries : an array of web IDs for entries to be modified
+
+The current set of tags for each entry will be returned."
   (with-elfeed-web
     (let* ((request (caar httpd-request))
            (content (cadr (assoc "Content" httpd-request)))
            (json (ignore-errors (json-read-from-string content)))
-           (entry (elfeed-web-lookup webid))
+           (add (cdr (assoc 'add json)))
+           (remove (cdr (assoc 'remove json)))
+           (webids (cdr (assoc 'entries json)))
+           (entries (cl-map 'list #'elfeed-web-lookup webids))
            (status
             (cond
              ((not (equal request "PUT")) 405)
              ((null json) 400)
-             ((not (elfeed-entry-p entry)) 404)
+             ((cl-some #'null entries) 404)
              (t 200))))
       (if (not (eql status 200))
           (progn
             (princ (json-encode `(:error ,status)))
             (httpd-send-header t "application/json" status))
-        (let ((add (cdr (assoc 'add json)))
-              (remove (cdr (assoc 'remove json))))
-          (apply #'elfeed-tag entry (map 'list #'intern add))
-          (apply #'elfeed-untag entry (map 'list #'intern remove))
-          (princ (json-encode (elfeed-entry-tags entry))))))))
+        (cl-loop for entry in entries
+                 for webid = (elfeed-web-make-webid entry)
+                 do (apply #'elfeed-tag entry (cl-map 'list #'intern add))
+                 do (apply #'elfeed-untag entry (cl-map 'list #'intern remove))
+                 collect (cons webid (elfeed-entry-tags entry)) into result
+                 finally (princ (json-encode result)))))))
 
 (defservlet elfeed text/plain (uri-path _ request)
   "Serve static files from `elfeed-web-data-root'."
