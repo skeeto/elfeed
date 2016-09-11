@@ -318,7 +318,7 @@ is called for side-effects on the ENTRY object.")
                                :id (cons feed-id (elfeed-cleanup id))
                                :link (elfeed-cleanup link)
                                :tags tags
-                               :date (elfeed-float-time date)
+                               :date (or (elfeed-float-time date) (float-time))
                                :content content
                                :enclosures enclosures
                                :content-type content-type)))
