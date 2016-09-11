@@ -57,6 +57,15 @@
   :group 'elfeed
   :type 'integer)
 
+(defcustom elfeed-curl-extra-arguments ()
+  "A list of additional arguments to pass to cURL.
+These extra arguments are appended after Elfeed's own arguments,
+and care must be taken to not interfere with Elfeed's needs. The
+guideline is to avoid arguments that change anything about cURL's
+output format."
+  :group 'elfeed
+  :type '(repeat string))
+
 (defvar elfeed-curl-queue ()
   "List of pending curl requests.")
 
@@ -273,6 +282,7 @@ URL can be a string or a list of URL strings."
     (dolist (header headers)
       (cl-destructuring-bind (key . value) header
         (push (format "-H%s: %s" key value) args)))
+    (setf args (nconc (reverse elfeed-curl-extra-arguments) args))
     (if (listp url)
         (nconc (nreverse args) url)
       (nreverse (cons url args)))))
