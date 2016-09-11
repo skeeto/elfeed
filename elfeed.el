@@ -295,7 +295,9 @@ is called for side-effects on the ENTRY object.")
                            xml-base (or altlink anylink)))
                     (date (or (xml-query '(published *) entry)
                               (xml-query '(updated *) entry)
-                              (xml-query '(date *) entry)))
+                              (xml-query '(date *) entry)
+                              (xml-query '(modified *) entry) ; Atom 0.3
+                              (xml-query '(issued *) entry))) ; Atom 0.3
                     (content (elfeed--atom-content entry))
                     (id (or (xml-query '(id *) entry) link
                             (elfeed-generate-id content)))
