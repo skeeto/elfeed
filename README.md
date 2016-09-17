@@ -12,7 +12,8 @@ For a longer overview,
  * [Tips and Tricks](http://nullprogram.com/blog/2013/11/26/)
  * [Read your RSS feeds in Emacs with Elfeed
 ](http://pragmaticemacs.com/emacs/read-your-rss-feeds-in-emacs-with-elfeed/)
- * [... and more ...](http://nullprogram.com/tags/elfeed/)
+ * [... more ...](http://nullprogram.com/tags/elfeed/)
+ * [... and more ...](http://pragmaticemacs.com/category/elfeed/)
 
 [![](http://i.imgur.com/kxgF5AH.png)](http://i.imgur.com/kxgF5AH.png)
 
