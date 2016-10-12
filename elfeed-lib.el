@@ -108,8 +108,8 @@ be relative to now (`elfeed-time-duration')."
            (if duration
                (- (float-time) duration)
              (let ((time (ignore-errors (date-to-time date))))
-               (if (equal time '(14445 17280)) ; date-to-time silently failed
-                   nil
+               ;; check if date-to-time failed, silently or otherwise
+               (unless (or (null time) (equal time '(14445 17280)))
                  (float-time time))))))))
     (integer date)
     (otherwise nil)))
