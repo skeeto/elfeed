@@ -234,8 +234,8 @@ On systems running X, it will try to use the PRIMARY selection
 first, then fall back onto the standard clipboard like other
 systems."
   (elfeed-strip-properties
-   (or (and (fboundp 'x-get-selection-value)
-            (funcall 'x-get-selection-value))
+   (or (and (fboundp 'x-get-selection)
+            (funcall 'x-get-selection))
        (and (functionp interprogram-paste-function)
             (funcall interprogram-paste-function))
        (and (fboundp 'w32-get-clipboard-data)
