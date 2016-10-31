@@ -12,6 +12,11 @@
 
 ;;; History:
 
+;; Version 2.0.1: features and fixes
+;;   * Added `elfeed-curl-extra-arguments' customization
+;;   * Use `x-get-selection' instead of `x-get-selection-value'
+;;   * More flexible date handling (including Atom 0.3 support)
+;;   * Various elfeed-web fixes
 ;; Version 2.0.0: new cURL fetching backend
 ;;   * Elfeed now uses cURL when available (`elfeed-use-curl')
 ;;   * Windows OS now supported when using cURL
@@ -105,7 +110,7 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "2.0.0")
+(defconst elfeed-version "2.0.1")
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow. You must add your
