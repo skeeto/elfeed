@@ -66,7 +66,7 @@
 (defvar elfeed-db-index nil
   "Collection of all entries sorted by date, part of `elfeed-db'.")
 
-(defvar elfeed-db-version "0.0.2"
+(defvar elfeed-db-version "0.0.3"
   "The database version this version of Elfeed expects to use.")
 
 (defvar elfeed-new-entry-hook ()
@@ -258,20 +258,21 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
         :success))))
 
 (defun elfeed-db-upgrade ()
-  "Upgrade the database from a previous format.
-This function increases the size of the structs in the database."
-  (cl-loop with feed-size = (length (elfeed-feed--create))
-           for feed hash-values in elfeed-db-feeds
-           using (hash-key id)
-           unless (elfeed-feed-p feed)
-           do (setf (gethash id elfeed-db-feeds)
-                    (elfeed-resize-vector feed feed-size)))
-  (cl-loop with entry-size = (length (elfeed-entry--create))
-           for entry hash-values in elfeed-db-entries
-           using (hash-key id)
-           unless (elfeed-entry-p entry)
-           do (setf (gethash id elfeed-db-entries)
-                    (elfeed-resize-vector entry entry-size)))
+  "Upgrade the database from a previous format."
+  (let ((entries (cl-loop for entry hash-values of elfeed-db-entries
+                          collect entry)))
+    (clrhash elfeed-db-entries)
+    (avl-tree-clear elfeed-db-index)
+    (dolist (entry entries)
+      (when (elfeed-entry-date entry)
+        (let* ((id (elfeed-entry-id entry))
+               (id-0 (car id))
+               (id-1 (cdr id))
+               (namespace (elfeed-url-to-namespace id-0))
+               (new-id (cons namespace id-1)))
+          (setf (elfeed-entry-id entry) new-id
+                (gethash new-id elfeed-db-entries) entry)
+          (avl-tree-enter elfeed-db-index new-id)))))
   (plist-put elfeed-db :version elfeed-db-version)
   elfeed-db-version)
 

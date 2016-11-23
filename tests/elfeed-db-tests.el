@@ -93,9 +93,10 @@
 (cl-defun elfeed-test-generate-entry (feed &optional (within "1 year"))
   "Generate a random entry. Warning: run this in `with-elfeed-test'."
   (let* ((feed-id (elfeed-feed-id feed))
+         (namespace (elfeed-url-to-namespace feed-id))
          (link (elfeed-test-generate-url)))
     (elfeed-entry--create
-     :id (cons feed-id link)
+     :id (cons namespace link)
      :title (elfeed-test-generate-title)
      :link link
      :date (elfeed-test-generate-date within)
@@ -217,14 +218,15 @@
 
 (ert-deftest elfeed-db-upgrade ()
   (with-elfeed-test
-   (elfeed-db-ensure)
-   (setf (gethash "foo" elfeed-db-feeds) [cl-struct-elfeed-feed 1])
-   (setf (gethash "bar" elfeed-db-feeds) [cl-struct-elfeed-feed 1 2])
-   (setf (gethash "baz" elfeed-db-feeds) [cl-struct-elfeed-feed 1 2 3])
-   (elfeed-db-upgrade)
-   (should (elfeed-feed-p (elfeed-db-get-feed "foo")))
-   (should (elfeed-feed-p (elfeed-db-get-feed "bar")))
-   (should (elfeed-feed-p (elfeed-db-get-feed "baz")))))
+    (elfeed-db-ensure)
+    (let* ((url (elfeed-test-generate-url))
+           (feed (elfeed-db-get-feed url))
+           (entry (elfeed-test-generate-entry feed))
+           (entry-id (elfeed-entry-id entry)))
+      (setf (elfeed-entry-id entry) (cons url (cdr entry-id)))
+      (elfeed-db-add (list entry))
+      (elfeed-db-upgrade)
+      (should (equal (elfeed-entry-id entry) entry-id)))))
 
 (ert-deftest elfeed-db-meta ()
   (with-elfeed-test

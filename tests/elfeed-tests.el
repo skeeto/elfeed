@@ -199,23 +199,27 @@
     (with-temp-buffer
       (insert elfeed-test-rss)
       (goto-char (point-min))
-      (let ((url (elfeed-test-generate-url))
-            (xml (elfeed-xml-parse-region)))
+      (let* ((url (elfeed-test-generate-url))
+             (namespace (elfeed-url-to-namespace url))
+             (xml (elfeed-xml-parse-region)))
         (cl-destructuring-bind (a b) (elfeed-entries-from-rss url xml)
           (should (string= (elfeed-feed-title (elfeed-db-get-feed url))
                            "RSS Title"))
           (should (string= (elfeed-entry-title a) "Example entry 1"))
           (should (= (elfeed-entry-date a) 1252254000.0))
           (should (equal (elfeed-entry-id a)
-                         (cons url "84815091-a6a3-35d4-7f04-80a6610dc85c")))
+                         (cons namespace
+                               "84815091-a6a3-35d4-7f04-80a6610dc85c")))
           (should (string= (elfeed-entry-title b) "Example entry 2"))
           (should (= (elfeed-entry-date b) 1378153507.0))
           (should (equal (elfeed-entry-id b)
-                         (cons url "5059196a-7f8e-3678-ecfe-dad84511d76f"))))))
+                         (cons namespace
+                               "5059196a-7f8e-3678-ecfe-dad84511d76f"))))))
     (with-temp-buffer
       (insert elfeed-test-atom)
       (goto-char (point-min))
       (let* ((url (elfeed-test-generate-url))
+             (namespace (elfeed-url-to-namespace url))
              (xml (elfeed-xml-parse-region))
              (feed (elfeed-db-get-feed url)))
         (cl-destructuring-bind (a b) (elfeed-entries-from-atom url xml)
@@ -229,7 +233,8 @@
           (should (= (elfeed-entry-date a) 1071340202.0))
           (should
            (equal (elfeed-entry-id a)
-                  (cons url "urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a")))
+                  (cons namespace
+                        "urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a")))
           (should (string= (elfeed-entry-title b)
                            "It's Raining Cats and Dogs"))
           (should (string= (elfeed-entry-link b)
@@ -237,13 +242,14 @@
           (should (= (elfeed-entry-date b) 1102962602.0))
           (should
            (equal (elfeed-entry-id b)
-                  (cons url
+                  (cons namespace
                         "urn:uuid:1b91e3d7-2dac-3916-27a3-8d31566f2d09"))))))
     (with-temp-buffer
       (insert elfeed-test-rss1.0)
       (goto-char (point-min))
-      (let ((url (elfeed-test-generate-url))
-            (xml (elfeed-xml-parse-region)))
+      (let* ((url (elfeed-test-generate-url))
+             (namespace (elfeed-url-to-namespace url))
+             (xml (elfeed-xml-parse-region)))
         (cl-destructuring-bind (a b) (elfeed-entries-from-rss1.0 url xml)
           (should (string= (elfeed-feed-title (elfeed-db-get-feed url))
                            "XML.com"))
@@ -251,12 +257,13 @@
                            "Processing Inclusions with XSLT"))
           (should
            (equal (elfeed-entry-id a)
-                  (cons url "http://xml.com/pub/2000/08/09/xslt/xslt.html")))
+                  (cons namespace
+                        "http://xml.com/pub/2000/08/09/xslt/xslt.html")))
           (should (string= (elfeed-entry-title b)
                            "Putting RDF to Work"))
           (should
            (equal (elfeed-entry-id b)
-                  (cons url
+                  (cons namespace
                         "http://xml.com/pub/2000/08/09/rdfdb/index.html"))))))))
 
 (ert-deftest elfeed-xml-base ()
