@@ -374,6 +374,53 @@ This function must *only* be called within the body of
                             (and feed-title (string-match-p m feed-title))))
                       not-matches)))))
 
+(defun elfeed-search-compile-filter (filter)
+  "Compile FILTER into a lambda function for `byte-compile'.
+
+Executing a filter in bytecode form is generally faster than
+\"interpreting\" the filter with `elfeed-search-filter'."
+  (cl-destructuring-bind
+      (after must-have must-not-have matches not-matches limit) filter
+    `(lambda (,(if (or after matches not-matches must-have must-not-have)
+                   'entry
+                 '_entry)
+              ,(if (or matches not-matches)
+                   'feed
+                 '_feed)
+              ,(if limit
+                   'count
+                 '_count))
+       (let* (,@(when after
+                  '((date (elfeed-entry-date entry))
+                    (age (- (float-time) date))))
+              ,@(when (or must-have must-not-have)
+                  '((tags (elfeed-entry-tags entry))))
+              ,@(when (or matches not-matches)
+                  '((title (or (elfeed-meta entry :title)
+                               (elfeed-entry-title entry)))
+                    (link (elfeed-entry-link entry))
+                    (feed-title (or (elfeed-meta feed :title)
+                                    (elfeed-feed-title feed) "")))))
+         ,@(when after
+             `((when (> age ,after)
+                 (elfeed-db-return))))
+         ,@(when limit
+             `((when (>= count ,limit)
+                 (elfeed-db-return))))
+         (and ,@(cl-loop for forbid in must-not-have
+                         collect `(not (memq ',forbid tags)))
+              ,@(cl-loop for forbid in must-have
+                         collect `(memq ',forbid tags))
+              ,@(cl-loop for regex in matches collect
+                         `(or (string-match-p ,regex title)
+                              (string-match-p ,regex link)
+                              (string-match-p ,regex feed-title)))
+              ,@(cl-loop for regex in not-matches collect
+                         `(not
+                           (or (string-match-p ,regex title)
+                               (string-match-p ,regex link)
+                               (string-match-p ,regex feed-title)))))))))
+
 (defun elfeed-search--prompt (current)
   "Prompt for a new filter, starting with CURRENT."
   (read-from-minibuffer
