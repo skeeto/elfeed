@@ -464,11 +464,16 @@ expression, matching against entry link, title, and feed title."
 (defun elfeed-search--update-list ()
   "Update `elfeed-search-filter' list."
   (let* ((filter (elfeed-search-parse-filter elfeed-search-filter))
+         ;; Force lexical bindings regardless of the current
+         ;; buffer-local value. Lexical scope uses the faster
+         ;; stack-ref opcode instead of the traditional varref opcode.
+         (lexical-binding t)
+         (filter-func (byte-compile (elfeed-search-compile-filter filter)))
          (head (list nil))
          (tail head)
          (count 0))
     (with-elfeed-db-visit (entry feed)
-      (when (elfeed-search-filter filter entry feed count)
+      (when (funcall filter-func entry feed count)
         (setf (cdr tail) (list entry)
               tail (cdr tail)
               count (1+ count))))
