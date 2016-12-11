@@ -49,6 +49,11 @@ Possible alignments are :left and :right."
   :group 'elfeed
   :type '(list string integer (choice (const :left) (const :right))))
 
+(defcustom elfeed-search-compile-filter t
+  "If non-nil, compile search filters into bytecode on the fly."
+  :group 'elfeed
+  :type 'boolean)
+
 (defvar elfeed-search-filter-active nil
   "When non-nil, Elfeed is currently reading a filter from the minibuffer.
 When live editing the filter, it is bound to :live.")
@@ -464,19 +469,25 @@ expression, matching against entry link, title, and feed title."
 (defun elfeed-search--update-list ()
   "Update `elfeed-search-filter' list."
   (let* ((filter (elfeed-search-parse-filter elfeed-search-filter))
-         ;; Force lexical bindings regardless of the current
-         ;; buffer-local value. Lexical scope uses the faster
-         ;; stack-ref opcode instead of the traditional varref opcode.
-         (lexical-binding t)
-         (filter-func (byte-compile (elfeed-search-compile-filter filter)))
          (head (list nil))
          (tail head)
          (count 0))
-    (with-elfeed-db-visit (entry feed)
-      (when (funcall filter-func entry feed count)
-        (setf (cdr tail) (list entry)
-              tail (cdr tail)
-              count (1+ count))))
+    (if elfeed-search-compile-filter
+        ;; Force lexical bindings regardless of the current
+        ;; buffer-local value. Lexical scope uses the faster
+        ;; stack-ref opcode instead of the traditional varref opcode.
+        (let ((lexical-binding t)
+              (func (byte-compile (elfeed-search-compile-filter filter))))
+          (with-elfeed-db-visit (entry feed)
+            (when (funcall func entry feed count)
+              (setf (cdr tail) (list entry)
+                    tail (cdr tail)
+                    count (1+ count)))))
+      (with-elfeed-db-visit (entry feed)
+        (when (elfeed-search-filter filter entry feed count)
+          (setf (cdr tail) (list entry)
+                tail (cdr tail)
+                count (1+ count)))))
     (setf elfeed-search-entries
           (if (eq elfeed-sort-order 'ascending)
               (nreverse (cdr head))
