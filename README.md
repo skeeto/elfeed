@@ -239,6 +239,40 @@ in red.
 All faces from all tags will be applied to the entry title. The faces
 will be ordered as they appear in `elfeed-search-face-alist`.
 
+## Metadata Plist
+
+All feed and entry objects have plist where you can store your own
+arbitrary, [readable values][rd]. These values are automatically
+persisteted in the database. This metadata is accessed using the
+polymorphic `elfeed-meta` function. It's setf-able.
+
+~~~el
+(setf (elfeed-meta entry :rating) 4)
+(elfeed-meta entry :rating)
+;; => 4
+
+(setf (elfeed-meta feed :title) "My Better Title")
+~~~
+
+Elfeed itself adds some entries to this plist, some for your use, some
+for its own use. Here are the properties that Elfeed uses:
+
+* `:author` : The entry's author of this entry.
+* `:canonical-url` : The final URL for the feed after all redirects.
+* `:categories` : The feed-supplied categories for this entry.
+* `:etag` : HTTP Etag header, for conditional GETs.
+* `:failures` : Number of times this feed has failed to update.
+* `:last-modified` : HTTP Last-Modified header, for conditional GETs.
+* `:title` : Overrides the feed-supplied title for display purposes,
+  both for feeds and entries.
+
+This list will grow in time, so you might consider namespacing your
+own properties to avoid collisions (e.g. `:xyz/rating`), or simply not
+using keywords as keys. Elfeed will always use keywords without a
+slash.
+
+[rd]: http://nullprogram.com/blog/2013/12/30/
+
 ## Web Interface
 
 Elfeed includes a demonstration/toy web interface for remote network
