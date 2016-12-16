@@ -11,7 +11,7 @@
 
 (defvar elfeed-test-rss
   "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-<rss version=\"2.0\">
+<rss version=\"2.0\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">
 <channel>
  <title>RSS Title</title>
  <description>This is an example of an RSS feed</description>
@@ -24,6 +24,7 @@
   <title>Example entry 1</title>
   <description>Interesting description 1.</description>
   <link>http://www.nullprogram.com/</link>
+  <author>John Doe &lt;john.doe@example.com&gt;</author>
   <guid>84815091-a6a3-35d4-7f04-80a6610dc85c</guid>
   <pubDate>Mon, 06 Sep 2009 16:20:00 +0000 </pubDate>
  </item>
@@ -32,6 +33,7 @@
   <title>Example entry 2</title>
   <description>Interesting description 2.</description>
   <link>http://www.wikipedia.org/</link>
+  <dc:creator>Jane Doe &lt;jane.doe@example.com&gt;</dc:creator>
   <guid>5059196a-7f8e-3678-ecfe-dad84511d76f</guid>
   <pubDate>Mon,  2 Sep 2013 20:25:07 GMT</pubDate>
  </item>
@@ -210,11 +212,15 @@
           (should (equal (elfeed-entry-id a)
                          (cons namespace
                                "84815091-a6a3-35d4-7f04-80a6610dc85c")))
+          (should (equal (elfeed-meta a :author)
+                         "John Doe <john.doe@example.com>"))
           (should (string= (elfeed-entry-title b) "Example entry 2"))
           (should (= (elfeed-entry-date b) 1378153507.0))
           (should (equal (elfeed-entry-id b)
                          (cons namespace
-                               "5059196a-7f8e-3678-ecfe-dad84511d76f"))))))
+                               "5059196a-7f8e-3678-ecfe-dad84511d76f")))
+          (should (equal (elfeed-meta b :author)
+                         "Jane Doe <jane.doe@example.com>")))))
     (with-temp-buffer
       (insert elfeed-test-atom)
       (goto-char (point-min))
@@ -240,6 +246,8 @@
           (should (string= (elfeed-entry-link b)
                            "http://example.org/2004/12/13/atom03.html"))
           (should (= (elfeed-entry-date b) 1102962602.0))
+          (should (equal (elfeed-meta b :author)
+                         "John Doe <johndoe@example.com>"))
           (should
            (equal (elfeed-entry-id b)
                   (cons namespace
