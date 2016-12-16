@@ -131,6 +131,18 @@ when they are first discovered."
   :type '(repeat (choice string
                          (cons string (repeat symbol)))))
 
+(defcustom elfeed-feed-functions
+  '(elfeed-get-link-at-point
+    elfeed-get-url-at-point
+    elfeed-clipboard-get)
+  "List of functions to use to get possible feeds for `elfeed-add-feed'.
+Each function should accept no arguments, and return a string or nil."
+  :group 'elfeed
+  :type 'hook
+  :options '(elfeed-get-link-at-point
+             elfeed-get-url-at-point
+             elfeed-clipboard-get))
+
 (defcustom elfeed-use-curl
   (not (null (executable-find elfeed-curl-program-name)))
   "If non-nil, fetch feeds using curl instead of `url-retrieve'."
@@ -507,13 +519,31 @@ Only a list of strings will be returned."
       (kill-buffer))
     (run-hook-with-args 'elfeed-update-hooks url)))
 
+(defun elfeed-candidate-feeds ()
+  "Return a list of possible feeds from `elfeed-feed-functions'."
+  (let (res)
+    (run-hook-wrapped
+     'elfeed-feed-functions
+     (lambda (fun)
+       (let* ((val (elfeed-cleanup (funcall fun))))
+         (when (and (not (zerop (length val)))
+                    (elfeed-looks-like-url-p val))
+           (cl-pushnew val res :test #'equal)))
+       nil))
+    (nreverse res)))
+
 (defun elfeed-add-feed (url)
   "Manually add a feed to the database."
-  (interactive (list
-                (let ((clipboard (elfeed-cleanup (elfeed-clipboard-get))))
-                  (read-from-minibuffer
-                   "URL: " (when (elfeed-looks-like-url-p clipboard)
-                             clipboard)))))
+  (interactive
+   (list
+    (let* ((feeds (elfeed-candidate-feeds))
+           (prompt (if feeds (concat "URL (default " (car feeds)  "): ")
+                     "URL: "))
+           (input (read-from-minibuffer prompt nil nil nil nil feeds))
+           (result (elfeed-cleanup input)))
+      (cond ((not (zerop (length result))) result)
+            (feeds (car feeds))
+            ((user-error "No feed to add"))))))
   (cl-pushnew url elfeed-feeds)
   (when (called-interactively-p 'any)
     (customize-save-variable 'elfeed-feeds elfeed-feeds))

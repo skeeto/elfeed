@@ -13,6 +13,7 @@
 (require 'cl-lib)
 (require 'time-date)
 (require 'url-parse)
+(require 'url-util)
 
 (defun elfeed-expose (function &rest args)
   "Return an interactive version of FUNCTION, 'exposing' it to the user."
@@ -241,6 +242,18 @@ systems."
        (and (fboundp 'w32-get-clipboard-data)
             (funcall 'w32-get-clipboard-data))
        (current-kill 0 :non-destructively))))
+
+(defun elfeed-get-link-at-point ()
+  "Try to a link at point and return its URL."
+  (or (get-text-property (point) 'shr-url)
+      (and (fboundp 'eww-current-url)
+           (funcall 'eww-current-url))
+      (get-text-property (point) :nt-link)))
+
+(defun elfeed-get-url-at-point ()
+  "Try to get a plain URL at point."
+  (or (url-get-url-at-point)
+      (thing-at-point 'url)))
 
 (defun elfeed-move-to-first-empty-line ()
   "Place point after first blank line, for use with `url-retrieve'.
