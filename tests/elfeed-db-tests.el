@@ -113,12 +113,19 @@
 
 (ert-deftest elfeed-db-merge ()
   (with-elfeed-test
-   (let* ((feed (elfeed-test-generate-feed))
-          (entry (elfeed-test-generate-entry feed))
-          (update (copy-sequence entry)))
-     (should (eq (elfeed-entry-merge entry update) nil))
-     (setf (elfeed-entry-title update) (elfeed-test-generate-title))
-     (should (eq (elfeed-entry-merge entry update) t)))))
+    (let* ((feed (elfeed-test-generate-feed))
+           (entry (elfeed-test-generate-entry feed))
+           (update (copy-sequence entry)))
+      (should (eq (elfeed-entry-merge entry update) nil))
+      (setf (elfeed-entry-title update) (elfeed-test-generate-title))
+      (should (eq (elfeed-entry-merge entry update) t)))
+    (let ((a (elfeed-entry--create :tags '(a b c) :meta '(:a 1 :b 2)))
+          (b (elfeed-entry--create :tags '(c d) :meta '(:b 3 :c 4))))
+      (elfeed-entry-merge a b)
+      (should (equal (elfeed-entry-tags a) '(a b c)))
+      (should (eql (plist-get (elfeed-entry-meta a) :a) 1))
+      (should (eql (plist-get (elfeed-entry-meta a) :b) 3))
+      (should (eql (plist-get (elfeed-entry-meta a) :c) 4)))))
 
 (ert-deftest elfeed-db-tag ()
   (with-elfeed-test

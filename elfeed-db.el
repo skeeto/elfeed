@@ -91,11 +91,13 @@ the :last-update time is updated.")
   "Merge B into A, preserving A's tags. Return true if an actual
 update occurred, not counting content."
   (setf (elfeed-entry-tags b) (elfeed-entry-tags a)
-        (elfeed-entry-content a) (elfeed-entry-content b)
-        (elfeed-entry-meta b) (elfeed-entry-meta a))
+        (elfeed-entry-content a) (elfeed-entry-content b))
+  (cl-loop for (key value) on (elfeed-entry-meta b) by #'cddr
+           do (setf (elfeed-entry-meta a)
+                    (plist-put (elfeed-entry-meta a) key value)))
   (not
    (zerop
-    (cl-loop for i from 0 below (length a)
+    (cl-loop for i from 1 below (1- (length a))
              for part-a = (aref a i)
              for part-b = (aref b i)
              count (not (equal part-a part-b))
