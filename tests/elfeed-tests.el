@@ -27,6 +27,8 @@
   <author>John Doe &lt;john.doe@example.com&gt;</author>
   <guid>84815091-a6a3-35d4-7f04-80a6610dc85c</guid>
   <pubDate>Mon, 06 Sep 2009 16:20:00 +0000 </pubDate>
+  <category>example-entry</category>
+  <category>Example One</category>
  </item>
 
  <item>
@@ -36,6 +38,8 @@
   <dc:creator>Jane Doe &lt;jane.doe@example.com&gt;</dc:creator>
   <guid>5059196a-7f8e-3678-ecfe-dad84511d76f</guid>
   <pubDate>Mon,  2 Sep 2013 20:25:07 GMT</pubDate>
+  <category>example-entry</category>
+  <category>Example Two</category>
  </item>
 
 </channel>
@@ -63,6 +67,8 @@
     <link rel=\"edit\" href=\"atom03/edit\"/>
     <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
     <updated>2003-12-13T18:30:02Z</updated>
+    <category term=\"example\"/>
+    <category term=\"cat-1\"/>
     <summary>Some text.</summary>
     <author>
       <name>John Doe</name>
@@ -78,6 +84,8 @@
     <link rel=\"edit\" href=\"http://example.org/2004/12/13/atom03/edit\"/>
     <id>urn:uuid:1b91e3d7-2dac-3916-27a3-8d31566f2d09</id>
     <updated>2004-12-13T18:30:02Z</updated>
+    <category term=\"example\"/>
+    <category term=\"cat-2\"/>
     <summary>Some text.</summary>
     <author>
       <name>John Doe</name>
@@ -220,7 +228,9 @@
                          (cons namespace
                                "5059196a-7f8e-3678-ecfe-dad84511d76f")))
           (should (equal (elfeed-meta b :author)
-                         "Jane Doe <jane.doe@example.com>")))))
+                         "Jane Doe <jane.doe@example.com>"))
+          (should (member "example-entry" (elfeed-meta b :categories)))
+          (should (member "Example Two" (elfeed-meta b :categories))))))
     (with-temp-buffer
       (insert elfeed-test-atom)
       (goto-char (point-min))
@@ -241,6 +251,8 @@
            (equal (elfeed-entry-id a)
                   (cons namespace
                         "urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a")))
+          (should (member "example" (elfeed-meta a :categories)))
+          (should (member "cat-1" (elfeed-meta a :categories)))
           (should (string= (elfeed-entry-title b)
                            "It's Raining Cats and Dogs"))
           (should (string= (elfeed-entry-link b)
@@ -248,6 +260,8 @@
           (should (= (elfeed-entry-date b) 1102962602.0))
           (should (equal (elfeed-meta b :author)
                          "John Doe <johndoe@example.com>"))
+          (should (member "example" (elfeed-meta b :categories)))
+          (should (member "cat-2" (elfeed-meta b :categories)))
           (should
            (equal (elfeed-entry-id b)
                   (cons namespace
