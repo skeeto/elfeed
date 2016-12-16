@@ -294,9 +294,6 @@ Some things I still might want to add:
 
 * Database synchronization between computers
 * Parallel feed fetching via separate Emacs subprocesses
-* SQLite-backed database via [EmacSQL](https://github.com/skeeto/emacsql)
-* Support for xml:base in Atom feeds
-* Smaller database footprint
 
 ## Motivation
 
