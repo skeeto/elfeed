@@ -282,6 +282,23 @@ slash.
 
 [rd]: http://nullprogram.com/blog/2013/12/30/
 
+## Hooks
+
+A number of hooks are available to customize the behavior of Elfeed at
+key points without resorting to advice.
+
+* `elfeed-new-entry-hook` : Called each time a new entry it added to
+  the database, allowing for automating tagging and such.
+* `elfeed-new-entry-parse-hook` : Called with each new entry and the
+  full XML structure from which it was parsed, allowing for additional
+  information to be drawn from the original feed XML.
+* `elfeed-http-error-hooks` : Allows for special behavior when HTTP
+  errors occur, beyond simply logging the error to `*elfeed-log*` .
+* `elfeed-parse-error-hooks` : Allows for special behavior when feed
+  parsing fails, beyond logging.
+* `elfeed-db-update-hook` : Called any time the database has had a
+  major modification.
+
 ## Web Interface
 
 Elfeed includes a demonstration/toy web interface for remote network
