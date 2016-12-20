@@ -273,7 +273,8 @@ for its own use. Here are the properties that Elfeed uses:
 * `:failures` : Number of times this feed has failed to update.
 * `:last-modified` : HTTP Last-Modified header, for conditional GETs.
 * `:title` : Overrides the feed-supplied title for display purposes,
-  both for feeds and entries.
+  both for feeds and entries. See also `elfeed-search-set-feed-title`
+  and `elfeed-search-set-entry-title`.
 
 This list will grow in time, so you might consider namespacing your
 own properties to avoid collisions (e.g. `:xyz/rating`), or simply not
