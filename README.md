@@ -239,6 +239,15 @@ in red.
 All faces from all tags will be applied to the entry title. The faces
 will be ordered as they appear in `elfeed-search-face-alist`.
 
+## Bookmarks
+
+Filters can be saved and restored using Emacs' built-in [bookmarks
+feature][bm]. While in the search buffer, use `M-x bookmark-set` to
+save the current filter, and `M-x bookmark-jump` to restore a saved
+filter. Emacs automatically persists bookmarks across sessions.
+
+[bm]: https://www.gnu.org/software/emacs/manual/html_node/emacs/Bookmarks.html
+
 ## Metadata Plist
 
 All feed and entry objects have plist where you can store your own
