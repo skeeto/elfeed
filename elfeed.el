@@ -132,16 +132,16 @@ when they are first discovered."
                          (cons string (repeat symbol)))))
 
 (defcustom elfeed-feed-functions
-  '(elfeed-clipboard-get
-    elfeed-get-link-at-point
-    elfeed-get-url-at-point)
+  '(elfeed-get-link-at-point
+    elfeed-get-url-at-point
+    elfeed-clipboard-get)
   "List of functions to use to get possible feeds for `elfeed-add-feed'.
 Each function should accept no arguments, and return a string or nil."
   :group 'elfeed
   :type 'hook
-  :options '(elfeed-clipboard-get
-             elfeed-get-link-at-point
-             elfeed-get-url-at-point))
+  :options '(elfeed-get-link-at-point
+             elfeed-get-url-at-point
+             elfeed-clipboard-get))
 
 (defcustom elfeed-use-curl
   (not (null (executable-find elfeed-curl-program-name)))
@@ -526,15 +526,23 @@ Only a list of strings will be returned."
      'elfeed-feed-functions
      (lambda (fun)
        (let* ((val (elfeed-cleanup (funcall fun))))
-         (when (not (zerop (length val))) (push val res)))
+         (when (and (not (zerop (length val)))
+                    (elfeed-looks-like-url-p val))
+           (cl-pushnew val res :test #'equal)))
        nil))
     (nreverse res)))
 
 (defun elfeed-add-feed (url)
   "Manually add a feed to the database."
-  (interactive (list
-                (let ((feeds (elfeed-candidate-feeds)))
-                  (read-from-minibuffer "URL: " nil nil nil nil feeds))))
+  (interactive
+   (list
+    (let* ((feeds (elfeed-candidate-feeds))
+           (prompt (if feeds (concat "URL (default " (car feeds)  "): ")
+                     "URL: "))
+           (res (read-from-minibuffer prompt nil nil nil nil feeds)))
+      (if (not (zerop (length (elfeed-cleanup res)))) res
+        (if feeds (car feeds)
+          (user-error "No feed to add"))))))
   (cl-pushnew url elfeed-feeds)
   (when (called-interactively-p 'any)
     (customize-save-variable 'elfeed-feeds elfeed-feeds))
