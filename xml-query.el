@@ -4,12 +4,16 @@
 
 ;;; Commentary:
 
-;; This provides a very rudimentary s-expression oriented, jQuery-like
-;; XML query language. It operates on the output of the xml package,
-;; such as `xml-parse-region' and `xml-parse-file'. It was written to
-;; support Elfeed.
+;; This provides a very rudimentary, jQuery-like, XML selector
+;; s-expression language. It operates on the output of the xml
+;; package, such as `xml-parse-region' and `xml-parse-file'. It was
+;; written to support Elfeed.
 
 ;; See the docstring for `xml-query-all'.
+
+;; The macro forms, `xml-query*' and `xml-query-all*', are an order of
+;; magnitude faster, but only work on static selectors and need the
+;; namespaces to be pre-stripped.
 
 ;; Examples:
 
@@ -110,6 +114,113 @@ Atom feed:
     (if (stringp result)
         result
       (car (xml-query-all query xml)))))
+
+;; Macro alternatives:
+
+;; This is a slightly less capable alternative with significantly
+;; better performance (x10 speedup) that requires a static selector.
+;; The selector is compiled into Lisp code via macro at compile-time,
+;; which is then carried through to byte-code by the compiler. In
+;; byte-code form, the macro performs no function calls other than
+;; `throw' in the case of `xml-query*', where it's invoked less than
+;; once per evaluation (only on success).
+
+;; Queries are compiled tail-to-head with a result handler at the
+;; deepest level. The generated code makes multiple bindings of the
+;; variable "v" as it dives deeper into the query, using the layers of
+;; bindings as a breadcrumb stack.
+
+;; For `xml-query*', which has a single result, the whole expression
+;; is wrapped in a catch, and the first successful match is thrown to
+;; it from the result handler.
+
+;; For `xml-query-all*', the result is pushed into an output list.
+
+(defun xml-query--compile-tag (tag subexp subloop-p)
+  `(when (and (consp v) (eq (car v) ',tag))
+     ,(if subloop-p
+          `(dolist (v (cddr v))
+             ,subexp)
+        subexp)))
+
+(defun xml-query--compile-attrib (pair subexp subloop-p)
+  `(let ((value (cdr (assq ',(aref pair 0) (cadr v)))))
+     (when (equal value ,(aref pair 1))
+       ,(if subloop-p
+            `(dolist (v (cddr v))
+               ,subexp)
+          subexp))))
+
+(defun xml-query--compile-keyword (keyword subexp)
+  (let ((attrib (intern (substring (symbol-name keyword) 1))))
+    `(let ((v (cdr (assq ',attrib (cadr v)))))
+       (when v
+         ,subexp))))
+
+(defun xml-query--compile-star (subexp)
+  `(when (stringp v)
+     ,subexp))
+
+(defun xml-query--compile-top (query input subexp)
+  (let* ((rquery (reverse query))
+         (prev nil))
+    (while rquery
+      (let ((matcher (pop rquery))
+            ;; Should the next item loop over its children?
+            (subloop-p (and (not (null prev))
+                            (not (keywordp prev))
+                            (symbolp prev))))
+        (cond
+         ((eq '* matcher)
+          (setf subexp (xml-query--compile-star subexp)))
+         ((keywordp matcher)
+          (setf subexp (xml-query--compile-keyword matcher subexp)))
+         ((symbolp matcher)
+          (setf subexp (xml-query--compile-tag matcher subexp subloop-p)))
+         ((vectorp matcher)
+          (setf subexp (xml-query--compile-attrib matcher subexp subloop-p)))
+         ((error "Bad query: %S" query)))
+        (setf prev matcher)))
+    `(dolist (v ,input)
+       ,subexp)))
+
+(defun xml-query--compile (query input)
+  (let ((tag (make-symbol "done")))
+    `(catch ',tag
+       ,(xml-query--compile-top query input `(throw ',tag v)))))
+
+(defmacro xml-query* (query sexp)
+  "Like `xml-query' but generate code to execute QUERY on SEXP.
+
+Unlike `xml-query', QUERY must be a static, compile-time
+s-expression. See `xml-query-all*' for more information.
+
+QUERY is *not* evaluated, so it should not be quoted."
+  (xml-query--compile query sexp))
+
+(defun xml-query-all--compile (query input)
+  (let ((output (make-symbol "output")))
+    `(let ((,output ()))
+       ,(xml-query--compile-top query input `(push v ,output))
+       (nreverse ,output))))
+
+(defmacro xml-query-all* (query sexp)
+  "Like `xml-query-all' but generate code to execute QUERY on SEXP.
+
+Unlike `xml-query-all', QUERY must be a static, compile-time
+s-expression. This macro compiles the query into actual code. The
+result is faster since the query will be compiled into byte-code
+rather than \"interpreted\" at run time.
+
+Also unlike `xml-query-all', the parsed XML s-expression must
+also have its namespace pre-stripped. This is accomplished by
+setting the optional PARSE-NS argument of `xml-parse-region' to
+symbol-qnames.
+
+Sub-expression lists are not supported by this macro.
+
+QUERY is *not* evaluated, so it should not be quoted."
+  (xml-query-all--compile query sexp))
 
 (provide 'xml-query)
 
