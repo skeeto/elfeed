@@ -67,8 +67,8 @@
     <link rel=\"edit\" href=\"atom03/edit\"/>
     <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
     <updated>2003-12-13T18:30:02Z</updated>
-    <category term=\"example\"/>
-    <category term=\"cat-1\"/>
+    <category scheme=\"http://example.com/scheme/\" term=\"example\"/>
+    <category term=\"cat-1\" scheme=\"http://example.com/scheme/\"/>
     <summary>Some text.</summary>
     <author>
       <name>John Doe</name>

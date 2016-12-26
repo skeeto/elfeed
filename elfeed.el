@@ -323,8 +323,9 @@ is called for side-effects on the ENTRY object.")
                     (author (cond ((and author-name author-email)
                                    (format "%s <%s>" author-name author-email))
                                   (author-name)))
-                    (categories (mapcar #'cl-cdaadr
-                                        (xml-query-all '(category) entry)))
+                    (categories
+                     (cl-loop for cat in (xml-query-all '(category) entry)
+                              collect (cdr (assq 'term (cadr cat)))))
                     (content (elfeed--atom-content entry))
                     (id (or (xml-query '(id *) entry) link
                             (elfeed-generate-id content)))
