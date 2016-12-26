@@ -115,7 +115,7 @@ be relative to now (`elfeed-time-duration')."
     (integer date)
     (otherwise nil)))
 
-(defun elfeed-xml-parse-region (&optional beg end buffer parse-dtd parse-ns)
+(defun elfeed-xml-parse-region (&optional beg end buffer parse-dtd _parse-ns)
   "Decode (if needed) and parse XML file. Uses coding system from
 XML encoding declaration."
   (unless beg (setq beg (point-min)))
@@ -134,7 +134,8 @@ XML encoding declaration."
           (recode-region mark-beg mark-end coding-system 'raw-text)
           (setf beg (marker-position mark-beg)
                 end (marker-position mark-end))))))
-  (xml-parse-region beg end buffer parse-dtd parse-ns))
+  (let ((xml-default-ns ()))
+    (xml-parse-region beg end buffer parse-dtd 'symbol-qnames)))
 
 (defun elfeed-xml-unparse (element)
   "Inverse of `elfeed-xml-parse-region', writing XML to the buffer."
