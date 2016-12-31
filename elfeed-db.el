@@ -166,8 +166,8 @@ update occurred, not counting content."
 
 (defun elfeed-normalize-tags (tags &rest more-tags)
   "Return the normalized tag list for TAGS."
-  (let ((all (copy-sequence (apply #'append tags more-tags))))
-    (cl-remove-duplicates (cl-sort all #'string< :key #'symbol-name))))
+  (let ((all (apply #'append tags (nconc more-tags (list ())))))
+    (cl-delete-duplicates (cl-sort all #'string< :key #'symbol-name))))
 
 (defun elfeed-tag (entry &rest tags)
   "Add TAGS to ENTRY."
