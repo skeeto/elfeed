@@ -70,8 +70,8 @@
   "The database version this version of Elfeed expects to use.")
 
 (defvar elfeed-new-entry-hook ()
-  "Functions in this list are called with the new entry as its
-argument. This is a chance to add cutoms tags to new entries.")
+  "Functions in this list are called with the new entry as its argument.
+This is a chance to add custom tags to new entries.")
 
 (defvar elfeed-db-update-hook ()
   "Functions in this list are called with no arguments any time
@@ -454,8 +454,8 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
              elfeed-db-feeds)))
 
 (defun elfeed-db-gc (&optional stats-p)
-  "Clean up unused content from the content database. If STATS is
-true, return the space cleared in bytes."
+  "Clean up unused content from the content database.
+If STATS is true, return the space cleared in bytes."
   (elfeed-db-gc-empty-feeds)
   (let* ((data (expand-file-name "data" elfeed-db-directory))
          (dirs (directory-files data t "^[0-9a-z]\\{2\\}$"))

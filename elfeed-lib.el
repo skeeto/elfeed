@@ -354,6 +354,7 @@ This includes expanding e.g. 3-5 into 3,4,5.  If the letter
           (url-recreate-url old)))))))
 
 (defun elfeed-url-to-namespace (url)
+  "Compute an ID namespace from URL."
   (let* ((urlobj (url-generic-parse-url url))
          (host (url-host urlobj)))
     (if (= 0 (length host))

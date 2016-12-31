@@ -106,15 +106,15 @@
 (require 'elfeed-log)
 (require 'elfeed-curl)
 
-(defgroup elfeed nil
+(defgroup elfeed ()
   "An Emacs web feed reader."
   :group 'comm)
 
 (defconst elfeed-version "2.0.1")
 
 (defcustom elfeed-feeds ()
-  "List of all feeds that Elfeed should follow. You must add your
-feeds to this list.
+  "List of all feeds that Elfeed should follow.
+You must add your feeds to this list.
 
 In its simplest form this will be a list of strings of feed URLs.
 Items in this list can also be list whose car is the feed URL
@@ -221,9 +221,10 @@ found.")
     url-queue-timeout))
 
 (defmacro elfeed-with-fetch (url &rest body)
-  "Asynchronously run BODY in a buffer with the contents from
-URL. This macro is anaphoric, with STATUS referring to the status
-from `url-retrieve'."
+  "Asynchronously run BODY in a buffer with the contents from URL.
+This macro is anaphoric, with STATUS referring to the status from
+`url-retrieve'/cURL and USE-CURL being the original invoked-value
+of `elfeed-use-curl'."
   (declare (indent defun))
   `(let* ((use-curl elfeed-use-curl) ; capture current value in closure
           (cb (lambda (status) ,@body)))
@@ -256,8 +257,7 @@ This is a workaround for issues in `url-queue-retrieve'."
 ;; Parsing:
 
 (defun elfeed-feed-type (content)
-  "Return the feed type given the parsed content (:atom, :rss) or
-NIL for unknown."
+  "Return the feed type (:atom, :rss, :rss1.0) or nil for unknown."
   (let ((top (xml-query-strip-ns (caar content))))
     (cadr (assoc top '((feed :atom)
                        (rss :rss)
