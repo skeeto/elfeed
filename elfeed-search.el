@@ -283,7 +283,7 @@ The customization `elfeed-search-date-format' sets the formatting."
 (defun elfeed-search--faces (tags)
   "Return all the faces that apply to an entry with TAGS."
   (nconc (cl-loop for (tag . faces) in elfeed-search-face-alist
-                  when (member tag tags)
+                  when (memq tag tags)
                   append faces)
          (list 'elfeed-search-title-face)))
 
@@ -364,8 +364,8 @@ This function must *only* be called within the body of
                 (and limit (<= limit 0))
                 (and limit count (>= count limit)))
         (elfeed-db-return))
-      (and (cl-every  (lambda (tag) (member tag tags)) must-have)
-           (cl-notany (lambda (tag) (member tag tags)) must-not-have)
+      (and (cl-every  (lambda (tag) (memq tag tags)) must-have)
+           (cl-notany (lambda (tag) (memq tag tags)) must-not-have)
            (or (null matches)
                (cl-every
                 (lambda (m)

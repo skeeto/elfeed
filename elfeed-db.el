@@ -179,11 +179,11 @@ update occurred, not counting content."
   "Remove TAGS from ENTRY."
   (setf (elfeed-entry-tags entry)
         (cl-loop for tag in (elfeed-entry-tags entry)
-                 unless (member tag tags) collect tag)))
+                 unless (memq tag tags) collect tag)))
 
 (defun elfeed-tagged-p (tag entry)
   "Return true if ENTRY is tagged by TAG."
-  (member tag (elfeed-entry-tags entry)))
+  (memq tag (elfeed-entry-tags entry)))
 
 (defun elfeed-db-last-update ()
   "Return the last database update time in (`float-time') seconds."
