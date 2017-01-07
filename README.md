@@ -12,6 +12,7 @@ For a longer overview,
  * [Tips and Tricks](http://nullprogram.com/blog/2013/11/26/)
  * [Read your RSS feeds in Emacs with Elfeed
 ](http://pragmaticemacs.com/emacs/read-your-rss-feeds-in-emacs-with-elfeed/)
+ * [Scoring Elfeed articles](http://kitchingroup.cheme.cmu.edu/blog/2017/01/05/Scoring-elfeed-articles/)
  * [... more ...](http://nullprogram.com/tags/elfeed/)
  * [... and more ...](http://pragmaticemacs.com/category/elfeed/)
 
