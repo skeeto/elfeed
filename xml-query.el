@@ -71,6 +71,10 @@
   (cl-loop for (tag attribs . content) in (cl-remove-if-not #'listp xml)
            append content))
 
+(defun xml-query--stringp (thing)
+  "Return non-nil of THING is a non-blank string."
+  (and (stringp thing) (string-match "[^ \t\r\n]" thing)))
+
 (defun xml-query-all (query xml)
   "Given a list of tags, XML, apply QUERY and return a list of
 matching tags.
@@ -92,7 +96,7 @@ Atom feed:
       (cond
        ((keywordp matcher) (xml-query--keyword matcher xml))
        ((eq matcher '*)
-        (cl-remove-if-not #'stringp (xml-query--append xml)))
+        (cl-remove-if-not #'xml-query--stringp (xml-query--append xml)))
        (:else
         (let ((matches
                (cl-etypecase matcher
@@ -111,7 +115,7 @@ Atom feed:
 (defun xml-query (query xml)
   "Like `xml-query-all' but only return the first result."
   (let ((result (xml-query-all query xml)))
-    (if (stringp result)
+    (if (xml-query--stringp result)
         result
       (car (xml-query-all query xml)))))
 
@@ -158,7 +162,7 @@ Atom feed:
          ,subexp))))
 
 (defun xml-query--compile-star (subexp)
-  `(when (stringp v)
+  `(when (and (stringp v) (string-match "[^ \t\r\n]" v))
      ,subexp))
 
 (defun xml-query--compile-top (query input subexp)

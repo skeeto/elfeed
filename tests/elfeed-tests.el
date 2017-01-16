@@ -23,7 +23,9 @@
  <item>
   <title>Example entry 1</title>
   <description>Interesting description 1.</description>
-  <link>http://www.nullprogram.com/</link>
+  <link>
+    <![CDATA[http://nullprogram.com/]]>
+  </link>
   <author>John Doe &lt;john.doe@example.com&gt;</author>
   <guid>84815091-a6a3-35d4-7f04-80a6610dc85c</guid>
   <pubDate>Mon, 06 Sep 2009 16:20:00 +0000 </pubDate>
@@ -216,6 +218,7 @@
           (should (string= (elfeed-feed-title (elfeed-db-get-feed url))
                            "RSS Title"))
           (should (string= (elfeed-entry-title a) "Example entry 1"))
+          (should (string= (elfeed-entry-link a) "http://nullprogram.com/"))
           (should (= (elfeed-entry-date a) 1252254000.0))
           (should (equal (elfeed-entry-id a)
                          (cons namespace
