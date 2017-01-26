@@ -12,6 +12,14 @@
 
 ;;; History:
 
+;; Version 2.1.0: features and new database format
+;;   * New entry ID based only on domain, not whole feed
+;;   * Byte-compiled search filters (`elfeed-search-compile-filter')
+;;   * Improved metadata persistence on entry updates
+;;   * Gather :author from entries
+;;   * Gather :categories from entries
+;;   * New `elfeed-add-feed' interface (thanks Mark Oteiza)
+;;   * New xml-query macros for faster feed parsing
 ;; Version 2.0.1: features and fixes
 ;;   * Added `elfeed-curl-extra-arguments' customization
 ;;   * Use `x-get-selection' instead of `x-get-selection-value'
@@ -110,7 +118,7 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "2.0.1")
+(defconst elfeed-version "2.1.0")
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow.
