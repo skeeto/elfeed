@@ -398,7 +398,8 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
       ref
     (let ((index (and (hash-table-p elfeed-ref-archive)
                       (gethash (elfeed-ref-id ref) elfeed-ref-archive)))
-          (archive-file (elfeed-ref-archive-filename ".gz")))
+          (archive-file (elfeed-ref-archive-filename ".gz"))
+          (coding-system-for-read 'utf-8))
       (if (and index (file-exists-p archive-file))
           (progn
             (when (null elfeed-ref-cache)
