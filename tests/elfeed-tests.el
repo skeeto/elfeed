@@ -298,7 +298,7 @@
       (goto-char (point-min))
       (let* ((url "http://bar.example.org/")
              (xml (elfeed-xml-parse-region))
-             (feed (elfeed-db-get-feed url)))
+             (_feed (elfeed-db-get-feed url)))
         (cl-destructuring-bind (a b c) (elfeed-entries-from-atom url xml)
           (should (string=
                    (elfeed-entry-link a)

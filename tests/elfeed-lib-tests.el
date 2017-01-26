@@ -87,7 +87,7 @@
     (insert
      (concat
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss>"
-      (mapconcat (lambda (i) " ") (number-sequence 1 100000) "")
+      (mapconcat (lambda (_) " ") (number-sequence 1 100000) "")
       "</rss>"))
     (elfeed-xml-parse-region))
   (with-temp-buffer

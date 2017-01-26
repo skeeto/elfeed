@@ -3,6 +3,7 @@
 (require 'cl-lib)
 (require 'ert)
 (require 'url-parse)
+(require 'elfeed)
 (require 'elfeed-db)
 (require 'elfeed-lib)
 (require 'jka-compr)
@@ -30,10 +31,9 @@
 
 (cl-defun elfeed-test-generate-word (&optional multibyte (length 6))
   "Generate a word around LENGTH letters long."
-  (let ((variance 1.0))
-    (apply #'string
-           (cl-loop repeat (elfeed-test-random length)
-                    collect (elfeed-test-generate-letter multibyte)))))
+  (apply #'string
+         (cl-loop repeat (elfeed-test-random length)
+                  collect (elfeed-test-generate-letter multibyte))))
 
 (cl-defun elfeed-test-generate-title (&optional multibyte (length 8))
   "Generate a title around LENGTH words long, capitalized."
