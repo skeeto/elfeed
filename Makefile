@@ -1,7 +1,7 @@
 .POSIX :
-EMACS    = emacs
-BATCH    = $(EMACS) -batch -Q -L . -L tests
-VERSION != $(BATCH) -l elfeed.el --eval '(princ elfeed-version)'
+EMACS   = emacs
+BATCH   = $(EMACS) -batch -Q -L . -L tests
+VERSION = 2.1.0
 
 EL   = elfeed-csv.el elfeed-curl.el elfeed-db.el elfeed-lib.el	\
        elfeed-log.el elfeed-show.el elfeed.el xml-query.el	\
@@ -19,7 +19,7 @@ test : $(EL:.el=.elc) $(TEST:.el=.elc)
 
 package : elfeed-$(VERSION).tar elfeed-web-$(VERSION).tar
 
-clean:
+clean :
 	rm -f *.tar $(EL:.el=.elc) $(TEST:.el=.elc)
 
 elfeed-$(VERSION).tar : $(EL) $(DOC)

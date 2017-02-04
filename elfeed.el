@@ -118,7 +118,14 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "2.1.0")
+(defconst elfeed-version
+  (eval-when-compile
+    (let* ((sibling (or load-file-name (symbol-file 'elfeed-log 'defun)))
+           (directory (file-name-directory sibling))
+           (pkg-file (expand-file-name "elfeed-pkg.el" directory)))
+      (with-temp-buffer
+        (insert-file-contents pkg-file)
+        (nth 2 (read (current-buffer)))))))
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow.
