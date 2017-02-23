@@ -70,7 +70,7 @@ database with entries.
 ;; Somewhere in your .emacs file
 (setq elfeed-feeds
       '("http://nullprogram.com/feed/"
-        "http://www.terminally-incoherent.com/blog/feed/"))
+        "http://planet.emacsen.org/atom.xml"))
 ```
 
 Another option for providing a feel list is with an OPML file. Running
