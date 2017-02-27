@@ -342,6 +342,47 @@ The customization `elfeed-search-date-format' sets the formatting."
                                (push element matches)))))
     (list after must-have must-not-have matches not-matches limit)))
 
+(defun elfeed-search--recover-units (seconds)
+  "Pick a reasonable filter representation for SECONDS."
+  (let ((units '((60   1 "minute")
+                 (60   1 "hour")
+                 (24   1 "day")
+                 (7    1 "week")
+                 (30   7 "month")
+                 (1461 120 "year")))
+        (value (float seconds))
+        (name "second"))
+    (cl-loop for (n d unit) in units
+             for next-value = (/ (* value d) n)
+             when (< next-value 1.0)
+             return t
+             do (setf name unit
+                      value next-value))
+    (let ((count (format "%.4g" value)))
+      (format "@%s-%s%s-ago" count name (if (equal count "1") "" "s")))))
+
+(defun elfeed-search-unparse-filter (filter)
+  "Inverse of `elfeed-search-parse-filter', returning a string.
+
+The time (@n-units-ago) filter may not exactly match the
+original, but will be equal in its effect."
+  (let ((output ()))
+    (cl-destructuring-bind
+        (after must-have must-not-have matches not-matches limit) filter
+      (when after
+        (push (elfeed-search--recover-units after) output))
+      (dolist (tag must-have)
+        (push (format "+%S" tag) output))
+      (dolist (tag must-not-have)
+        (push (format "-%S" tag) output))
+      (dolist (re matches)
+        (push re output))
+      (dolist (re not-matches)
+        (push (concat "!" re) output))
+      (when limit
+        (push (format "#%d" limit) output))
+      (mapconcat #'identity (nreverse output) " "))))
+
 (defun elfeed-search-filter (filter entry feed &optional count)
   "Return non-nil if ENTRY and FEED pass FILTER.
 
