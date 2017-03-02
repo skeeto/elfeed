@@ -13,7 +13,9 @@ For a longer overview,
  * [Read your RSS feeds in Emacs with Elfeed
 ](http://pragmaticemacs.com/emacs/read-your-rss-feeds-in-emacs-with-elfeed/)
  * [Scoring Elfeed articles](http://kitchingroup.cheme.cmu.edu/blog/2017/01/05/Scoring-elfeed-articles/)
- * [Using Emacs 29](https://www.youtube.com/watch?v=pOFqzK1Ymr4)
+ * [Using Emacs 29](https://www.youtube.com/watch?v=pOFqzK1Ymr4),
+   [30](https://www.youtube.com/watch?v=tjnK1rkO7RU),
+   [31](https://www.youtube.com/watch?v=5zuSUbAHH8c)
  * [... more ...](http://nullprogram.com/tags/elfeed/)
  * [... and more ...](http://pragmaticemacs.com/category/elfeed/)
 
