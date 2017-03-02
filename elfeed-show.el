@@ -78,7 +78,8 @@ Defaults to `elfeed-kill-buffer'.")
    (if (elfeed-libxml-supported-p)
        (with-temp-buffer
          ;; insert <base> to work around libxml-parse-html-region bug
-         (insert (format "<base href=\"%s\">" base-url))
+         (when base-url
+           (insert (format "<base href=\"%s\">" base-url)))
          (insert html)
          (libxml-parse-html-region (point-min) (point-max) base-url))
      '(i () "Elfeed: libxml2 functionality is unavailable"))))
