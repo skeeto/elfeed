@@ -18,6 +18,11 @@
   :group 'elfeed
   :type 'boolean)
 
+(defcustom elfeed-show-entry-author nil
+  "When non-nil, show the entry's author (if it's in the entry's metadata)."
+  :group 'elfeed
+  :type 'boolean)
+
 (defvar elfeed-show-entry nil
   "The entry being displayed in this buffer.")
 
@@ -108,6 +113,7 @@ Defaults to `elfeed-kill-buffer'.")
   (let* ((inhibit-read-only t)
          (title (elfeed-entry-title elfeed-show-entry))
          (date (seconds-to-time (elfeed-entry-date elfeed-show-entry)))
+	 (author (elfeed-meta elfeed-show-entry :author))
          (link (elfeed-entry-link elfeed-show-entry))
          (tags (elfeed-entry-tags elfeed-show-entry))
          (tagsstr (mapconcat #'symbol-name tags ", "))
@@ -120,6 +126,9 @@ Defaults to `elfeed-kill-buffer'.")
     (erase-buffer)
     (insert (format (propertize "Title: %s\n" 'face 'message-header-name)
                     (propertize title 'face 'message-header-subject)))
+    (when (and author elfeed-show-entry-author)
+      (insert (format (propertize "Author: %s\n" 'face 'message-header-name)
+		      (propertize author 'face 'message-header-to))) )
     (insert (format (propertize "Date: %s\n" 'face 'message-header-name)
                     (propertize nicedate 'face 'message-header-other)))
     (insert (format (propertize "Feed: %s\n" 'face 'message-header-name)
