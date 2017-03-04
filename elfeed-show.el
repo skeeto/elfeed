@@ -18,7 +18,7 @@
   :group 'elfeed
   :type 'boolean)
 
-(defcustom elfeed-show-entry-author nil
+(defcustom elfeed-show-entry-author t
   "When non-nil, show the entry's author (if it's in the entry's metadata)."
   :group 'elfeed
   :type 'boolean)
