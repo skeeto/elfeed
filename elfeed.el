@@ -165,6 +165,7 @@ Each function should accept no arguments, and return a string or nil."
 (provide 'elfeed)
 
 (require 'elfeed-search)
+(require 'elfeed-show)
 (require 'elfeed-lib)
 (require 'elfeed-db)
 (require 'elfeed-csv)
@@ -575,6 +576,13 @@ Only a list of strings will be returned."
   (unless (eq major-mode 'elfeed-search-mode)
     (elfeed-search-mode))
   (elfeed-search-update))
+
+;;;###autoload
+(defun elfeed-setup-split-pane ()
+  "Sets up Elfeed for split pane view."
+  (interactive)
+  (setq elfeed-show-entry-switch #'elfeed-show-entry--switch-pane
+        elfeed-show-entry-delete #'elfeed-show-entry--delete-pane))
 
 ;; New entry filtering
 
