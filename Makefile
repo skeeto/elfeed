@@ -15,7 +15,7 @@ TEST = tests/elfeed-db-tests.el tests/elfeed-lib-tests.el	\
 compile: $(EL:.el=.elc) $(TEST:.el=.elc)
 
 test: $(EL:.el=.elc) $(TEST:.el=.elc)
-	$(BATCH) -l tests/elfeed-tests.el -f ert-run-tests-batch
+	$(BATCH) -l tests/elfeed-tests.elc -f ert-run-tests-batch
 
 package: elfeed-$(VERSION).tar elfeed-web-$(VERSION).tar
 
