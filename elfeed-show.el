@@ -9,6 +9,8 @@
 (require 'url-parse)
 (require 'browse-url)
 (require 'message) ; faces
+
+(require 'elfeed)
 (require 'elfeed-db)
 (require 'elfeed-lib)
 (require 'elfeed-search)
