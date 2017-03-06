@@ -691,6 +691,7 @@ saved to your customization file."
 
 (cl-eval-when (load eval)
   (require 'elfeed-csv)
+  (require 'elfeed-show)
   (require 'elfeed-search))
 
 ;;; elfeed.el ends here
