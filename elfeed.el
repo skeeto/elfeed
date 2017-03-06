@@ -588,7 +588,6 @@ Only a list of strings will be returned."
 (defun elfeed ()
   "Enter elfeed."
   (interactive)
-  (require 'elfeed-search)
   (switch-to-buffer (elfeed-search-buffer))
   (unless (eq major-mode 'elfeed-search-mode)
     (elfeed-search-mode)))
@@ -691,6 +690,7 @@ saved to your customization file."
 (provide 'elfeed)
 
 (cl-eval-when (load eval)
-  (require 'elfeed-csv))
+  (require 'elfeed-csv)
+  (require 'elfeed-search))
 
 ;;; elfeed.el ends here
