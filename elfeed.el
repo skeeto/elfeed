@@ -19,6 +19,9 @@
 
 ;;; History:
 
+;; Version 2.1.1: fixes and some features
+;;   * Added `elfeed-show-entry-author' customization variable.
+;;   * Added `elfeed-search-unparse-filter'.
 ;; Version 2.1.0: features and new database format
 ;;   * New entry ID based only on domain, not whole feed
 ;;   * Byte-compiled search filters (`elfeed-search-compile-filter')
@@ -132,7 +135,7 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "2.1.0")
+(defconst elfeed-version "2.1.1")
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow.
