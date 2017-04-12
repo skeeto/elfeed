@@ -16,6 +16,7 @@ For a longer overview,
  * [Using Emacs 29](https://www.youtube.com/watch?v=pOFqzK1Ymr4),
    [30](https://www.youtube.com/watch?v=tjnK1rkO7RU),
    [31](https://www.youtube.com/watch?v=5zuSUbAHH8c)
+ * [Take Elfeed everywhere: Mobile rss reading Emacs-style (for free/cheap)](http://babbagefiles.blogspot.com/2017/03/take-elfeed-everywhere-mobile-rss.html)
  * [... more ...](http://nullprogram.com/tags/elfeed/)
  * [... and more ...](http://pragmaticemacs.com/category/elfeed/)
 
