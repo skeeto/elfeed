@@ -55,18 +55,20 @@ search buffer or show a concrete entry."
     (elfeed)
     (elfeed-search-set-filter filter-or-id)))
 
-;;;###autoload
-(eval-after-load 'org
-  '(if (version< (org-version) "9.0")
-       (progn
-         (org-add-link-type "elfeed" #'elfeed-link-open)
-         (add-hook 'org-store-link-functions #'elfeed-link-store-link))
-     (with-no-warnings
-       (org-link-set-parameters
-        "elfeed"
-        :follow #'elfeed-link-open
-        :store #'elfeed-link-store-link))))
+;; Register Elfeed with Org
+(if (version< (org-version) "9.0")
+    (progn
+      (org-add-link-type "elfeed" #'elfeed-link-open)
+      (add-hook 'org-store-link-functions #'elfeed-link-store-link))
+  (with-no-warnings
+    (org-link-set-parameters
+     "elfeed"
+     :follow #'elfeed-link-open
+     :store #'elfeed-link-store-link)))
 
 (provide 'elfeed-link)
+
+;;;###autoload
+(eval-after-load 'org '(require 'elfeed-link))
 
 ;;; elfeed-link.el ends here
