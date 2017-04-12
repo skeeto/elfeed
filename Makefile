@@ -33,8 +33,9 @@ elfeed-curl.elc: elfeed-curl.el elfeed-lib.elc elfeed-log.elc
 elfeed-db.elc: elfeed-db.el elfeed-lib.elc
 elfeed-lib.elc: elfeed-lib.el
 elfeed-log.elc: elfeed-log.el
-elfeed-show.elc: elfeed-show.el elfeed.el elfeed-db.elc elfeed-lib.elc \
+elfeed-show.elc: elfeed-show.el elfeed.elc elfeed-db.elc elfeed-lib.elc \
     elfeed-search.elc
+elfeed-link.elc: elfeed-link.el elfeed.elc
 elfeed.elc: elfeed.el elfeed-lib.elc elfeed-log.elc elfeed-curl.elc \
     elfeed-db.elc xml-query.elc
 xml-query.elc: xml-query.el
