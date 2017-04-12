@@ -10,11 +10,9 @@
 
 ;;; Code:
 
-(require 'elfeed-db)
-(require 'elfeed-show)
-(require 'elfeed-search)
-
 (require 'org)
+(require 'cl-lib)
+(require 'elfeed)
 
 (defun elfeed-link-store-link ()
   "Store a link to an elfeed search or entry buffer.
@@ -54,9 +52,7 @@ search buffer or show a concrete entry."
       (elfeed-show-entry (elfeed-db-get-entry
                           (cons (match-string 1 filter-or-id)
                                 (match-string 2 filter-or-id))))
-    (switch-to-buffer (elfeed-search-buffer))
-    (unless (eq major-mode 'elfeed-search-mode)
-      (elfeed-search-mode))
+    (elfeed)
     (elfeed-search-set-filter filter-or-id)))
 
 ;;;###autoload
