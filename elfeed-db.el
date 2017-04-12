@@ -288,7 +288,7 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
           (plist-put db :entries (make-hash-table :test 'equal))
           ;; Compiler will warn about this (bug#15327):
           (plist-put db :index (avl-tree-create #'elfeed-db-compare)))
-      (with-current-buffer (find-file-noselect index :nowarn)
+      (with-current-buffer (find-file-noselect index :nowarn t)
         (goto-char (point-min))
         (setf elfeed-db (read (current-buffer)))
         (kill-buffer)))
