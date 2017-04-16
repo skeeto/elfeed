@@ -128,7 +128,7 @@ update occurred, not counting content."
 
 (defun elfeed-db-set-update-time ()
   "Update the database last-update time."
-  (plist-put elfeed-db :last-update (float-time))
+  (setf elfeed-db (plist-put elfeed-db :last-update (float-time)))
   (run-hooks 'elfeed-db-update-hook))
 
 (defun elfeed-db-add (entries)
@@ -248,7 +248,7 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
 (defun elfeed-db-save ()
   "Write the database index to the filesystem."
   (elfeed-db-ensure)
-  (plist-put elfeed-db :version elfeed-db-version)
+  (setf elfeed-db (plist-put elfeed-db :version elfeed-db-version))
   (mkdir elfeed-db-directory t)
   (let ((coding-system-for-write 'utf-8))
     (with-temp-file (expand-file-name "index" elfeed-db-directory)
@@ -275,7 +275,7 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
           (setf (elfeed-entry-id entry) new-id
                 (gethash new-id elfeed-db-entries) entry)
           (avl-tree-enter elfeed-db-index new-id)))))
-  (plist-put elfeed-db :version elfeed-db-version)
+  (setf elfeed-db (plist-put elfeed-db :version elfeed-db-version))
   elfeed-db-version)
 
 (defun elfeed-db-load ()
@@ -283,11 +283,12 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
   (let ((index (expand-file-name "index" elfeed-db-directory))
         (enable-local-variables nil)) ; don't set local variables from index!
     (if (not (file-exists-p index))
-        (let ((db (setf elfeed-db (list :version elfeed-db-version))))
-          (plist-put db :feeds (make-hash-table :test 'equal))
-          (plist-put db :entries (make-hash-table :test 'equal))
-          ;; Compiler will warn about this (bug#15327):
-          (plist-put db :index (avl-tree-create #'elfeed-db-compare)))
+        (setf elfeed-db
+              `(:version ,elfeed-db-version
+                :feeds ,(make-hash-table :test 'equal)
+                :entries ,(make-hash-table :test 'equal)
+                ;; Compiler may warn about this (bug#15327):
+                :index ,(avl-tree-create #'elfeed-db-compare)))
       (with-current-buffer (find-file-noselect index :nowarn)
         (goto-char (point-min))
         (setf elfeed-db (read (current-buffer)))
