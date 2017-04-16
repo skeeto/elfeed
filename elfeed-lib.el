@@ -115,6 +115,15 @@ be relative to now (`elfeed-time-duration')."
     (integer date)
     (otherwise nil)))
 
+(eval-when-compile
+  (defun elfeed-lib-has-bug26533 ()
+    "Return non-nil if this version of Emacs has the `xml-parse-region' bug."
+    (with-temp-buffer
+      (insert "<root a:b='c'></root>")
+      (let ((xml-default-ns ()))
+        (equal '((root ((a:b . "c"))))
+               (xml-parse-region nil nil nil nil 'symbol-qnames))))))
+
 (defun elfeed-xml-parse-region (&optional beg end buffer parse-dtd _parse-ns)
   "Decode (if needed) and parse XML file. Uses coding system from
 XML encoding declaration."
@@ -134,7 +143,10 @@ XML encoding declaration."
           (recode-region mark-beg mark-end coding-system 'raw-text)
           (setf beg (marker-position mark-beg)
                 end (marker-position mark-end))))))
-  (let ((xml-default-ns ()))
+  (let ((xml-default-ns (eval-when-compile
+                          (if (elfeed-lib-has-bug26533)
+                              '(symbol-qnames)
+                            ()))))
     (xml-parse-region beg end buffer parse-dtd 'symbol-qnames)))
 
 (defun elfeed-xml-unparse (element)
