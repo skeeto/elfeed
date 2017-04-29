@@ -77,7 +77,7 @@ Defaults to `elfeed-kill-buffer'.")
         buffer-read-only t)
   (buffer-disable-undo)
   (make-local-variable 'elfeed-show-entry)
-  (run-hooks 'elfeed-show-mode-hook))
+  (run-mode-hooks 'elfeed-show-mode-hook))
 
 (defun elfeed-insert-html (html &optional base-url)
   "Converted HTML markup to a propertized string."

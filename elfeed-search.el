@@ -192,7 +192,7 @@ When live editing the filter, it is bound to :live.")
   (add-hook 'elfeed-update-init-hooks #'elfeed-search-update--force)
   (add-hook 'kill-buffer-hook #'elfeed-db-save t t)
   (elfeed-search-update :force)
-  (run-hooks 'elfeed-search-mode-hook))
+  (run-mode-hooks 'elfeed-search-mode-hook))
 
 (defun elfeed-search-buffer ()
   (get-buffer-create "*elfeed-search*"))
