@@ -267,7 +267,7 @@ Use `elfeed-curl--narrow' to select a header."
            do (setf location (elfeed-update-location location value))
            finally return location))
 
-(defun elfeed-curl--args (url token &optional headers)
+(defun elfeed-curl--args (url token &optional headers method data)
   "Build an argument list for curl for URL.
 URL can be a string or a list of URL strings."
   (let ((args ()))
@@ -282,6 +282,8 @@ URL can be a string or a list of URL strings."
     (dolist (header headers)
       (cl-destructuring-bind (key . value) header
         (push (format "-H%s: %s" key value) args)))
+    (when method (push (format "-X%s" method) args))
+    (when data (push (format "-d%s" data) args))
     (setf args (nconc (reverse elfeed-curl-extra-arguments) args))
     (if (listp url)
         (nconc (nreverse args) url)
@@ -297,12 +299,12 @@ URL can be a string or a list of URL strings."
   (elfeed-curl--decode)
   (current-buffer))
 
-(defun elfeed-curl-retrieve-synchronously (url &optional headers)
+(defun elfeed-curl-retrieve-synchronously (url &optional headers method data)
   "Retrieve the contents for URL and return a new buffer with them.
 HEADERS is an alist of additional headers to add to the HTTP request."
   (with-current-buffer (generate-new-buffer " *curl*")
     (setf elfeed-curl--token (elfeed-curl--token))
-    (let ((args (elfeed-curl--args url elfeed-curl--token headers))
+    (let ((args (elfeed-curl--args url elfeed-curl--token headers method data))
           (coding-system-for-read 'binary))
       (apply #'call-process elfeed-curl-program-name nil t nil args))
     (elfeed-curl--parse-write-out)
@@ -360,7 +362,7 @@ HEADERS is an alist of additional headers to add to the HTTP request."
                  for (_ . cb) in elfeed-curl--requests
                  do (run-at-time 0 nil handler buffer cb))))))
 
-(defun elfeed-curl-retrieve (url cb &optional headers)
+(defun elfeed-curl-retrieve (url cb &optional headers method data)
   "Retrieve URL contents asynchronously, calling CB with one status argument.
 
 The callback must *not* kill the buffer!
@@ -378,7 +380,7 @@ results will not."
   (with-current-buffer (generate-new-buffer " *curl*")
     (setf elfeed-curl--token (elfeed-curl--token))
     (let* ((coding-system-for-read 'binary)
-           (args (elfeed-curl--args url elfeed-curl--token headers))
+           (args (elfeed-curl--args url elfeed-curl--token headers method data))
            (process (apply #'start-process "elfeed-curl" (current-buffer)
                            elfeed-curl-program-name args)))
       (prog1 process
@@ -392,26 +394,26 @@ results will not."
           (setf elfeed-curl--refcount 1))
         (setf (process-sentinel process) #'elfeed-curl--sentinel)))))
 
-(defun elfeed-curl--request-key (url headers)
+(defun elfeed-curl--request-key (url headers method data)
   "Try to fetch URLs with matching keys at the same time."
   (unless (listp url)
     (let* ((urlobj (url-generic-parse-url url)))
       (list (url-type urlobj)
             (url-host urlobj)
             (url-portspec urlobj)
-            headers))))
+            headers method data))))
 
 (defun elfeed-curl--queue-consolidate (queue-in)
   "Group compatible requests together and return a new queue.
 Compatible means the requests have the same protocol, domain,
-port, and headers, allowing them to be used safely in the same
-curl invocation."
+port, headers, method, and body, allowing them to be used safely
+in the same curl invocation."
   (let ((table (make-hash-table :test 'equal))
         (keys ())
         (queue-out ()))
     (dolist (entry queue-in)
-      (cl-destructuring-bind (url _ headers) entry
-        (let* ((key (elfeed-curl--request-key url headers)))
+      (cl-destructuring-bind (url _ headers method data) entry
+        (let* ((key (elfeed-curl--request-key url headers method data)))
           (push key keys)
           (push entry (gethash key table nil)))))
     (dolist (key (nreverse keys))
@@ -419,7 +421,9 @@ curl invocation."
         (when entry
           (let ((rotated (list (nreverse (cl-mapcar #'car entry))
                                (nreverse (cl-mapcar #'cadr entry))
-                               (cl-caddar entry))))
+                               (cl-caddar entry)
+                               (elt (car entry) 3)
+                               (elt (car entry) 4))))
             (push rotated queue-out)
             (setf (gethash key table) nil)))))
     (nreverse queue-out)))
@@ -443,7 +447,7 @@ curl invocation."
           (elfeed-curl--queue-consolidate elfeed-curl-queue)))
   (while (and (< elfeed-curl-queue-active elfeed-curl-max-connections)
               (> (length elfeed-curl-queue) 0))
-    (cl-destructuring-bind (url cb headers) (pop elfeed-curl-queue)
+    (cl-destructuring-bind (url cb headers method data) (pop elfeed-curl-queue)
       (elfeed-log 'debug "retrieve %s" url)
       (cl-incf elfeed-curl-queue-active 1)
       (elfeed-curl-retrieve
@@ -452,15 +456,15 @@ curl invocation."
            (elfeed-curl--queue-wrap cb)
          (cons (elfeed-curl--queue-wrap (car cb))
                (cdr cb)))
-       headers))))
+       headers method data))))
 
-(defun elfeed-curl-enqueue (url cb &optional headers)
+(defun elfeed-curl-enqueue (url cb &optional headers method data)
   "Just like `elfeed-curl-retrieve', but restricts concurrent fetches."
   (unless (or (stringp url)
               (and (listp url) (cl-every #'stringp url)))
     ;; Signal error synchronously instead of asynchronously in the timer
     (signal 'wrong-type-argument (list 'string-p-or-string-list-p url)))
-  (let ((entry (list url cb headers)))
+  (let ((entry (list url cb headers method data)))
     (setf elfeed-curl-queue (nconc elfeed-curl-queue (list entry)))
     (unless elfeed-curl--run-queue-queued
       (run-at-time 0 nil #'elfeed-curl--run-queue)
