@@ -301,6 +301,15 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
     (when (version< (or (plist-get elfeed-db :version) "0") elfeed-db-version)
       (elfeed-db-upgrade))))
 
+(defun elfeed-db-unload ()
+  "Unload the database so that it can be operated on externally."
+  (interactive)
+  (elfeed-db-save)
+  (setf elfeed-db nil
+        elfeed-db-feeds nil
+        elfeed-db-entries nil
+        elfeed-db-index nil))
+
 (defun elfeed-db-ensure ()
   "Ensure that the database has been loaded."
   (when (null elfeed-db) (elfeed-db-load)))
