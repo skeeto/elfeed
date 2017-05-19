@@ -299,9 +299,12 @@ URL can be a string or a list of URL strings."
   (elfeed-curl--decode)
   (current-buffer))
 
-(defun elfeed-curl-retrieve-synchronously (url &optional headers method data)
+(cl-defun elfeed-curl-retrieve-synchronously (url &key headers method data)
   "Retrieve the contents for URL and return a new buffer with them.
-HEADERS is an alist of additional headers to add to the HTTP request."
+
+HEADERS is an alist of additional headers to add to the HTTP request.
+METHOD is the HTTP method to use.
+DATA is the content to include in the request."
   (with-current-buffer (generate-new-buffer " *curl*")
     (setf elfeed-curl--token (elfeed-curl--token))
     (let ((args (elfeed-curl--args url elfeed-curl--token headers method data))
@@ -362,14 +365,17 @@ HEADERS is an alist of additional headers to add to the HTTP request."
                  for (_ . cb) in elfeed-curl--requests
                  do (run-at-time 0 nil handler buffer cb))))))
 
-(defun elfeed-curl-retrieve (url cb &optional headers method data)
+(cl-defun elfeed-curl-retrieve (url cb &key headers method data)
   "Retrieve URL contents asynchronously, calling CB with one status argument.
 
 The callback must *not* kill the buffer!
 
 The destination buffer is set at the current buffer for the
-callback. HEADERS is an alist of additional headers to add to
-HTTP requests.
+callback.
+
+HEADERS is an alist of additional headers to add to HTTP requests.
+METHOD is the HTTP method to use.
+DATA is the content to include in the request.
 
 URL can be a list of URLs, which will fetch them all in the same
 curl process. In this case, CB can also be either a list of the
@@ -401,7 +407,9 @@ results will not."
       (list (url-type urlobj)
             (url-host urlobj)
             (url-portspec urlobj)
-            headers method data))))
+            headers
+            method
+            data))))
 
 (defun elfeed-curl--queue-consolidate (queue-in)
   "Group compatible requests together and return a new queue.
@@ -456,9 +464,11 @@ in the same curl invocation."
            (elfeed-curl--queue-wrap cb)
          (cons (elfeed-curl--queue-wrap (car cb))
                (cdr cb)))
-       headers method data))))
+       :headers headers
+       :method method
+       :data data))))
 
-(defun elfeed-curl-enqueue (url cb &optional headers method data)
+(cl-defun elfeed-curl-enqueue (url cb &key headers method data)
   "Just like `elfeed-curl-retrieve', but restricts concurrent fetches."
   (unless (or (stringp url)
               (and (listp url) (cl-every #'stringp url)))

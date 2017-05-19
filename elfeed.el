@@ -263,7 +263,7 @@ of `elfeed-use-curl'."
              (push `("If-None-Match" . ,etag) headers))
            (when last-modified
              (push `("If-Modified-Since" . ,last-modified) headers))
-           (elfeed-curl-enqueue ,url cb headers))
+           (elfeed-curl-enqueue ,url cb :headers headers))
        (url-queue-retrieve ,url cb () t t))))
 
 (defun elfeed-unjam ()
