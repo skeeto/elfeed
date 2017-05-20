@@ -169,17 +169,33 @@ update occurred, not counting content."
   (let ((all (apply #'append tags (nconc more-tags (list ())))))
     (cl-delete-duplicates (cl-sort all #'string< :key #'symbol-name))))
 
-(defun elfeed-tag (entry &rest tags)
+(defun elfeed-tag-1 (entry &rest tags)
   "Add TAGS to ENTRY."
   (let ((current (elfeed-entry-tags entry)))
     (setf (elfeed-entry-tags entry)
           (elfeed-normalize-tags (append tags current)))))
 
-(defun elfeed-untag (entry &rest tags)
+(defun elfeed-untag-1 (entry &rest tags)
   "Remove TAGS from ENTRY."
   (setf (elfeed-entry-tags entry)
         (cl-loop for tag in (elfeed-entry-tags entry)
                  unless (memq tag tags) collect tag)))
+
+(defun elfeed-tag (entry-or-entry-list &rest tags)
+  "Add TAGS to ENTRY-OR-ENTRY-LIST and run `elfeed-tag-hooks'."
+  (let* ((entries (if (elfeed-entry-p entry-or-entry-list)
+                      (list entry-or-entry-list)
+                    entry-or-entry-list)))
+    (run-hook-with-args 'elfeed-tag-hooks entries tags)
+    (cl-loop for entry in entries do (apply #'elfeed-tag-1 entry tags))))
+
+(defun elfeed-untag (entry-or-entry-list &rest tags)
+  "Remove TAGS from ENTRY-OR-ENTRY-LIST and run `elfeed-untag-hooks'."
+  (let* ((entries (if (elfeed-entry-p entry-or-entry-list)
+                      (list entry-or-entry-list)
+                    entry-or-entry-list)))
+    (run-hook-with-args 'elfeed-untag-hooks entries tags)
+    (cl-loop for entry in entries do (apply #'elfeed-untag-1 entry tags))))
 
 (defun elfeed-tagged-p (tag entry)
   "Return true if ENTRY is tagged by TAG."

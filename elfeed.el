@@ -207,6 +207,16 @@ found.")
 Receivers may want to, say, update a display to indicate that
 updates are pending.")
 
+(defvar elfeed-tag-hooks ()
+  "Hooks called when one or more entries add tags.
+It is called with 2 arguments. The first argument is the entry
+list. The second argument is the tag list.")
+
+(defvar elfeed-untag-hooks ()
+  "Hooks called when one or more entries remove tags.
+It is called with 2 arguments. The first argument is the entry
+list. The second argument is the tag list.")
+
 (defvar elfeed--inhibit-update-init-hooks nil
   "When non-nil, don't run `elfeed-update-init-hooks'.")
 
@@ -245,6 +255,11 @@ updates are pending.")
   (if elfeed-use-curl
       elfeed-curl-timeout
     url-queue-timeout))
+
+(defun elfeed-is-status-error (status use-curl)
+  "Check if HTTP request returned status means a error."
+  (or (and use-curl (null status)) ; nil = error
+      (and (not use-curl) (eq (car status) :error))))
 
 (defmacro elfeed-with-fetch (url &rest body)
   "Asynchronously run BODY in a buffer with the contents from URL.
@@ -519,8 +534,7 @@ Only a list of strings will be returned."
   (unless elfeed--inhibit-update-init-hooks
     (run-hooks 'elfeed-update-init-hooks))
   (elfeed-with-fetch url
-    (if (or (and use-curl (null status)) ; nil = error
-            (and (not use-curl) (eq (car status) :error)))
+    (if (elfeed-is-status-error status use-curl)
         (let ((print-escape-newlines t))
           (elfeed-handle-http-error
            url (if use-curl elfeed-curl-error-message status)))

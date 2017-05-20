@@ -638,7 +638,7 @@ browser defined by `browse-url-generic-program'."
          (links (mapcar #'elfeed-entry-link entries))
          (links-str (mapconcat #'identity links " ")))
     (when entries
-      (cl-loop for entry in entries do (elfeed-untag entry 'unread))
+      (elfeed-untag entries 'unread)
       (kill-new links-str)
       (if (fboundp 'gui-set-selection)
           (gui-set-selection elfeed-search-clipboard-type links-str)
@@ -652,7 +652,7 @@ browser defined by `browse-url-generic-program'."
   "Apply TAG to all selected entries."
   (interactive (list (intern (read-from-minibuffer "Tag: "))))
   (let ((entries (elfeed-search-selected)))
-    (cl-loop for entry in entries do (elfeed-tag entry tag))
+    (elfeed-tag entries tag)
     (mapc #'elfeed-search-update-entry entries)
     (unless (use-region-p) (forward-line))))
 
@@ -660,18 +660,20 @@ browser defined by `browse-url-generic-program'."
   "Remove TAG from all selected entries."
   (interactive (list (intern (read-from-minibuffer "Tag: "))))
   (let ((entries (elfeed-search-selected)))
-    (cl-loop for entry in entries do (elfeed-untag entry tag))
+    (elfeed-untag entries tag)
     (mapc #'elfeed-search-update-entry entries)
     (unless (use-region-p) (forward-line))))
 
 (defun elfeed-search-toggle-all (tag)
   "Toggle TAG on all selected entries."
   (interactive (list (intern (read-from-minibuffer "Tag: "))))
-  (let ((entries (elfeed-search-selected)))
+  (let ((entries (elfeed-search-selected)) entries-tag entries-untag)
     (cl-loop for entry in entries
              when (elfeed-tagged-p tag entry)
-             do (elfeed-untag entry tag)
-             else do (elfeed-tag entry tag))
+             do (push entry entries-untag)
+             else do (push entry entries-tag))
+    (elfeed-tag entries-tag tag)
+    (elfeed-untag entries-untag tag)
     (mapc #'elfeed-search-update-entry entries)
     (unless (use-region-p) (forward-line))))
 
