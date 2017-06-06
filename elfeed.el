@@ -596,6 +596,18 @@ Only a list of strings will be returned."
     (customize-save-variable 'elfeed-feeds elfeed-feeds))
   (elfeed-update-feed url))
 
+(defun elfeed-apply-autotags-all ()
+  "Applay autotags to all entries with the latest rules."
+  (interactive)
+  (let ((entries (cl-loop for entry hash-values of elfeed-db-entries
+                          collect entry)))
+    (dolist (entry entries)
+      (when (elfeed-entry-date entry)
+        (let ((feed (elfeed-entry-feed-id entry)))
+          (apply #'elfeed-tag entry (elfeed-feed-autotags feed))
+          )))
+    (message "Apply autotags for all entries done")))
+
 ;;;###autoload
 (defun elfeed-update ()
   "Update all the feeds in `elfeed-feeds'."
