@@ -63,6 +63,7 @@ Defaults to `elfeed-kill-buffer'.")
       (define-key map "\e\t" 'shr-previous-link)
       (define-key map [backtab] 'shr-previous-link)
       (define-key map [mouse-2] 'shr-browse-url)
+      (define-key map "A" 'elfeed-show-add-enclosure-to-playlist)
       (define-key map "P" 'elfeed-show-play-enclosure)))
   "Keymap for `elfeed-show-mode'.")
 
@@ -391,6 +392,22 @@ If ENCLOSURE-INDEX is nil ask for the enclosure number."
 	;; FIXME: is there a better way of doing this?
 	(emms-stop)
 	(emms-start)))))
+
+
+(defun elfeed-show-add-enclosure-to-playlist (&optional entry enclosure-index)
+  "Play enclosure number ENCLOSURE-INDEX from ENTRY using emms.
+If ENTRY is nil use the elfeed-show-entry variable.
+If ENCLOSURE-INDEX is nil ask for the enclosure number."
+  (interactive)
+  (require 'emms) ;; optional
+  (let* ((entry (or entry elfeed-show-entry))
+         (enclosure-index (or enclosure-index
+                              (elfeed--get-enclosure-num
+                               "Enclosure to add" entry)))
+         (url-enclosure (car (elt (elfeed-entry-enclosures entry)
+                                  (- enclosure-index 1)))))
+    (with-no-warnings ;; due to lazy (require )
+      (emms-add-url url-enclosure))))
 
 (provide 'elfeed-show)
 
