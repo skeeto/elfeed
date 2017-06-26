@@ -15,6 +15,27 @@
 (require 'url-parse)
 (require 'url-util)
 
+(defmacro elfeed--defstruct (name _doc &rest fields)
+  "Like a simplified `cl-defstruct', but with the pre-Emacs 26 format."
+  (declare (indent defun))
+  `(progn
+     ;; Constructor
+     (cl-defun ,(intern (format "%s--create" name)) (&key ,@fields)
+       (vector ',(intern (format "cl-struct-%s" name)) ,@fields))
+     ;; Predicate
+     (defun ,(intern (format "%s-p" name)) (thing)
+       (and (vectorp thing)
+            (= (length thing) ,(1+ (length fields)))
+            (eq (aref thing 0) ',(intern (format "cl-struct-%s" name)))))
+     ;; Accessors
+     ,@(cl-loop for field in fields
+                for n upfrom 1
+                for accessor = (intern (format "%s-%s" name field))
+                collect `(defsubst ,accessor (thing)
+                           (aref thing ,n))
+                collect `(gv-define-setter ,accessor (value thing)
+                           (list 'setf (list 'aref thing ,n) value)))))
+
 (defun elfeed-expose (function &rest args)
   "Return an interactive version of FUNCTION, 'exposing' it to the user."
   (lambda () (interactive) (apply function args)))

@@ -79,11 +79,11 @@ the :last-update time is updated.")
 
 ;; Data model:
 
-(cl-defstruct (elfeed-feed (:constructor elfeed-feed--create))
+(elfeed--defstruct elfeed-feed
   "A web feed, contains elfeed-entry structs."
   id url title author meta)
 
-(cl-defstruct (elfeed-entry (:constructor elfeed-entry--create))
+(elfeed--defstruct elfeed-entry
   "A single entry from a feed, normalized towards Atom."
   id title link date content content-type enclosures tags feed-id meta)
 
@@ -383,7 +383,8 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
 (defvar elfeed-ref-cache nil
   "Temporary storage of the full archive content.")
 
-(cl-defstruct (elfeed-ref (:constructor elfeed-ref--create))
+(elfeed--defstruct elfeed-ref
+  "A reference to a blob of data in the database."
   id)
 
 (defun elfeed-ref--file (ref)
