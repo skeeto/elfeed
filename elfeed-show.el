@@ -380,19 +380,18 @@ If ENCLOSURE-INDEX is nil ask for the enclosure number."
                                "Enclosure to play" entry)))
          (url-enclosure (car (elt (elfeed-entry-enclosures entry)
                                   (- enclosure-index 1)))))
-    (with-no-warnings ;; due to lazy (require )
+    (with-no-warnings ;; due to lazy (require)
       (with-current-emms-playlist
-	(let ((old-pos (point-max)))
-	  (emms-add-url url-enclosure)
-	  (goto-char old-pos)
-	  ;; if we're sitting on a group name, move forward
-	  (unless (emms-playlist-track-at (point))
-	    (emms-playlist-next))
-	  (emms-playlist-select (point)))
-	;; FIXME: is there a better way of doing this?
-	(emms-stop)
-	(emms-start)))))
-
+       (let ((old-pos (point-max)))
+         (emms-add-url url-enclosure)
+         (goto-char old-pos)
+         ;; if we're sitting on a group name, move forward
+         (unless (emms-playlist-track-at (point))
+           (emms-playlist-next))
+         (emms-playlist-select (point)))
+       ;; FIXME: is there a better way of doing this?
+       (emms-stop)
+       (emms-start)))))
 
 (defun elfeed-show-add-enclosure-to-playlist (&optional entry enclosure-index)
   "Play enclosure number ENCLOSURE-INDEX from ENTRY using emms.
