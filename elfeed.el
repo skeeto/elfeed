@@ -19,6 +19,11 @@
 
 ;;; History:
 
+;; Version 2.2.0:
+;;   * Support for org links (elfeed-link.el)
+;;   * Added `elfeed-db-unload'
+;;   * New `elfeed-curl-retrieve' interface (breaking changes)
+;;   * New hooks `elfeed-tag-hooks' and `elfeed-untag-hooks'
 ;; Version 2.1.1: fixes and some features
 ;;   * Added `elfeed-show-entry-author' customization variable.
 ;;   * Added `elfeed-search-unparse-filter'.
@@ -135,7 +140,7 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "2.1.1")
+(defconst elfeed-version "2.2.0")
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow.
