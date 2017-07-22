@@ -8,7 +8,10 @@
 (require 'elfeed-lib)
 (require 'jka-compr)
 
-(defvar elfeed-test-random-state [cl-random-state-tag -1 30 267466518]
+(defvar elfeed-test-random-state
+  (if (functionp 'record) ; Emacs 26 or later?
+      (record 'cl--random-state -1 30 267466518)
+    (vector 'cl-random-state-tag -1 30 267466518))
   "Use the same random state for each run.")
 
 (defun elfeed-random* (x)
