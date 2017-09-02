@@ -34,9 +34,8 @@ of available props."
                         (car (elfeed-entry-id elfeed-show-entry))
                         (cdr (elfeed-entry-id elfeed-show-entry)))
           :description (elfeed-entry-title elfeed-show-entry)
-           (cl-loop for (prop) in (cdr (plist-get
-                                        (symbol-plist 'elfeed-entry)
-                                        'cl-struct-slots))
+           (cl-loop for prop in
+                    (list 'id 'title 'link 'date 'content 'content-type 'enclosures 'tags 'feed-id 'meta)
                     nconc (list
                            (intern (concat ":elfeed-entry-" (symbol-name prop)))
                            (funcall
