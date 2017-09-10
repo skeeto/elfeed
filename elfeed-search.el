@@ -31,9 +31,25 @@
   :type 'string)
 
 (defcustom elfeed-sort-order 'descending
-  "The order in which entries should be displayed, by time."
+  "The order in which entries should be displayed.
+
+Changing this from the default will lead to misleading results
+during live filter editing, but the results be will correct when
+live filter editing is exited. "
   :group 'elfeed
   :type '(choice (const descending) (const ascending)))
+
+(defcustom elfeed-search-sort-function nil
+  "Sort predicate applied to the list of entries before display.
+
+This function must take two entries as arguments, an interface
+suitable as the predicate for `sort'.
+
+Changing this from the default will lead to misleading results
+during live filter editing, but the results be will correct when
+live filter editing is exited."
+  :group 'elfeed
+  :type '(choice function (const nil)))
 
 (defcustom elfeed-search-clipboard-type 'PRIMARY
   "Selects the clipboard `elfeed-search-yank' should use.
@@ -530,10 +546,14 @@ expression, matching against entry link, title, and feed title."
           (setf (cdr tail) (list entry)
                 tail (cdr tail)
                 count (1+ count)))))
-    (setf elfeed-search-entries
-          (if (eq elfeed-sort-order 'ascending)
-              (nreverse (cdr head))
-            (cdr head)))))
+    ;; Determine the final list order
+    (let ((entries (cdr head)))
+      (when elfeed-search-sort-function
+        (setf entries (sort entries elfeed-search-sort-function)))
+      (when (eq elfeed-sort-order 'ascending)
+        (setf entries (nreverse entries)))
+      (setf elfeed-search-entries
+            entries))))
 
 (defmacro elfeed-save-excursion (&rest body)
   "Like `save-excursion', but by entry/line/column instead of point."
