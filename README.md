@@ -154,8 +154,12 @@ A component beginning with a `#` limits the total number of entries
 displayed to the number immediately following the symbol. For example,
 to limit the display to 20 entries: `#20`.
 
-All other components are treated as a regular expression, which means
-only entries matching this will be shown.
+A component beginning with a `=` is a regular expression matching the
+entry's feed (title or URL). Only entries belonging to a feed that
+match at least one of the `=` expressions will be shown.
+
+All other components are treated as a regular expression, and only
+entries matching it (title or URL) will be shown.
 
 Here are some example filters.
 
@@ -176,6 +180,10 @@ Only show the most recent 10 previously-read entries tagged as
 
 Only show unread entries not having `emacs` or `xemacs` in the title
 or link.
+
+* `+emacs =http://example.org/feed/`
+
+Only show entries tagged as `emacs` from a specific feed.
 
 #### Default Search Filter
 
