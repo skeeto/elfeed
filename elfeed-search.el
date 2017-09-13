@@ -332,7 +332,7 @@ The customization `elfeed-search-date-format' sets the formatting."
       (insert "(" tags-str ")"))))
 
 (defun elfeed-search-parse-filter (filter)
-  "Parse the elements of a search filter."
+  "Parse the elements of a search filter into a plist."
   (let ((must-have ())
         (must-not-have ())
         (after nil)
@@ -357,7 +357,18 @@ The customization `elfeed-search-date-format' sets the formatting."
                   (?# (setf limit (string-to-number (substring element 1))))
                   (otherwise (when (elfeed-valid-regexp-p element)
                                (push element matches)))))
-    (list after must-have must-not-have matches not-matches limit)))
+    `(,@(when after
+          (list :after after))
+      ,@(when must-have
+          (list :must-have must-have))
+      ,@(when must-not-have
+          (list :must-not-have must-not-have))
+      ,@(when matches
+          (list :matches matches))
+      ,@(when not-matches
+          (list :not-matches not-matches))
+      ,@(when limit
+          (list :limit limit)))))
 
 (defun elfeed-search--recover-units (seconds)
   "Pick a reasonable filter representation for SECONDS."
@@ -384,8 +395,12 @@ The customization `elfeed-search-date-format' sets the formatting."
 The time (@n-units-ago) filter may not exactly match the
 original, but will be equal in its effect."
   (let ((output ()))
-    (cl-destructuring-bind
-        (after must-have must-not-have matches not-matches limit) filter
+    (let ((after (plist-get filter :after))
+          (must-have (plist-get filter :must-have))
+          (must-not-have (plist-get filter :must-not-have))
+          (matches (plist-get filter :matches))
+          (not-matches (plist-get filter :not-matches))
+          (limit (plist-get filter :limit)))
       (when after
         (push (elfeed-search--recover-units after) output))
       (dolist (tag must-have)
@@ -400,7 +415,7 @@ original, but will be equal in its effect."
         (push (format "#%d" limit) output))
       (mapconcat #'identity (nreverse output) " "))))
 
-(defun elfeed-search-filter (filter entry feed &optional count)
+  (defun elfeed-search-filter (filter entry feed &optional count)
   "Return non-nil if ENTRY and FEED pass FILTER.
 
 COUNT is the total number of entries collected so far, for
@@ -409,8 +424,12 @@ filtering against a limit filter (ex. #10).
 See `elfeed-search-set-filter' for format/syntax documentation.
 This function must *only* be called within the body of
 `with-elfeed-db-visit' because it may perform a non-local exit."
-  (cl-destructuring-bind
-      (after must-have must-not-have matches not-matches limit) filter
+  (let ((after (plist-get filter :after))
+        (must-have (plist-get filter :must-have))
+        (must-not-have (plist-get filter :must-not-have))
+        (matches (plist-get filter :matches))
+        (not-matches (plist-get filter :not-matches))
+        (limit (plist-get filter :limit)))
     (let* ((tags (elfeed-entry-tags entry))
            (date (elfeed-entry-date entry))
            (age (- (float-time) date))
@@ -442,8 +461,12 @@ This function must *only* be called within the body of
 
 Executing a filter in bytecode form is generally faster than
 \"interpreting\" the filter with `elfeed-search-filter'."
-  (cl-destructuring-bind
-      (after must-have must-not-have matches not-matches limit) filter
+  (let ((after (plist-get filter :after))
+        (must-have (plist-get filter :must-have))
+        (must-not-have (plist-get filter :must-not-have))
+        (matches (plist-get filter :matches))
+        (not-matches (plist-get filter :not-matches))
+        (limit (plist-get filter :limit)))
     `(lambda (,(if (or after matches not-matches must-have must-not-have)
                    'entry
                  '_entry)
