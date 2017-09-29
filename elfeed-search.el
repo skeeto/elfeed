@@ -827,7 +827,8 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
 
 (defun elfeed-search-bookmark-make-record ()
   "Return a bookmark record for the current elfeed-search buffer."
-  (let ((tags (nth 1 (elfeed-search-parse-filter elfeed-search-filter))))
+  (let* ((filter (elfeed-search-parse-filter elfeed-search-filter))
+         (tags (plist-get filter :must-have)))
     `(,(format "elfeed %s" elfeed-search-filter)
       (location . ,elfeed-search-filter)
       (tags ,@(mapcar #'symbol-name tags))
