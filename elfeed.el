@@ -533,6 +533,11 @@ Only a list of strings will be returned."
   (run-hook-with-args 'elfeed-parse-error-hooks url error)
   (elfeed-log 'error "%s: %s" url error))
 
+(defun elfeed-update-all ()
+  "Update all feeds."
+  (interactive)
+  (mapc #'elfeed-update-feed (elfeed--shuffle (elfeed-feed-list))))
+
 (defun elfeed-update-feed (url)
   "Update a specific feed."
   (interactive (list (completing-read "Feed: " (elfeed-feed-list))))
@@ -611,7 +616,7 @@ called interactively, SAVE is set to t."
   (elfeed-log 'info "Elfeed update: %s"
               (format-time-string "%B %e %Y %H:%M:%S %Z"))
   (let ((elfeed--inhibit-update-init-hooks t))
-    (mapc #'elfeed-update-feed (elfeed--shuffle (elfeed-feed-list))))
+    (elfeed-update-all))
   (run-hooks 'elfeed-update-init-hooks)
   (elfeed-db-save))
 
