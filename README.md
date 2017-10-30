@@ -265,7 +265,7 @@ filter. Emacs automatically persists bookmarks across sessions.
 
 All feed and entry objects have plist where you can store your own
 arbitrary, [readable values][rd]. These values are automatically
-persisteted in the database. This metadata is accessed using the
+persisted in the database. This metadata is accessed using the
 polymorphic `elfeed-meta` function. It's setf-able.
 
 ~~~el
