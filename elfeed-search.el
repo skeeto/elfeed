@@ -25,6 +25,9 @@
 (defvar elfeed-search-last-update 0
   "The last time the buffer was redrawn in epoch seconds.")
 
+(defvar elfeed-search-update-hook ()
+  "List of functions to run immediately following a search buffer update.")
+
 (defcustom elfeed-search-filter "@6-months-ago +unread"
   "Query string filtering shown entries."
   :group 'elfeed
@@ -616,18 +619,19 @@ expression, matching against entry link, title, and feed title."
 When FORCE is non-nil, redraw even when the database hasn't changed."
   (interactive)
   (with-current-buffer (elfeed-search-buffer)
-    (if (or force (and (not elfeed-search-filter-active)
-                       (< elfeed-search-last-update (elfeed-db-last-update))))
-        (elfeed-save-excursion
-          (let ((inhibit-read-only t)
-                (standard-output (current-buffer)))
-            (erase-buffer)
-            (elfeed-search--update-list)
-            (dolist (entry elfeed-search-entries)
-              (funcall elfeed-search-print-entry-function entry)
-              (insert "\n"))
-            (insert "End of entries.\n")
-            (setf elfeed-search-last-update (float-time)))))))
+    (when (or force (and (not elfeed-search-filter-active)
+                         (< elfeed-search-last-update (elfeed-db-last-update))))
+      (elfeed-save-excursion
+        (let ((inhibit-read-only t)
+              (standard-output (current-buffer)))
+          (erase-buffer)
+          (elfeed-search--update-list)
+          (dolist (entry elfeed-search-entries)
+            (funcall elfeed-search-print-entry-function entry)
+            (insert "\n"))
+          (insert "End of entries.\n")
+          (setf elfeed-search-last-update (float-time))))
+      (run-hooks 'elfeed-search-update-hook))))
 
 (defun elfeed-search-fetch (prefix)
   "Update all feeds via `elfeed-update', or only visible feeds with PREFIX.
