@@ -361,6 +361,44 @@ This includes expanding e.g. 3-5 into 3,4,5.  If the letter
         url
       host)))
 
+(defun elfeed-protocol-feed-p (feed-url)
+  "Check if a FEED-URL contains extra protocol."
+  (eq 'string (type-of (elfeed-protocol-type feed-url))))
+
+(defun elfeed-protocol-type (feed-url)
+  "Get protocol type in FEED-URL, for example \"owncloud+https://user@pass:host.com:443\"
+will return \"owncloud\". If there is no valid protocol type in PORTO-URL, will
+return nil."
+  (let* ((urlobj (url-generic-parse-url feed-url))
+         (type (url-type urlobj))
+         (list (when type (split-string type "+"))))
+    (when (and list (eq 2 (length list)))
+      (elt list 0))))
+
+(defun elfeed-protocol-url (feed-url)
+  "Get protocol url in FEED-URL, for example \"owncloud+https://user@pass:host.com:443\"
+will return \"https://user@pass:host.com:443\". If there is no valid protocol
+type in PORTO-URL, will return nil."
+  (let ((proto-type (elfeed-protocol-type feed-url)))
+    (when proto-type
+      (replace-regexp-in-string
+       (regexp-quote (concat proto-type  "+")) "" feed-url))))
+
+(defun elfeed-protocol-update-func (proto-type)
+  "Get update function for special PROTO-TYPE."
+  (cdr (assoc proto-type elfeed-protocols)))
+
+(defun elfeed-protocol-register (proto-type update-func)
+  "Register a new protocol updater to `elfeed-protocols'."
+  (if (elfeed-protocol-update-func proto-type)
+      (setf (cdr (assoc proto-type elfeed-protocols)) update-func)
+    (add-to-list 'elfeed-protocols (cons proto-type update-func))))
+
+(defun elfeed-protocol-unregister (proto-type)
+  "Unregister a protocol updater from `elfeed-protocols'."
+  (setq elfeed-protocols
+        (delq (assoc proto-type elfeed-protocols) elfeed-protocols)))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here

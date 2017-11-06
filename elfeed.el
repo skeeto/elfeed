@@ -173,6 +173,19 @@ Each function should accept no arguments, and return a string or nil."
              elfeed-get-url-at-point
              elfeed-clipboard-get))
 
+(defcustom elfeed-protocols ()
+  "List of all registered extra protocols in Elfeed.
+
+Could be modified by `elfeed-protocol-register' and
+`elfeed-protocol-unregister'.
+
+For example,
+  (elfeed-protocol-register \"owncloud\" 'elfeed-protocol-owncloud-update)
+  (elfeed-protocol-unregister \"owncloud\")
+"
+  :group 'elfeed
+  :type '(repeat (cons string symbol)))
+
 (defcustom elfeed-use-curl
   (not (null (executable-find elfeed-curl-program-name)))
   "If non-nil, fetch feeds using curl instead of `url-retrieve'."
@@ -500,7 +513,9 @@ Only a list of strings will be returned."
   (dolist (feed elfeed-feeds)
     (unless (cl-typecase feed
               (list (and (stringp (car feed))
-                         (cl-every #'symbolp (cdr feed))))
+                         (if (not (elfeed-protocol-feed-p (car feed)))
+                             (cl-every #'symbolp (cdr feed))
+                           t)))
               (string t))
       (error "elfeed-feeds malformed, bad entry: %S" feed)))
   (cl-loop for feed in elfeed-feeds
@@ -513,7 +528,8 @@ Only a list of strings will be returned."
                  (or (elfeed-feed-url url-or-feed)
                      (elfeed-feed-id url-or-feed))
                url-or-feed)))
-    (mapcar #'elfeed-keyword->symbol (cdr (assoc url elfeed-feeds)))))
+    (unless (elfeed-protocol-feed-p url)
+      (mapcar #'elfeed-keyword->symbol (cdr (assoc url elfeed-feeds))))))
 
 (defun elfeed-apply-autotags-now ()
   "Apply autotags to existing entries according to `elfeed-feeds'."
@@ -538,38 +554,47 @@ Only a list of strings will be returned."
   (interactive (list (completing-read "Feed: " (elfeed-feed-list))))
   (unless elfeed--inhibit-update-init-hooks
     (run-hooks 'elfeed-update-init-hooks))
-  (elfeed-with-fetch url
-    (if (elfeed-is-status-error status use-curl)
-        (let ((print-escape-newlines t))
-          (elfeed-handle-http-error
-           url (if use-curl elfeed-curl-error-message status)))
-      (condition-case error
-          (let ((feed (elfeed-db-get-feed url)))
-            (unless use-curl
-              (elfeed-move-to-first-empty-line)
-              (set-buffer-multibyte t))
-            (unless (eql elfeed-curl-status-code 304)
-              ;; Update Last-Modified and Etag
-              (setf (elfeed-meta feed :last-modified)
-                    (cdr (assoc "last-modified" elfeed-curl-headers))
-                    (elfeed-meta feed :etag)
-                    (cdr (assoc "etag" elfeed-curl-headers)))
-              (if (equal url elfeed-curl-location)
-                  (setf (elfeed-meta feed :canonical-url) nil)
-                (setf (elfeed-meta feed :canonical-url) elfeed-curl-location))
-              (let* ((xml (elfeed-xml-parse-region (point) (point-max)))
-                     (entries (cl-case (elfeed-feed-type xml)
-                                (:atom (elfeed-entries-from-atom url xml))
-                                (:rss (elfeed-entries-from-rss url xml))
-                                (:rss1.0 (elfeed-entries-from-rss1.0 url xml))
-                                (otherwise
-                                 (error (elfeed-handle-parse-error
-                                         url "Unknown feed type."))))))
-                (elfeed-db-add entries))))
-        (error (elfeed-handle-parse-error url error))))
-    (unless use-curl
-      (kill-buffer))
-    (run-hook-with-args 'elfeed-update-hooks url)))
+  (if (elfeed-protocol-feed-p url)
+      (let* ((proto-type (elfeed-protocol-type url))
+             (update-func (elfeed-protocol-update-func proto-type)))
+        (if update-func
+            (progn
+              (funcall update-func (elfeed-protocol-url url))
+              (run-hook-with-args 'elfeed-update-hooks url))
+          (elfeed-log 'error "There is not updater for protocol %s"
+                      proto-type)))
+    (elfeed-with-fetch url
+      (if (elfeed-is-status-error status use-curl)
+          (let ((print-escape-newlines t))
+            (elfeed-handle-http-error
+             url (if use-curl elfeed-curl-error-message status)))
+        (condition-case error
+            (let ((feed (elfeed-db-get-feed url)))
+              (unless use-curl
+                (elfeed-move-to-first-empty-line)
+                (set-buffer-multibyte t))
+              (unless (eql elfeed-curl-status-code 304)
+                ;; Update Last-Modified and Etag
+                (setf (elfeed-meta feed :last-modified)
+                      (cdr (assoc "last-modified" elfeed-curl-headers))
+                      (elfeed-meta feed :etag)
+                      (cdr (assoc "etag" elfeed-curl-headers)))
+                (if (equal url elfeed-curl-location)
+                    (setf (elfeed-meta feed :canonical-url) nil)
+                  (setf (elfeed-meta feed :canonical-url) elfeed-curl-location))
+                (let* ((xml (elfeed-xml-parse-region (point) (point-max)))
+                       (entries (cl-case (elfeed-feed-type xml)
+                                  (:atom (elfeed-entries-from-atom url xml))
+                                  (:rss (elfeed-entries-from-rss url xml))
+                                  (:rss1.0 (elfeed-entries-from-rss1.0 url xml))
+                                  (otherwise
+                                   (error (elfeed-handle-parse-error
+                                           url "Unknown feed type."))))))
+                  (elfeed-db-add entries))))
+          (error (elfeed-handle-parse-error url error))))
+      (unless use-curl
+        (kill-buffer))
+        (run-hook-with-args 'elfeed-update-hooks url))))
 
 (defun elfeed-candidate-feeds ()
   "Return a list of possible feeds from `elfeed-feed-functions'."
