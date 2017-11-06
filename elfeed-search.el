@@ -117,6 +117,7 @@ When live editing the filter, it is bound to :live.")
       (define-key map "r" 'elfeed-search-untag-all-unread)
       (define-key map "n" 'next-line)
       (define-key map "p" 'previous-line)
+      (define-key map "<" 'elfeed-search-toggle-feed-filter)
       (define-key map "+" 'elfeed-search-tag-all)
       (define-key map "-" 'elfeed-search-untag-all)))
   "Keymap for elfeed-search-mode.")
@@ -713,6 +714,27 @@ browser defined by `browse-url-generic-program'."
       (message "Copied: %s" links-str)
       (mapc #'elfeed-search-update-entry entries)
       (unless (use-region-p) (forward-line)))))
+
+(defun elfeed-search-toggle-feed-filter ()
+  "Toggle filter with current feed url."
+  (interactive)
+  (let* ((entry (elfeed-search-selected :ignore-region))
+         (feed (when entry (elfeed-entry-feed entry)))
+         (feed-url (when feed (elfeed-feed-url feed)))
+         (filter-keyword (when feed-url (concat "=" (regexp-quote feed-url)))))
+    (when filter-keyword
+      (if (string-match-p (regexp-quote filter-keyword) elfeed-search-filter)
+          (progn
+            (setq elfeed-search-filter
+                  (replace-regexp-in-string " +" " "
+                                            (replace-regexp-in-string
+                                             (regexp-quote filter-keyword) ""
+                                             elfeed-search-filter)))
+            (elfeed-search-update--force))
+        (progn
+          (setq elfeed-search-filter (concat elfeed-search-filter
+                                             " " filter-keyword))
+          (elfeed-search-update--force))))))
 
 (defun elfeed-search-tag-all (tag)
   "Apply TAG to all selected entries."
