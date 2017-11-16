@@ -566,7 +566,9 @@ expression, matching against entry link, title, and feed title."
             (if current-prefix-arg "" elfeed-search-filter)))))
   (with-current-buffer (elfeed-search-buffer)
     (setf elfeed-search-filter
-          (or new-filter (default-value 'elfeed-search-filter)))
+          (or (unless (string-empty-p new-filter)
+                new-filter)
+              (default-value 'elfeed-search-filter)))
     (elfeed-search-update :force)))
 
 (defun elfeed-search--update-list ()
