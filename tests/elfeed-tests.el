@@ -291,6 +291,49 @@
                   (cons namespace
                         "http://xml.com/pub/2000/08/09/rdfdb/index.html"))))))))
 
+(ert-deftest elfeed-protocol-relative-url ()
+  (with-elfeed-test
+    (with-temp-buffer
+      (insert elfeed-test-rss)
+      (setf (point) (point-min))
+      (while (search-forward "http://" nil t)
+        (replace-match "//" nil t))
+      (setf (point) (point-min))
+      (let ((xml (elfeed-xml-parse-region)))
+        (cl-destructuring-bind (a b)
+            (elfeed-entries-from-rss "http://example.com/" xml)
+          (should (equal (elfeed-entry-link a)
+                         "http://nullprogram.com/"))
+          (should (equal (elfeed-entry-link b)
+                         "http://www.wikipedia.org/")))
+        (cl-destructuring-bind (a b)
+            (elfeed-entries-from-rss "https://example.com/" xml)
+          (should (equal (elfeed-entry-link a)
+                         "https://nullprogram.com/"))
+          (should (equal (elfeed-entry-link b)
+                         "https://www.wikipedia.org/")))))
+    (with-temp-buffer
+      (insert elfeed-test-atom)
+      (setf (point) (point-min))
+      (while (search-forward "base=\"http://" nil t)
+        (replace-match "base=\"//" nil t))
+      (setf (point) (point-min))
+      (let ((xml (elfeed-xml-parse-region)))
+        (cl-destructuring-bind (a b)
+            (elfeed-entries-from-atom "http://example.com/" xml)
+          (should (equal (elfeed-entry-link a)
+                         ;; inherited protocol-relative from xml:base
+                         "http://example.org/2003/atom03.html"))
+          (should (equal (elfeed-entry-link b)
+                         "http://example.org/2004/12/13/atom03.html")))
+        (cl-destructuring-bind (a b)
+            (elfeed-entries-from-atom "https://example.com/" xml)
+          (should (equal (elfeed-entry-link a)
+                         ;; inherited protocol-relative from xml:base
+                         "https://example.org/2003/atom03.html"))
+          (should (equal (elfeed-entry-link b)
+                         "http://example.org/2004/12/13/atom03.html")))))))
+
 (ert-deftest elfeed-xml-base ()
   (with-elfeed-test
     (with-temp-buffer

@@ -337,9 +337,17 @@ Take three arguments: the feed TYPE, the XML structure for the
 entry, and the Elfeed ENTRY object. Return value is ignored, and
 is called for side-effects on the ENTRY object.")
 
+(defsubst elfeed--fixup-protocol (protocol url)
+  "Prepend PROTOCOL to URL if it is protocol-relative.
+If PROTOCOL is nil, returns URL."
+  (if (and protocol (string-match-p "^//[^/]" url))
+      (concat protocol ":" url)
+    url))
+
 (defun elfeed-entries-from-atom (url xml)
   "Turn parsed Atom content into a list of elfeed-entry structs."
   (let* ((feed-id url)
+         (protocol (url-type (url-generic-parse-url url)))
          (namespace (elfeed-url-to-namespace url))
          (feed (elfeed-db-get-feed feed-id))
          (title (elfeed-cleanup (xml-query* (feed title *) xml)))
@@ -355,8 +363,10 @@ is called for side-effects on the ENTRY object.")
                                xml-base (xml-query* (:base) (list entry))))
                     (anylink (xml-query* (link :href) entry))
                     (altlink (xml-query* (link [rel "alternate"] :href) entry))
-                    (link (elfeed-update-location
-                           xml-base (or altlink anylink)))
+                    (link (elfeed--fixup-protocol
+                           protocol
+                           (elfeed-update-location xml-base
+                                                   (or altlink anylink))))
                     (date (or (xml-query* (published *) entry)
                               (xml-query* (updated *) entry)
                               (xml-query* (date *) entry)
@@ -407,6 +417,7 @@ is called for side-effects on the ENTRY object.")
 (defun elfeed-entries-from-rss (url xml)
   "Turn parsed RSS content into a list of elfeed-entry structs."
   (let* ((feed-id url)
+         (protocol (url-type (url-generic-parse-url url)))
          (namespace (elfeed-url-to-namespace url))
          (feed (elfeed-db-get-feed feed-id))
          (title (elfeed-cleanup (xml-query* (rss channel title *) xml)))
@@ -416,7 +427,9 @@ is called for side-effects on the ENTRY object.")
     (cl-loop for item in (xml-query-all* (rss channel item) xml) collect
              (let* ((title (or (xml-query* (title *) item) ""))
                     (guid (xml-query* (guid *) item))
-                    (link (or (xml-query* (link *) item) guid))
+                    (link (elfeed--fixup-protocol
+                           protocol
+                           (or (xml-query* (link *) item) guid)))
                     (date (or (xml-query* (pubDate *) item)
                               (xml-query* (date *) item)))
                     (author (or (xml-query* (author *) item)
