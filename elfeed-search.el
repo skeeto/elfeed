@@ -782,6 +782,7 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
     (prog1 table
       (modify-syntax-entry ?+ "w" table)
       (modify-syntax-entry ?- "w" table)
+      (modify-syntax-entry ?= "w" table)
       (modify-syntax-entry ?@ "w" table)))
   "Syntax table active when editing the filter in the minibuffer.")
 
