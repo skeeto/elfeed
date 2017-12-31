@@ -275,6 +275,10 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
         (prin1 elfeed-db)
         :success))))
 
+(defun elfeed-db-save-safe ()
+  "Run `elfeed-db-save' without triggering any errors, for use as a safe hook."
+  (ignore-errors (elfeed-db-save)))
+
 (defun elfeed-db-upgrade ()
   "Upgrade the database from a previous format."
   (let ((entries (cl-loop for entry hash-values of elfeed-db-entries
@@ -550,7 +554,7 @@ gzip-compressed files, so the gzip program must be in your PATH."
 
 (unless noninteractive
   (add-hook 'kill-emacs-hook #'elfeed-db-gc-safe :append)
-  (add-hook 'kill-emacs-hook #'elfeed-db-save))
+  (add-hook 'kill-emacs-hook #'elfeed-db-save-safe))
 
 (provide 'elfeed-db)
 
