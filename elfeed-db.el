@@ -298,27 +298,60 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
   (setf elfeed-db (plist-put elfeed-db :version elfeed-db-version))
   elfeed-db-version)
 
+(defun elfeed-db--create-empty ()
+  "Return a new, empty database."
+  `(:version ,elfeed-db-version
+    :feeds ,(make-hash-table :test 'equal)
+    :entries ,(make-hash-table :test 'equal)
+    :index ,(avl-tree-create #'elfeed-db-compare)))
+
+(defun elfeed-db--valid-p (db)
+  "Return non-nil of DB looks to be a valid database."
+  (let ((feeds (plist-get db :feeds))
+        (entries (plist-get db :entries))
+        (index (plist-get db :index)))
+    (and (hash-table-p feeds)
+         (cl-loop for url hash-keys of feeds
+                  using (hash-values feed)
+                  unless (stringp url) return nil
+                  unless (elfeed-feed-p feed) return nil
+                  finally return t)
+         (hash-table-p entries)
+         (cl-loop for id hash-keys of entries
+                  using (hash-values entry)
+                  collect id
+                  unless (stringp (car id)) return nil
+                  unless (stringp (cdr id)) return nil
+                  unless (elfeed-entry-p entry) return nil
+                  finally return t)
+         (avl-tree-p index)
+         (catch 'elfeed-validate
+           (prog1 t
+             (avl-tree-mapc (lambda (id)
+                              (when (or (not (stringp (car id)))
+                                        (not (stringp (cdr id))))
+                                (throw 'elfeed-validate (cons id :fail))))
+                            index))))))
+
 (defun elfeed-db-load ()
   "Load the database index from the filesystem."
   (let ((index (expand-file-name "index" elfeed-db-directory))
+        (db nil)
         (enable-local-variables nil)) ; don't set local variables from index!
-    (if (not (file-exists-p index))
-        (setf elfeed-db
-              `(:version ,elfeed-db-version
-                :feeds ,(make-hash-table :test 'equal)
-                :entries ,(make-hash-table :test 'equal)
-                ;; Compiler may warn about this (bug#15327):
-                :index ,(avl-tree-create #'elfeed-db-compare)))
-      (with-current-buffer (find-file-noselect index :nowarn)
-        (goto-char (point-min))
-        (setf elfeed-db (read (current-buffer)))
+    (with-current-buffer (find-file-noselect index :nowarn)
+      (goto-char (point-min))
+      (unwind-protect
+          (setf db (ignore-errors (read (current-buffer))))
         (kill-buffer)))
-    (setf elfeed-db-feeds (plist-get elfeed-db :feeds)
-          elfeed-db-entries (plist-get elfeed-db :entries)
-          elfeed-db-index (plist-get elfeed-db :index)
+    (unless (elfeed-db--valid-p db)
+      (setf db (elfeed-db--create-empty)))
+    (setf elfeed-db db
+          elfeed-db-feeds (plist-get db :feeds)
+          elfeed-db-entries (plist-get db :entries)
+          elfeed-db-index (plist-get db :index)
           ;; Internal function use required for security!
           (avl-tree--cmpfun elfeed-db-index) #'elfeed-db-compare)
-    (when (version< (or (plist-get elfeed-db :version) "0") elfeed-db-version)
+    (when (version< (or (plist-get db :version) "0") elfeed-db-version)
       (elfeed-db-upgrade))))
 
 (defun elfeed-db-unload ()
