@@ -309,10 +309,17 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
                 :entries ,(make-hash-table :test 'equal)
                 ;; Compiler may warn about this (bug#15327):
                 :index ,(avl-tree-create #'elfeed-db-compare)))
-      (with-current-buffer (find-file-noselect index :nowarn)
-        (goto-char (point-min))
-        (setf elfeed-db (read (current-buffer)))
-        (kill-buffer)))
+      ;; Override the default value for major-mode. There is no
+      ;; preventing find-file-noselect from starting the default major
+      ;; mode while also having it handle buffer conversion. Some
+      ;; major modes crash Emacs when enabled in large buffers (e.g.
+      ;; org-mode). This includes the Elfeed index, so we must not let
+      ;; this happen.
+      (cl-letf (((default-value 'major-mode) 'fundamental-mode))
+        (with-current-buffer (find-file-noselect index :nowarn)
+          (goto-char (point-min))
+          (setf elfeed-db (read (current-buffer)))
+          (kill-buffer))))
     (setf elfeed-db-feeds (plist-get elfeed-db :feeds)
           elfeed-db-entries (plist-get elfeed-db :entries)
           elfeed-db-index (plist-get elfeed-db :index)
