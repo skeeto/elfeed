@@ -340,7 +340,7 @@ is called for side-effects on the ENTRY object.")
 (defsubst elfeed--fixup-protocol (protocol url)
   "Prepend PROTOCOL to URL if it is protocol-relative.
 If PROTOCOL is nil, returns URL."
-  (if (and protocol (string-match-p "^//[^/]" url))
+  (if (and protocol url (string-match-p "^//[^/]" url))
       (concat protocol ":" url)
     url))
 
