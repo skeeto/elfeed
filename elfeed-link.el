@@ -12,7 +12,9 @@
 
 (require 'org)
 (require 'cl-lib)
-(require 'elfeed)
+(require 'elfeed-db)
+(require 'elfeed-show)
+(require 'elfeed-search)
 
 (defun elfeed-link-store-link ()
   "Store a link to an elfeed search or entry buffer.

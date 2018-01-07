@@ -734,8 +734,10 @@ saved to your customization file."
 (provide 'elfeed)
 
 (cl-eval-when (load eval)
-  (require 'elfeed-csv)
-  (require 'elfeed-show)
-  (require 'elfeed-search))
+  ;; run-time only, so don't load when compiling other files
+  (unless byte-compile-root-dir
+    (require 'elfeed-csv)
+    (require 'elfeed-show)
+    (require 'elfeed-search)))
 
 ;;; elfeed.el ends here
