@@ -23,10 +23,18 @@ clean:
 	rm -f *.tar $(EL:.el=.elc) $(TEST:.el=.elc)
 
 elfeed-$(VERSION).tar: $(EL) $(DOC)
-	tar -cf $@ --transform "s,^,elfeed-$(VERSION)/," $(EL) $(DOC)
+	rm -rf elfeed-$(VERSION)/
+	mkdir elfeed-$(VERSION)/
+	cp $(EL) $(DOC) elfeed-$(VERSION)/
+	tar cf $@ elfeed-$(VERSION)/
+	rm -rf elfeed-$(VERSION)/
 
 elfeed-web-$(VERSION).tar: $(WEB)
-	tar -cf $@ --transform "s,^web/,elfeed-web-$(VERSION)/," $(WEB)
+	rm -rf elfeed-web-$(VERSION)/
+	mkdir elfeed-web-$(VERSION)/
+	cp $(WEB) elfeed-web-$(VERSION)/
+	tar cf $@ elfeed-web-$(VERSION)/
+	rm -rf elfeed-web-$(VERSION)/
 
 elfeed-csv.elc: elfeed-csv.el elfeed-db.elc
 elfeed-curl.elc: elfeed-curl.el elfeed-lib.elc elfeed-log.elc
