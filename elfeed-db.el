@@ -332,7 +332,9 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
       (elfeed-db-upgrade))))
 
 (defun elfeed-db-unload ()
-  "Unload the database so that it can be operated on externally."
+  "Unload the database so that it can be operated on externally.
+
+Runs `elfeed-db-unload-hook' after unloading the database."
   (interactive)
   (elfeed-db-save)
   (setf elfeed-db nil
