@@ -77,6 +77,9 @@ This is a chance to add custom tags to new entries.")
   "Functions in this list are called with no arguments any time
 the :last-update time is updated.")
 
+(defvar elfeed-db-unload-hook ()
+  "Hook to run immediately after `elfeed-db-unload'.")
+
 ;; Data model:
 
 (cl-defstruct (elfeed-feed (:constructor elfeed-feed--create))
@@ -335,7 +338,8 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
   (setf elfeed-db nil
         elfeed-db-feeds nil
         elfeed-db-entries nil
-        elfeed-db-index nil))
+        elfeed-db-index nil)
+  (run-hooks 'elfeed-db-unload-hook))
 
 (defun elfeed-db-ensure ()
   "Ensure that the database has been loaded."
