@@ -386,6 +386,7 @@ results will not."
   (with-current-buffer (generate-new-buffer " *curl*")
     (setf elfeed-curl--token (elfeed-curl--token))
     (let* ((coding-system-for-read 'binary)
+           (process-connection-type nil)
            (args (elfeed-curl--args url elfeed-curl--token headers method data))
            (process (apply #'start-process "elfeed-curl" (current-buffer)
                            elfeed-curl-program-name args)))
