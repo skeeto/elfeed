@@ -19,6 +19,16 @@
 
 ;;; History:
 
+;; Version 2.3.0:
+;;   * New =<feed-matcher> syntax in search filters
+;;   * Support for protocol-relative entry links (i.e. //example.com/foo/)
+;;   * New `elfeed-add-feed' :save key argument
+;;   * New plist-based parsed search filter format
+;;   * New hook: `elfeed-search-update-hook'
+;;   * New hook: `elfeed-db-unload-hook'
+;;   * New variable: `elfeed-search-sort-function'
+;;   * Connect curl with a pipe instead of a pty: performance boost
+;;   * Minor bug fixes
 ;; Version 2.2.0:
 ;;   * Support for org links (elfeed-link.el)
 ;;   * Added `elfeed-db-unload'
@@ -140,7 +150,7 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "2.2.0")
+(defconst elfeed-version "2.3.0")
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow.
