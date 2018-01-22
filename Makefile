@@ -14,6 +14,7 @@ TEST = tests/elfeed-db-tests.el tests/elfeed-lib-tests.el	\
 
 compile: $(EL:.el=.elc) $(TEST:.el=.elc)
 
+check: test
 test: $(EL:.el=.elc) $(TEST:.el=.elc)
 	$(BATCH) -l tests/elfeed-tests.elc -f ert-run-tests-batch
 
