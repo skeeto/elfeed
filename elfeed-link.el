@@ -58,7 +58,7 @@ search buffer or show a concrete entry."
 
 ;; Register Elfeed with Org
 (if (version< (org-version) "9.0")
-    (progn
+    (with-no-warnings
       (org-add-link-type "elfeed" #'elfeed-link-open)
       (add-hook 'org-store-link-functions #'elfeed-link-store-link))
   (with-no-warnings
