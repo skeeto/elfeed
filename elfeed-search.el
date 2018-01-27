@@ -101,11 +101,17 @@ When live editing the filter, it is bound to :live.")
   (elfeed-expose #'elfeed-search-update :force)
   "Force refresh view of the feed listing.")
 
+(defun elfeed-search-quit-window ()
+  "Save the database, then `quit-window'."
+  (interactive)
+  (elfeed-db-save)
+  (quit-window))
+
 (defvar elfeed-search-mode-map
   (let ((map (make-sparse-keymap)))
     (prog1 map
       (suppress-keymap map)
-      (define-key map "q" 'quit-window)
+      (define-key map "q" 'elfeed-search-quit-window)
       (define-key map "g" 'elfeed-search-update--force)
       (define-key map "G" 'elfeed-search-fetch)
       (define-key map (kbd "RET") 'elfeed-search-show-entry)
