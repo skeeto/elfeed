@@ -77,7 +77,7 @@ database with entries.
         "http://planet.emacsen.org/atom.xml"))
 ```
 
-Another option for providing a feel list is with an OPML file. Running
+Another option for providing a feed list is with an OPML file. Running
 `M-x elfeed-load-opml` will fill `elfeed-feeds` with feeds listed in
 an OPML file. When `elfeed-load-opml` is called interactively, it will
 automatically save the feedlist to your customization file, so you
