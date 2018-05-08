@@ -226,18 +226,6 @@
                    (content (elfeed-deref (elfeed-entry-content entry))))
                (should (string= title content))))))))))
 
-(ert-deftest elfeed-db-upgrade ()
-  (with-elfeed-test
-    (elfeed-db-ensure)
-    (let* ((url (elfeed-test-generate-url))
-           (feed (elfeed-db-get-feed url))
-           (entry (elfeed-test-generate-entry feed))
-           (entry-id (elfeed-entry-id entry)))
-      (setf (elfeed-entry-id entry) (cons url (cdr entry-id)))
-      (elfeed-db-add (list entry))
-      (elfeed-db-upgrade)
-      (should (equal (elfeed-entry-id entry) entry-id)))))
-
 (ert-deftest elfeed-db-meta ()
   (with-elfeed-test
    (let* ((feed (elfeed-db-get-feed (elfeed-test-generate-url)))

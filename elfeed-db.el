@@ -66,7 +66,11 @@
 (defvar elfeed-db-index nil
   "Collection of all entries sorted by date, part of `elfeed-db'.")
 
-(defvar elfeed-db-version "0.0.3"
+(defvar elfeed-db-version
+  ;; If records are avaiable (Emacs 26), use the newer database format
+  (if (functionp 'record)
+      4
+    "0.0.3")
   "The database version this version of Elfeed expects to use.")
 
 (defvar elfeed-new-entry-hook ()
@@ -275,6 +279,13 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
             (print-level nil)
             (print-length nil)
             (print-circle nil))
+        (princ (format ";;; Elfeed Database Index (version %s)\n\n"
+                       elfeed-db-version))
+        (when (eql elfeed-db-version 4)
+          ;; Put empty dummy index in front
+          (princ ";; Dummy index for backwards compatablity:\n")
+          (prin1 (elfeed-db--dummy))
+          (princ "\n\n;; Real index:\n"))
         (prin1 elfeed-db)
         :success))))
 
@@ -282,36 +293,86 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
   "Run `elfeed-db-save' without triggering any errors, for use as a safe hook."
   (ignore-errors (elfeed-db-save)))
 
-(defun elfeed-db-upgrade ()
+(defun elfeed-db-upgrade (db)
   "Upgrade the database from a previous format."
-  (let ((entries (cl-loop for entry hash-values of elfeed-db-entries
-                          collect entry)))
-    (clrhash elfeed-db-entries)
-    (avl-tree-clear elfeed-db-index)
-    (dolist (entry entries)
-      (when (elfeed-entry-date entry)
-        (let* ((id (elfeed-entry-id entry))
-               (id-0 (car id))
-               (id-1 (cdr id))
-               (namespace (elfeed-url-to-namespace id-0))
-               (new-id (cons namespace id-1)))
-          (setf (elfeed-entry-id entry) new-id
-                (gethash new-id elfeed-db-entries) entry)
-          (avl-tree-enter elfeed-db-index new-id)))))
-  (setf elfeed-db (plist-put elfeed-db :version elfeed-db-version))
-  elfeed-db-version)
+  (if (not (vectorp (plist-get db :index)))
+      db  ; Database is already in record format
+    (let* ((new-db (elfeed-db--empty))
+           ;; Dynamically bind for other functions
+           (elfeed-db-feeds (plist-get new-db :feeds))
+           (elfeed-db-entries (plist-get new-db :entries))
+           (elfeed-db-index (plist-get new-db :index)))
+      ;; Fix up feeds
+      (cl-loop with table = (plist-get new-db :feeds)
+               for feed hash-values of (plist-get db :feeds)
+               for id = (aref feed 1)
+               for fixed = (elfeed-feed--create
+                            :id id
+                            :url (aref feed 2)
+                            :title (aref feed 3)
+                            :author (aref feed 4)
+                            :meta (aref feed 5))
+               do (setf (gethash id table) fixed))
+      ;; Fix up entries
+      (cl-loop with table = (plist-get new-db :entries)
+               with index = (plist-get new-db :index)
+               for entry hash-values of (plist-get db :entries)
+               for id = (aref entry 1)
+               for content = (aref entry 5)
+               for fixed = (elfeed-entry--create
+                            :id id
+                            :title (aref entry 2)
+                            :link (aref entry 3)
+                            :date (aref entry 4)
+                            :content (if (vectorp content)
+                                         (elfeed-ref--create
+                                          :id (aref content 1))
+                                       content)
+                            :content-type (aref entry 6)
+                            :enclosures (aref entry 7)
+                            :tags (aref entry 8)
+                            :feed-id (aref entry 9)
+                            :meta (aref entry 10))
+               do (setf (gethash id table) fixed)
+               do (avl-tree-enter index id))
+      new-db)))
+
+(defun elfeed-db--empty ()
+  "Create an empty database object."
+  `(:version ,elfeed-db-version
+    :feeds ,(make-hash-table :test 'equal)
+    :entries ,(make-hash-table :test 'equal)
+    ;; Compiler may warn about this (bug#15327):
+    :index ,(avl-tree-create #'elfeed-db-compare)))
+
+(defun elfeed-db--dummy ()
+  "Create an empty dummy database for Emacs 25 and earlier."
+  (list :version "0.0.3"
+        :feeds #s(hash-table size 65
+                             test equal
+                             rehash-size 1.5
+                             rehash-threshold 0.8
+                             data ())
+        :entries #s(hash-table size 65
+                               test equal
+                               rehash-size 1.5
+                               rehash-threshold 0.8
+                               data ())
+        :index [cl-struct-avl-tree- [nil nil nil 0] elfeed-db-compare]))
+
+;; To cope with the incompatible struct changes in Emacs 26, Elfeed
+;; uses version 4 of the database format when run under Emacs 26. This
+;; version saves a dummy, empty index in front of the real database. A
+;; user going from Emacs 26 to Emacs 25 will quietly load an empty
+;; index since it's unreasonable to downgrade (would require rewriting
+;; the Emacs reader from scratch).
 
 (defun elfeed-db-load ()
   "Load the database index from the filesystem."
   (let ((index (expand-file-name "index" elfeed-db-directory))
         (enable-local-variables nil)) ; don't set local variables from index!
     (if (not (file-exists-p index))
-        (setf elfeed-db
-              `(:version ,elfeed-db-version
-                :feeds ,(make-hash-table :test 'equal)
-                :entries ,(make-hash-table :test 'equal)
-                ;; Compiler may warn about this (bug#15327):
-                :index ,(avl-tree-create #'elfeed-db-compare)))
+        (setf elfeed-db (elfeed-db--empty))
       ;; Override the default value for major-mode. There is no
       ;; preventing find-file-noselect from starting the default major
       ;; mode while also having it handle buffer conversion. Some
@@ -321,15 +382,26 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
       (cl-letf (((default-value 'major-mode) 'fundamental-mode))
         (with-current-buffer (find-file-noselect index :nowarn)
           (goto-char (point-min))
-          (setf elfeed-db (read (current-buffer)))
+          (if (eql elfeed-db-version 4)
+              ;; May need to skip over dummy database
+              (let ((db-1 (read (current-buffer)))
+                    (db-2 (ignore-errors (read (current-buffer)))))
+                (setf elfeed-db (or db-2 db-1)))
+            ;; Just load first database
+            (setf elfeed-db (read (current-buffer))))
           (kill-buffer))))
+    ;; Perform an upgrade if necessary and possible
+    (unless (equal (plist-get elfeed-db :version) elfeed-db-version)
+      (ignore-errors
+        (copy-file index (concat index ".backup")))
+      (message "Upgrading Elfeed index for Emacs 26 ...")
+      (setf elfeed-db (elfeed-db-upgrade elfeed-db))
+      (message "Elfeed index upgrade complete."))
     (setf elfeed-db-feeds (plist-get elfeed-db :feeds)
           elfeed-db-entries (plist-get elfeed-db :entries)
           elfeed-db-index (plist-get elfeed-db :index)
           ;; Internal function use required for security!
-          (avl-tree--cmpfun elfeed-db-index) #'elfeed-db-compare)
-    (when (version< (or (plist-get elfeed-db :version) "0") elfeed-db-version)
-      (elfeed-db-upgrade))))
+          (avl-tree--cmpfun elfeed-db-index) #'elfeed-db-compare)))
 
 (defun elfeed-db-unload ()
   "Unload the database so that it can be operated on externally.
