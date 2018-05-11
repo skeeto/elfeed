@@ -335,7 +335,7 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
                             :meta (aref entry 10))
                do (setf (gethash id table) fixed)
                do (avl-tree-enter index id))
-      new-db)))
+      (plist-put new-db :last-update (plist-get db :last-update)))))
 
 (defun elfeed-db--empty ()
   "Create an empty database object."
