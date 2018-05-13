@@ -1,5 +1,10 @@
 # Changes
 
+## 2.3.1 (2018-05-13)
+
+* The index is now saved when quitting the elfeed-search window ("q").
+* `elfeed-link` is now autoloaded.
+
 ## 2.3.0 (2018-01-21)
 
 * New `=<feed-matcher>` syntax in search filters
