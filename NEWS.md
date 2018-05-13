@@ -1,5 +1,27 @@
 # Changes
 
+## 3.0.0 (2018-05-13)
+
+* Under Emacs 26, there is a new database index format (version 4).
+
+Emacs 26 introduces a new "record" type, and cl-defstruct objects used
+by Elfeed as its database format are now based on this type. This
+unfortunately changes (and breaks) Elfeed's index format. Prior to this
+release, Emacs 26 could not open an Emacs 24–25 index and vice versa.
+
+As of Elfeed 2.4.0, Elfeed running under Emacs 26 will automatically and
+quietly upgrade an Emacs 25 database index for Emacs 26. **THIS UPGRADE
+IS IRREVERSIBLE** and the database can no longer be used with Emacs 25.
+A one-time backup copy ("index.backup") of the original Emacs 25 index
+is created before performing the upgrade. If Emacs 25, whether running
+this or any prior Elfeed release, loads the new database format, it will
+see an empty database as if starting from scratch.
+
+## 2.3.1 (2018-05-13)
+
+* The index is now saved when quitting the elfeed-search window ("q").
+* `elfeed-link` is now autoloaded.
+
 ## 2.3.0 (2018-01-21)
 
 * New `=<feed-matcher>` syntax in search filters

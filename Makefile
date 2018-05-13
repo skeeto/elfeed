@@ -1,7 +1,7 @@
 .POSIX:
 EMACS   = emacs
 BATCH   = $(EMACS) -batch -Q -L . -L tests
-VERSION = 2.3.0
+VERSION = 3.0.0
 
 EL   = elfeed-csv.el elfeed-curl.el elfeed-db.el elfeed-lib.el	\
        elfeed-log.el elfeed-show.el elfeed.el xml-query.el	\
