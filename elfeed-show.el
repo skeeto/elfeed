@@ -252,6 +252,10 @@ directory and saves all attachments in the chosen directory."
   :type 'boolean
   :group 'elfeed)
 
+(defvar elfeed-show-enclosure-filename-function
+  #'elfeed-show-enclosure-filename-remote
+  "Function called to generate the filename for an enclosure.")
+
 (defun elfeed--download-enclosure (url path)
   "Download asynchronously the enclosure from URL to PATH."
   (if (require 'async nil :noerror)
@@ -299,6 +303,13 @@ corresponding string."
     (if (file-directory-p fpath)
         fpath)))
 
+(defun elfeed-show-enclosure-filename-remote (_entry url-enclosure)
+  "Returns the remote filename as local filename for an enclosure."
+  (file-name-nondirectory
+   (url-unhex-string
+    (car (url-path-and-query (url-generic-parse-url
+                              url-enclosure))))))
+
 (defun elfeed-show-save-enclosure-single (&optional entry enclosure-index)
   "Save enclosure number ENCLOSURE-INDEX from ENTRY.
 If ENTRY is nil use the elfeed-show-entry variable.
@@ -311,10 +322,9 @@ If ENCLOSURE-INDEX is nil ask for the enclosure number."
                                "Enclosure to save" entry)))
          (url-enclosure (car (elt (elfeed-entry-enclosures entry)
                                   (- enclosure-index 1))))
-         (fname (file-name-nondirectory
-                 (url-unhex-string
-                  (car (url-path-and-query (url-generic-parse-url
-                                            url-enclosure))))))
+         (fname
+          (funcall elfeed-show-enclosure-filename-function
+                   entry url-enclosure))
          (retry t)
          (fpath))
     (while retry
@@ -345,10 +355,9 @@ enclosures, but as this is the default, you may not need it."
           (dolist (enclosure-index attachnums)
             (let* ((url-enclosure
                     (aref (elfeed-entry-enclosures entry) enclosure-index))
-                   (fname (file-name-nondirectory
-                           (url-unhex-string
-                            (car (url-path-and-query
-                                  (url-generic-parse-url url-enclosure))))))
+                   (fname
+                    (funcall elfeed-show-enclosure-filename-function
+                             entry url-enclosure))
                    (retry t))
               (while retry
                 (setf fpath (expand-file-name (concat attachdir fname) path)
