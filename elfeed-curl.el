@@ -175,21 +175,36 @@ output format."
     (89 . "No connection available, the session will be queued")
     (90 . "SSL public key does not matched pinned public key")))
 
-(defvar elfeed-curl--version-cache
+(defvar elfeed-curl--capabilities-cache
   (make-hash-table :test 'eq :weakness 'key)
   "Used to avoid invoking curl more than once for version info.")
 
-(defun elfeed-curl-get-version ()
-  "Return the version of curl for `elfeed-curl-program-name'."
-  (let* ((cache elfeed-curl--version-cache)
+(defun elfeed-curl-get-capabilities ()
+  "Return capabilities plist for the curl at `elfeed-curl-program-name'.
+:version     -- cURL's version string
+:compression -- non-nil if --compressed is supported"
+  (let* ((cache elfeed-curl--capabilities-cache)
          (cache-value (gethash elfeed-curl-program-name cache)))
     (if cache-value
         cache-value
       (with-temp-buffer
         (call-process elfeed-curl-program-name nil t nil "--version")
-        (setf (point) (point-min))
-        (when (re-search-forward "[.0-9]+" nil t)
-          (setf (gethash elfeed-curl-program-name cache) (match-string 0)))))))
+        (let ((version
+               (progn
+                 (setf (point) (point-min))
+                 (when (re-search-forward "[.0-9]+" nil t)
+                   (match-string 0))))
+              (compression
+               (progn
+                 (setf (point) (point-min))
+                 (not (null (re-search-forward "libz\\>" nil t))))))
+          (setf (gethash elfeed-curl-program-name cache)
+                `(:version ,version :compression ,compression)))))))
+
+(defun elfeed-curl-get-version ()
+  "Return the version of curl for `elfeed-curl-program-name'."
+  (plist-get (elfeed-curl-get-capabilities) :version))
+(make-obsolete 'elfeed-curl-get-version 'elfeed-curl-get-capabilities "3.0.1")
 
 (defun elfeed-curl--token ()
   "Return a unique, random string that prints as a symbol without escapes.
@@ -270,10 +285,13 @@ Use `elfeed-curl--narrow' to select a header."
 (defun elfeed-curl--args (url token &optional headers method data)
   "Build an argument list for curl for URL.
 URL can be a string or a list of URL strings."
-  (let ((args ()))
-    (unless (version< (elfeed-curl-get-version) "7.33.0")
+  (let* ((args ())
+         (capabilities (elfeed-curl-get-capabilities))
+         (version (plist-get capabilities :version)))
+    (unless (version< version "7.33.0")
       (push "--http1.1" args)) ; too many broken HTTP/2 servers
-    (push "--compressed" args)
+    (when (plist-get capabilities :compression)
+      (push "--compressed" args))
     (push "--silent" args)
     (push "--location" args)
     (push (format "-w(%s . %%{size_header})" token) args)
