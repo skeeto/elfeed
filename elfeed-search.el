@@ -572,6 +572,10 @@ Any component beginning with a # is an entry count maximum. The
 number following # determines the maxiumum number of entries
 to be shown (descending by date). Ex. \"#20\" or \"#100\".
 
+Any component beginning with a = is a regular expression matching
+the entry's feed (title or URL). Only entries belonging to a feed
+that match at least one of the = expressions will be shown.
+
 Every other space-seperated element is treated like a regular
 expression, matching against entry link, title, and feed title."
   (interactive
