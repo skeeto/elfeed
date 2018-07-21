@@ -72,6 +72,14 @@ Each function should accept no arguments, and return a string or nil."
              elfeed-get-url-at-point
              elfeed-clipboard-get))
 
+(defcustom elfeed-summary-as-default t
+  "If non-nil, top level `elfeed' goes to feed summary page, then
+selecting a feed will take you to the search page; quitting search
+will return you to the feed summary page.  If nil, top level
+`elfeed' takes you to search page."
+  :group 'elfeed
+  :type 'boolean)
+
 (defcustom elfeed-use-curl
   (not (null (executable-find elfeed-curl-program-name)))
   "If non-nil, fetch feeds using curl instead of `url-retrieve'."
@@ -516,6 +524,12 @@ called interactively, SAVE is set to t."
     (customize-save-variable 'elfeed-feeds elfeed-feeds))
   (elfeed-update-feed url))
 
+(defun elfeed-enter (buffer modename)
+  "Jump to showing given BUFFER with MODENAME"
+  (switch-to-buffer buffer)
+  (unless (eq major-mode modename)
+    (funcall (symbol-function modename))))
+
 ;;;###autoload
 (defun elfeed-update ()
   "Update all the feeds in `elfeed-feeds'."
@@ -531,9 +545,9 @@ called interactively, SAVE is set to t."
 (defun elfeed ()
   "Enter elfeed."
   (interactive)
-  (switch-to-buffer (elfeed-search-buffer))
-  (unless (eq major-mode 'elfeed-search-mode)
-    (elfeed-search-mode)))
+  (if elfeed-summary-as-default
+      (elfeed-enter (elfeed-summary-buffer) 'elfeed-summary-mode)
+    (elfeed-enter (elfeed-search-buffer) 'elfeed-search-mode)))
 
 ;; New entry filtering
 
@@ -637,6 +651,7 @@ saved to your customization file."
   (unless byte-compile-root-dir
     (require 'elfeed-csv)
     (require 'elfeed-show)
+    (require 'elfeed-summary)
     (require 'elfeed-search)))
 
 ;;; elfeed.el ends here

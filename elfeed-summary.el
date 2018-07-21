@@ -2,19 +2,27 @@
 
 ;; This is free and unencumbered software released into the public domain.
 
-;; Sketch of a summary mode for elfeed, based on a conversation here:
+;;
+;; This is a sketch of a summary mode for elfeed, based on a conversation here:
 ;; https://www.reddit.com/r/emacs/comments/8y9ikh/elfeed_summarymetasearch_view
+;;
+;; TODO:
+;;   - desktop support?
+;;   - hooks?
+;;   - bookmarks support?
+;;   - user might want to configure columns
+;;
 
 ;;; Code:
 
 (require 'elfeed-search)
 
 (defcustom elfeed-summary-sort-key "TITLE"
-  "TOTAL, UNREAD, DATE, or TITLE"
+  "Sort the summary by TOTAL, UNREAD, DATE, or TITLE."
   :group 'elfeed
   :type 'string)
 
-(defcustom elfeed-summary-line-format "%11s %-70s %s/%s"
+(defcustom elfeed-summary-line-format "%10s %-70s %s/%s"
   "Controls summary columns: date, title, unread/total"
   :group 'elfeed
   :type 'string)
@@ -27,21 +35,25 @@ Possible alignments are :left and :right."
   :group 'elfeed
   :type '(list string integer (choice (const :left) (const :right))))
 
-(defface elfeed-summary-title-face
-  '((t :inherit 'elfeed-search-title-face))
-  "Face for showing Elfeed summary titles."
-  :group 'elfeed)
-
 (defface elfeed-summary-date-face
-  '((t :inherit 'elfeed-search-date-face))
-  "Face for showing Elfeed summary dates."
+  '((((class color) (background light)) (:foreground "#aaa"))
+    (((class color) (background dark))  (:foreground "#77a")))
+  "Face used in summary mode for dates."
   :group 'elfeed)
 
-(defface elfeed-summary-unread-count-face
-  '((t :inherit elfeed-search-unread-count-face))
-  "Face for showing Elfeed summary counts."
+(defface elfeed-summary-feed-face
+  '((((class color) (background light)) (:foreground "#aa0"))
+    (((class color) (background dark))  (:foreground "#ff0")))
+  "Face used in summary mode for feed titles."
   :group 'elfeed)
 
+(defface elfeed-summary-unread-counts-face
+  '((((class color) (background light)) (:foreground "#070"))
+    (((class color) (background dark))  (:foreground "#0f0")))
+  "Face used in summary mode for unread count."
+  :group 'elfeed)
+
+;; steal from siblings
 (defalias 'elfeed-summary-format-date #'elfeed-search-format-date)
 
 (defun elfeed-gather-summary ()
@@ -99,10 +111,9 @@ Possible alignments are :left and :right."
 (defun elfeed-summary-show-entry ()
   "Display the currently selected item in a buffer."
   (interactive)
-  (message "hi")
   (let ((feedid (elfeed-summary-selected-feed)))
     (when feedid
-      (call-interactively #'elfeed)
+      (elfeed-enter (elfeed-search-buffer) 'elfeed-search-mode)
       (elfeed-search-set-filter (concat "+unread =" feedid)))))
 
 (defvar elfeed-summary-mode-map
@@ -111,42 +122,48 @@ Possible alignments are :left and :right."
       (suppress-keymap map)
       (define-key map "q" 'elfeed-summary-quit-window)
       (define-key map (kbd "RET") 'elfeed-summary-show-entry)
+      (define-key map "g" 'elfeed-refresh-feeds)
       (define-key map "n" 'next-line)
       (define-key map "p" 'previous-line)
-      ;;
       ;; TODO: command to force update all feeds
       ;; TODO: command to force update current feed
       ;; TODO: command to mark all of current feed up to date
       ;;
   "Keymap for elfeed-summary-mode.")))
 
-(defun elfeed-summary-mode ()
-  "Major mode for summarizing elfeed feeds.
-\\{elfeed-summary-mode-map}"
-  ;; TODO do any hooks make sense?
+(defun elfeed-summary-buffer ()
+  (get-buffer-create "*elfeed-summary*"))
+
+(defun elfeed-summary-update ()
+  "Recompute feed summaries"
   (interactive)
-  (with-current-buffer (get-buffer-create "*elfeed-summary*")
-    (kill-all-local-variables)
-    (use-local-map elfeed-summary-mode-map)
-    (setq major-mode 'elfeed-summary-mode
-          mode-name "elfeed-summary"
-          header-line-format (format elfeed-summary-line-format "Date" "Title" "Unread" "Total")
-          truncate-lines t
-          buffer-read-only t)
+  (with-current-buffer (elfeed-summary-buffer)
     (let ((inhibit-read-only t))
       (erase-buffer)
-      (hl-line-mode)
       (dolist (item (elfeed-gather-summary))
-;	(let ((line (format elfeed-summary-line-format
-	(let ((line (concat ;;elfeed-summary-line-format
-			    (propertize (plist-get item :date) 'face 'font-lock-keyword-face) ;elfeed-search-date-face)
-			    (propertize (plist-get item :title) 'face 'elfeed-search-title-face)
-			    (propertize (int-to-string (plist-get item  :unread)) 'face 'elfeed-search-title-face) ; 'elfeed-summary-unread-count-face)
-			    (propertize (int-to-string (plist-get item :total)) 'face 'elfeed-search-unread-count-face))))
-	  ;; A little trick here: add a property field holding the feed ID.
-	  (insert (propertize line 'face 'elfeed-search-title-face 'feedid (plist-get item :feedid)))
+	(let ((line (format elfeed-summary-line-format
+			    (propertize (plist-get item :date) 'face 'elfeed-summary-date-face)
+			    (propertize (plist-get item :title) 'face 'elfeed-summary-feed-face)
+			    (propertize (int-to-string (plist-get item  :unread)) 'face 'elfeed-summary-unread-counts-face)
+			    (propertize (int-to-string (plist-get item :total)) 'face 'elfeed-summary-unread-counts-face))))
+	  ;; A little trick here: add a property field holding the feed ID; read back when jumping to that feed
+	  (insert (propertize line 'feedid (plist-get item :feedid)))
 	  (insert "\n")))
       (insert "End of summary.\n")
       (pop-to-buffer (current-buffer))
-      (setf (point) (point-min)))
-  (buffer-disable-undo)))
+      (setf (point) (point-min)))))
+
+(defun elfeed-summary-mode ()
+  "Major mode for listing elfeed feeds and show some info about them.
+\\{elfeed-search-mode-map}"
+  (interactive)
+  (kill-all-local-variables)
+  (use-local-map elfeed-summary-mode-map)
+  (setq major-mode 'elfeed-summary-mode
+        mode-name "elfeed-summary"
+        header-line-format (format elfeed-summary-line-format "Date" " Title" " Unread" "Total")
+        truncate-lines t
+        buffer-read-only t)
+  (buffer-disable-undo)
+  (hl-line-mode)
+  (elfeed-summary-update))
