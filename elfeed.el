@@ -72,7 +72,7 @@ Each function should accept no arguments, and return a string or nil."
              elfeed-get-url-at-point
              elfeed-clipboard-get))
 
-(defcustom elfeed-summary-as-default t
+(defcustom elfeed-summary-as-default nil
   "If non-nil, top level `elfeed' goes to feed summary page, then
 selecting a feed will take you to the search page; quitting search
 will return you to the feed summary page.  If nil, top level
