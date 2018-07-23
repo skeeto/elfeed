@@ -167,3 +167,7 @@ Possible alignments are :left and :right."
   (buffer-disable-undo)
   (hl-line-mode)
   (elfeed-summary-update))
+
+(provide 'elfeed-summary)
+
+;;; elfeed-summary.el ends here
