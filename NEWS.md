@@ -1,5 +1,16 @@
 # Changes
 
+## 3.1.0 (2018-08-29)
+
+* Add `elfeed-show-enclosure-filename-function` for controlling
+  enclosure filenames.
+
+* Dynamically enable/disable --compressed curl option. On some systems
+  curl is built without this option, so it causes errors when it is
+  used.
+
+* Minor documentation fixes.
+
 ## 3.0.0 (2018-05-13)
 
 * Under Emacs 26, there is a new database index format (version 4).
