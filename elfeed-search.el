@@ -180,7 +180,7 @@ When live editing the filter, it is bound to :live.")
    ((> (elfeed-queue-count-total) 0)
     (let ((total (elfeed-queue-count-total))
           (in-process (elfeed-queue-count-active)))
-      (format "%d feeds pending, %d in process ..."
+      (format "%d jobs pending, %d active..."
               (- total in-process) in-process)))
    ((let* ((db-time (seconds-to-time (elfeed-db-last-update)))
            (update (format-time-string "%Y-%m-%d %H:%M" db-time))
