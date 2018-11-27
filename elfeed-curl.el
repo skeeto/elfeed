@@ -286,10 +286,7 @@ Use `elfeed-curl--narrow' to select a header."
   "Build an argument list for curl for URL.
 URL can be a string or a list of URL strings."
   (let* ((args ())
-         (capabilities (elfeed-curl-get-capabilities))
-         (version (plist-get capabilities :version)))
-    (unless (version< version "7.33.0")
-      (push "--http1.1" args)) ; too many broken HTTP/2 servers
+         (capabilities (elfeed-curl-get-capabilities)))
     (when (plist-get capabilities :compression)
       (push "--compressed" args))
     (push "--silent" args)
