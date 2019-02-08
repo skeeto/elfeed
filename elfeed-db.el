@@ -49,7 +49,11 @@
 (require 'avl-tree)
 (require 'elfeed-lib)
 
-(defcustom elfeed-db-directory "~/.elfeed"
+(defcustom elfeed-db-directory
+  (if (file-exists-p "~/.elfeed")
+      ;; Use existing database at original location
+      (expand-file-name ".elfeed" "~")
+    (expand-file-name "elfeed" (or (getenv "XDG_CONFIG_HOME") "~/.config")))
   "Directory where elfeed will store its database."
   :group 'elfeed
   :type 'directory)
