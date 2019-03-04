@@ -159,9 +159,20 @@ Defaults to `elfeed-kill-buffer'.")
   (interactive)
   (call-interactively elfeed-show-refresh-function))
 
+(defcustom elfeed-show-unique-buffers nil
+  "When non-nil, every entry buffer gets a unique name.
+This allows for displaying multiple show buffers at the same
+time."
+  :group 'elfeed
+  :type 'boolean)
+
 (defun elfeed-show-entry (entry)
   "Display ENTRY in the current buffer."
-  (let ((buff (get-buffer-create "*elfeed-entry*")))
+  (let ((buff (get-buffer-create (if elfeed-show-unique-buffers
+                                     (format "*elfeed-entry-<%s %s>*"
+                                             (elfeed-entry-title entry)
+                                             (format-time-string "%F" (elfeed-entry-date entry)))
+                                   "*elfeed-entry*"))))
     (with-current-buffer buff
       (elfeed-show-mode)
       (setq elfeed-show-entry entry)
