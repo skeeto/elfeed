@@ -166,13 +166,18 @@ time."
   :group 'elfeed
   :type 'boolean)
 
+(defun elfeed-show--buffer-name (entry)
+  "Return the appropriate buffer name for ENTRY.
+The result depends on the value of `elfeed-show-unique-buffers'."
+  (if elfeed-show-unique-buffers
+      (format "*elfeed-entry-<%s %s>*"
+	      (elfeed-entry-title entry)
+	      (format-time-string "%F" (elfeed-entry-date entry)))
+    "*elfeed-entry*"))
+
 (defun elfeed-show-entry (entry)
   "Display ENTRY in the current buffer."
-  (let ((buff (get-buffer-create (if elfeed-show-unique-buffers
-                                     (format "*elfeed-entry-<%s %s>*"
-                                             (elfeed-entry-title entry)
-                                             (format-time-string "%F" (elfeed-entry-date entry)))
-                                   "*elfeed-entry*"))))
+  (let ((buff (get-buffer-create (elfeed-show--buffer-name entry))))
     (with-current-buffer buff
       (elfeed-show-mode)
       (setq elfeed-show-entry entry)
