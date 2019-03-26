@@ -23,6 +23,11 @@ package: elfeed-$(VERSION).tar elfeed-web-$(VERSION).tar
 clean:
 	rm -f *.tar $(EL:.el=.elc) $(TEST:.el=.elc)
 
+virtual: compile
+	(mkdir tmp-$$$$; \
+	 HOME=$$PWD/tmp-$$$$ $(EMACS) -L . -l elfeed.elc; \
+	 trap "rm -rf tmp-$$$$" EXIT)
+
 elfeed-$(VERSION).tar: $(EL) $(DOC)
 	rm -rf elfeed-$(VERSION)/
 	mkdir elfeed-$(VERSION)/
