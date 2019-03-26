@@ -242,7 +242,8 @@ systems."
             (funcall interprogram-paste-function))
        (and (fboundp 'w32-get-clipboard-data)
             (funcall 'w32-get-clipboard-data))
-       (current-kill 0 :non-destructively))))
+       (ignore-errors
+         (current-kill 0 :non-destructively)))))
 
 (defun elfeed-get-link-at-point ()
   "Try to a link at point and return its URL."
