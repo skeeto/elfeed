@@ -59,7 +59,7 @@ Defaults to `elfeed-kill-buffer'.")
       (define-key map (kbd "SPC") 'scroll-up-command)
       (define-key map (kbd "DEL") 'scroll-down-command)
       (define-key map "\t" 'shr-next-link)
-      (define-key map [tab] 'shr-next-link)
+      (define-key map [tab] 'elfeed-next-link)
       (define-key map "\e\t" 'shr-previous-link)
       (define-key map [backtab] 'shr-previous-link)
       (define-key map [mouse-2] 'shr-browse-url)
@@ -432,6 +432,13 @@ If ENCLOSURE-INDEX is nil ask for the enclosure number."
                                   (- enclosure-index 1)))))
     (with-no-warnings ;; due to lazy (require )
       (emms-add-url url-enclosure))))
+
+(defun elfeed-next-link ()
+  "Skip to the next link, exclusive of the Link header."
+  (interactive)
+  (when (memq 'message-header-name (text-properties-at (line-beginning-position)))
+      (forward-paragraph))
+  (shr-next-link))
 
 (provide 'elfeed-show)
 
