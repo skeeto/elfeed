@@ -396,45 +396,31 @@ offer to save a range of enclosures."
       (elfeed-show-save-enclosure-multi)
     (elfeed-show-save-enclosure-single)))
 
-(defun elfeed-show-play-enclosure (&optional entry enclosure-index)
-  "Play enclosure number ENCLOSURE-INDEX from ENTRY using emms.
-If ENTRY is nil use the elfeed-show-entry variable.
-If ENCLOSURE-INDEX is nil ask for the enclosure number."
-  (interactive)
-  (require 'emms) ;; optional
-  (let* ((entry (or entry elfeed-show-entry))
-         (enclosure-index (or enclosure-index
-                              (elfeed--get-enclosure-num
-                               "Enclosure to play" entry)))
-         (url-enclosure (car (elt (elfeed-entry-enclosures entry)
-                                  (- enclosure-index 1)))))
-    (with-no-warnings ;; due to lazy (require)
-      (with-current-emms-playlist
-       (let ((old-pos (point-max)))
-         (emms-add-url url-enclosure)
-         (goto-char old-pos)
-         ;; if we're sitting on a group name, move forward
-         (unless (emms-playlist-track-at (point))
-           (emms-playlist-next))
-         (emms-playlist-select (point)))
-       ;; FIXME: is there a better way of doing this?
-       (emms-stop)
-       (emms-start)))))
+(defun elfeed--enclosure-maybe-prompt-index (entry)
+  "Prompt for an enclosure if there are multiple in ENTRY."
+  (if (= 1 (length (elfeed-entry-enclosures entry)))
+      1
+    (elfeed--get-enclosure-num "Enclosure to play" entry)))
 
-(defun elfeed-show-add-enclosure-to-playlist (&optional entry enclosure-index)
-  "Play enclosure number ENCLOSURE-INDEX from ENTRY using emms.
-If ENTRY is nil use the elfeed-show-entry variable.
-If ENCLOSURE-INDEX is nil ask for the enclosure number."
-  (interactive)
+(defun elfeed-show-play-enclosure (enclosure-index)
+  "Play enclosure number ENCLOSURE-INDEX from current entry using EMMS.
+Prompts for ENCLOSURE-INDEX when called interactively."
+  (interactive (list (elfeed--enclosure-maybe-prompt-index elfeed-show-entry)))
+  (elfeed-show-add-enclosure-to-playlist enclosure-index)
+  (with-no-warnings
+    (with-current-emms-playlist
+      (emms-playlist-select-last)
+      (emms-playlist-mode-play-current-track))))
+
+(defun elfeed-show-add-enclosure-to-playlist (enclosure-index)
+  "Add enclosure number ENCLOSURE-INDEX to current EMMS playlist.
+Prompts for ENCLOSURE-INDEX when called interactively."
+
+  (interactive (list (elfeed--enclosure-maybe-prompt-index elfeed-show-entry)))
   (require 'emms) ;; optional
-  (let* ((entry (or entry elfeed-show-entry))
-         (enclosure-index (or enclosure-index
-                              (elfeed--get-enclosure-num
-                               "Enclosure to add" entry)))
-         (url-enclosure (car (elt (elfeed-entry-enclosures entry)
-                                  (- enclosure-index 1)))))
-    (with-no-warnings ;; due to lazy (require )
-      (emms-add-url url-enclosure))))
+  (with-no-warnings ;; due to lazy (require )
+    (emms-add-url   (car (elt (elfeed-entry-enclosures elfeed-show-entry)
+                              (- enclosure-index 1))))))
 
 (defun elfeed-show-next-link ()
   "Skip to the next link, exclusive of the Link header."
