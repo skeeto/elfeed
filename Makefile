@@ -24,9 +24,10 @@ clean:
 	rm -f *.tar $(EL:.el=.elc) $(TEST:.el=.elc)
 
 virtual: compile
-	(mkdir tmp-$$$$; \
-	 HOME=$$PWD/tmp-$$$$ $(EMACS) -L . -l elfeed.elc; \
-	 trap "rm -rf tmp-$$$$" EXIT)
+	(mkdir -p tmp-$$$$/.elfeed; \
+	 cp ~/.elfeed/index tmp-$$$$/.elfeed/ 2>/dev/null || true; \
+	 trap "rm -rf tmp-$$$$" INT EXIT; \
+	 HOME=$$PWD/tmp-$$$$ $(EMACS) -L . -l elfeed.elc $(ARGS))
 
 elfeed-$(VERSION).tar: $(EL) $(DOC)
 	rm -rf elfeed-$(VERSION)/
