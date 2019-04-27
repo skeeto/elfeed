@@ -409,8 +409,9 @@ Prompts for ENCLOSURE-INDEX when called interactively."
   (elfeed-show-add-enclosure-to-playlist enclosure-index)
   (with-no-warnings
     (with-current-emms-playlist
-      (emms-playlist-select-last)
-      (emms-playlist-mode-play-current-track))))
+      (save-excursion
+        (emms-playlist-last)
+        (emms-playlist-mode-play-current-track)))))
 
 (defun elfeed-show-add-enclosure-to-playlist (enclosure-index)
   "Add enclosure number ENCLOSURE-INDEX to current EMMS playlist.
