@@ -288,6 +288,7 @@ Use `elfeed-curl--narrow' to select a header."
 URL can be a string or a list of URL strings."
   (let* ((args ())
          (capabilities (elfeed-curl-get-capabilities)))
+    (push "--disable" args)
     (when (plist-get capabilities :compression)
       (push "--compressed" args))
     (push "--silent" args)
