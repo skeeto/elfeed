@@ -24,6 +24,20 @@
   (should (= (elfeed-time-duration "1-day")       (* 1.0 24 60 60)))
   (should (= (elfeed-time-duration "1hour")       (* 1.0 60 60))))
 
+(ert-deftest elfeed-time-duration-absolute ()
+  ;; fixed time for testing: assume U.S. eastern
+  (cl-letf (((symbol-function 'current-time)
+	     (lambda () (encode-time 0 20 13 24 6 2019 (* -1 4 60 60)))))
+    ;; "2019-06-24T13:20:00-04:00" is "2019-06-24T17:20:00Z" so 17h 20mins is
+    ;; the time difference:
+    (should (= (+ (* 17 60 60) (* 20 60)) (elfeed-time-duration "2019-06-24")))
+    (should (= (* 10 60) (elfeed-time-duration "2019-06-24T17:10")))
+    (should (= (* 10 60) (elfeed-time-duration "2019-06-24T17:10:00")))
+    (should (= (+ (* 9 60) 30) (elfeed-time-duration "2019-06-24T17:10:30")))
+    (should (= (+ (* 9 60) 30) (elfeed-time-duration "2019-06-24T17:10:30Z")))
+    (should (= (+ (* 9 60) 30) (elfeed-time-duration "2019-06-24T17:10:30+00:00")))
+    (should (= (+ (* 9 60) 30) (elfeed-time-duration "20190624T17:10:30+00:00")))))
+
 (ert-deftest elfeed-format-column ()
   (should (string= (elfeed-format-column "foo" 10 :right) "       foo"))
   (should (string= (elfeed-format-column "foo" 10 :left)  "foo       "))
@@ -59,6 +73,7 @@
 (ert-deftest elfeed-float-time ()
   (cl-macrolet ((test (time seconds)
                    `(should (= (elfeed-float-time ,time) ,seconds))))
+    (test "1985-03-24"                    480470400.0)
     (test "1985-03-24T03:23:42Z"          480482622.0)
     (test "Mon,  5 May 1986 15:16:09 GMT" 515690169.0)
     (test "2015-02-20" 1424390400.0)
