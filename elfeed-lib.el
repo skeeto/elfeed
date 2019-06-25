@@ -44,8 +44,10 @@
    ((let ((iso-time (elfeed-parse-simple-iso-8601 time)))
       (when iso-time (float-time (time-subtract (current-time) iso-time)))))
    ((string-match-p "[[:alpha:]]" time)
-    (let ((clean (replace-regexp-in-string "\\(ago\\|old\\|-\\)" " " time)))
-      (timer-duration clean)))))
+    (let* ((clean (replace-regexp-in-string "\\(ago\\|old\\|-\\)" " " time))
+           (duration (timer-duration clean)))
+      ;; convert to float since float-time is used elsewhere
+      (when duration (float duration))))))
 
 (defun elfeed-looks-like-url-p (string)
   "Return true if STRING looks like it could be a URL."
@@ -80,22 +82,22 @@ Align should be a keyword :left or :right."
   "Attempt to parse STRING as a simply formatted ISO 8601 date.
 Examples: 2015-02-22, 2015-02, 20150222"
   (let* ((re (cl-flet ((re-numbers (num) (format "\\([0-9]\\{%s\\}\\)" num)))
-	       (format "^%s-?%s-?%s?\\(T%s:%s:?%s?\\)?"
-		       (re-numbers 4)
-		       (re-numbers 2)
-		       (re-numbers 2)
-		       (re-numbers 2)
-		       (re-numbers 2)
-		       (re-numbers 2))))
-	 (matches (save-match-data
-		    (when (string-match re string)
-		      (cl-loop for i from 1 to 7
-			       collect (let ((match (match-string i string)))
-					 (and match (string-to-number match))))))))
+               (format "^%s-?%s-?%s?\\(T%s:%s:?%s?\\)?"
+                       (re-numbers 4)
+                       (re-numbers 2)
+                       (re-numbers 2)
+                       (re-numbers 2)
+                       (re-numbers 2)
+                       (re-numbers 2))))
+         (matches (save-match-data
+                    (when (string-match re string)
+                      (cl-loop for i from 1 to 7
+                               collect (let ((match (match-string i string)))
+                                         (and match (string-to-number match))))))))
     (when matches
       (cl-multiple-value-bind (year month day _ hour min sec) matches
-	(float-time (encode-time (or sec 0) (or min 0) (or hour 0)
-				 (or day 1) month year t))))))
+        (float-time (encode-time (or sec 0) (or min 0) (or hour 0)
+                                 (or day 1) month year t))))))
 
 (defun elfeed-new-date-for-entry (old-date new-date)
   "Decide entry date, given an existing date (nil for new) and a new date.

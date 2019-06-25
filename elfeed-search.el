@@ -352,6 +352,7 @@ The customization `elfeed-search-date-format' sets the formatting."
   "Parse the elements of a search filter into a plist."
   (let ((must-have ())
         (must-not-have ())
+        (before nil)
         (after nil)
         (matches ())
         (not-matches ())
@@ -368,7 +369,13 @@ The customization `elfeed-search-date-format' sets the formatting."
                    (let ((symbol (intern (substring element 1))))
                      (unless (eq '## symbol)
                        (push symbol must-not-have))))
-                  (?@ (setf after (elfeed-time-duration (substring element 1))))
+                  (?@ (cl-multiple-value-bind (a b) (split-string (substring element 1) "--")
+                        (let ((duration-a (elfeed-time-duration a))
+                              (duration-b (and b (elfeed-time-duration b))))
+                          (when (and duration-b (> duration-b duration-a))
+                            (cl-rotatef duration-a duration-b))
+                          (when duration-b (setf before duration-b))
+                          (setf after duration-a))))
                   (?! (let ((re (substring element 1)))
                         (when (elfeed-valid-regexp-p re)
                           (push re not-matches))))
@@ -377,7 +384,9 @@ The customization `elfeed-search-date-format' sets the formatting."
                         (push url feeds)))
                   (otherwise (when (elfeed-valid-regexp-p element)
                                (push element matches)))))
-    `(,@(when after
+    `(,@(when before
+          (list :before before))
+      ,@(when after
           (list :after after))
       ,@(when must-have
           (list :must-have must-have))
@@ -392,7 +401,7 @@ The customization `elfeed-search-date-format' sets the formatting."
       ,@(when feeds
           (list :feeds feeds)))))
 
-(defun elfeed-search--recover-units (seconds)
+(defun elfeed-search--recover-time (seconds)
   "Pick a reasonable filter representation for SECONDS."
   (let ((units '((60   1 "minute")
                  (60   1 "hour")
@@ -409,7 +418,15 @@ The customization `elfeed-search-date-format' sets the formatting."
              do (setf name unit
                       value next-value))
     (let ((count (format "%.4g" value)))
-      (format "@%s-%s%s-ago" count name (if (equal count "1") "" "s")))))
+      (format "%s-%s%s-ago" count name (if (equal count "1") "" "s")))))
+
+(defun elfeed-search--recover-units (after-seconds &optional before-seconds)
+  "Stringify the age or optionally the date range specified by
+AFTER-SECONDS and BEFORE-SECONDS."
+  (apply 'concat "@"
+          (elfeed-search--recover-time after-seconds)
+          (when before-seconds
+            (list "--"(elfeed-search--recover-time before-seconds)))))
 
 (defun elfeed-search-unparse-filter (filter)
   "Inverse of `elfeed-search-parse-filter', returning a string.
@@ -418,6 +435,7 @@ The time (@n-units-ago) filter may not exactly match the
 original, but will be equal in its effect."
   (let ((output ()))
     (let ((after (plist-get filter :after))
+          (before (plist-get filter :before))
           (must-have (plist-get filter :must-have))
           (must-not-have (plist-get filter :must-not-have))
           (matches (plist-get filter :matches))
@@ -425,7 +443,7 @@ original, but will be equal in its effect."
           (limit (plist-get filter :limit))
           (feeds (plist-get filter :feeds)))
       (when after
-        (push (elfeed-search--recover-units after) output))
+        (push (elfeed-search--recover-units after before) output))
       (dolist (tag must-have)
         (push (format "+%S" tag) output))
       (dolist (tag must-not-have)
@@ -492,6 +510,7 @@ This function must *only* be called within the body of
 Executing a filter in bytecode form is generally faster than
 \"interpreting\" the filter with `elfeed-search-filter'."
   (let ((after (plist-get filter :after))
+        (before (plist-get filter :before))
         (must-have (plist-get filter :must-have))
         (must-not-have (plist-get filter :must-not-have))
         (matches (plist-get filter :matches))
@@ -541,7 +560,9 @@ Executing a filter in bytecode form is generally faster than
                   `((or ,@(cl-loop
                            for regex in feeds
                            collect `(string-match-p ,regex feed-id)
-                           collect `(string-match-p ,regex feed-title))))))))))
+                           collect `(string-match-p ,regex feed-title)))))
+              ,@(when before
+                  `((> age ,before))))))))
 
 (defun elfeed-search--prompt (current)
   "Prompt for a new filter, starting with CURRENT."
@@ -565,8 +586,15 @@ Any component beginning with a + or - is treated as a tag. If +
 the tag must be present on the entry. If - the tag must *not* be
 present on the entry. Ex. \"+unread\" or \"+unread -comic\".
 
-Any component beginning with an @ is an age limit. No posts older
-than this are allowed. Ex. \"@3-days-ago\" or \"@1-year-old\".
+Any component beginning with an @ is an age limit or an age
+range. If a limit, no posts older than this are allowed. If a
+range, posts dates have to be inbetween the specified date
+range. Examples:
+- \"@3-days-ago\"
+- \"@1-year-old\"
+- \"@2019-06-24\"
+- \"@2019-06-24--2019-06-24\"
+- \"@5-days-ago--1-day-ago\"
 
 Any component beginning with a # is an entry count maximum. The
 number following # determines the maxiumum number of entries

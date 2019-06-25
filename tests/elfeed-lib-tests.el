@@ -27,7 +27,7 @@
 (ert-deftest elfeed-time-duration-absolute ()
   ;; fixed time for testing: assume U.S. eastern
   (cl-letf (((symbol-function 'current-time)
-	     (lambda () (encode-time 0 20 13 24 6 2019 (* -1 4 60 60)))))
+             (lambda () (encode-time 0 20 13 24 6 2019 (* -1 4 60 60)))))
     ;; "2019-06-24T13:20:00-04:00" is "2019-06-24T17:20:00Z" so 17h 20mins is
     ;; the time difference:
     (should (= (+ (* 17 60 60) (* 20 60)) (elfeed-time-duration "2019-06-24")))
