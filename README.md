@@ -139,15 +139,16 @@ Any component of the search string beginning with a `+` or
 a `-` is treated like a tag. `+` means the tag is required, `-` means
 the tag must not be present.
 
-A component beginning with a `@` indicates an age or a date range. An age is a
-relative time expression or an absolute date expression. Entries older than this
-age are filtered out. The age description accepts plain English, but cannot have
-spaces, so use dashes. For example, `"@2-years-old"`, `"@3-days-ago"` or
-`"@2019-06-24"`. A date range are two ages seperated by a `--`, e.g.
-`"@2019-06-24--2019-06-24"` or `"@5-days-ago--1-day-ago"`. The entry must be
-newer than the first expression but older than the second. The database is
-date-oriented, so **filters that include an age restriction are significantly
-more efficient.**
+A component beginning with a `@` indicates an age or a date range. An
+age is a relative time expression or an absolute date expression.
+Entries older than this age are filtered out. The age description
+accepts plain English, but cannot have spaces, so use dashes. For
+example, `"@2-years-old"`, `"@3-days-ago"` or `"@2019-06-24"`. A date
+range are two ages seperated by a `--`, e.g.
+`"@2019-06-20--2019-06-24"` or `"@5-days-ago--1-day-ago"`. The entry
+must be newer than the first expression but older than the second. The
+database is date-oriented, so **filters that include an age
+restriction are significantly more efficient.**
 
 A component beginning with a `!` is treated as an "inverse" regular
 expression. This means that any entry matching this regular expression
