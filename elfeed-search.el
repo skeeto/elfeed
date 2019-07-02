@@ -111,6 +111,7 @@ When live editing the filter, it is bound to :live.")
   (let ((map (make-sparse-keymap)))
     (prog1 map
       (suppress-keymap map)
+      (define-key map "h" #'describe-mode)
       (define-key map "q" #'elfeed-search-quit-window)
       (define-key map "g" #'elfeed-search-update--force)
       (define-key map "G" #'elfeed-search-fetch)

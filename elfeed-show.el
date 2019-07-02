@@ -45,6 +45,7 @@ Defaults to `elfeed-kill-buffer'.")
   (let ((map (make-sparse-keymap)))
     (prog1 map
       (suppress-keymap map)
+      (define-key map "h" #'describe-mode)
       (define-key map "d" #'elfeed-show-save-enclosure)
       (define-key map "q" #'elfeed-kill-buffer)
       (define-key map "g" #'elfeed-show-refresh)
