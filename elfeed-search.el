@@ -117,6 +117,7 @@ When live editing the filter, it is bound to :live.")
       (define-key map (kbd "RET") #'elfeed-search-show-entry)
       (define-key map "s" #'elfeed-search-live-filter)
       (define-key map "S" #'elfeed-search-set-filter)
+      (define-key map "c" #'elfeed-search-clear-filter)
       (define-key map "b" #'elfeed-search-browse-url)
       (define-key map "y" #'elfeed-search-yank)
       (define-key map "u" #'elfeed-search-tag-all-unread)
@@ -576,6 +577,11 @@ Executing a filter in bytecode form is generally faster than
        current
      (concat current " "))
    nil nil 'elfeed-search-filter-history))
+
+(defun elfeed-search-clear-filter ()
+  "Reset the search filter to the default value of `elfeed-search-filter'."
+  (interactive)
+  (setf elfeed-search-filter (default-value 'elfeed-search-filter)))
 
 (defun elfeed-search-set-filter (new-filter)
   "Set a new search filter for the elfeed-search buffer.
