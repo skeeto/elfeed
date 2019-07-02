@@ -64,6 +64,7 @@ Running the interactive function `elfeed` will pop up the
  * <kbd>g</kbd>: refresh view of the feed listing
  * <kbd>G</kbd>: fetch feed updates from the servers
  * <kbd>s</kbd>: update the search filter (see tags)
+ * <kbd>c</kbd>: clear the search filter
 
 This buffer will be empty until you add your feeds to the
 `elfeed-feeds` list and initiate an update with `M-x elfeed-update`
@@ -133,7 +134,7 @@ of strings, but an item can also be a list, providing set of
 
 To make tags useful, the Elfeed entry listing buffer can be filtered
 by tags. Use `elfeed-search-set-filter` (or <kbd>s</kbd>) to update
-the filter.
+the filter. Use `elfeed-search-clear-filter` to restore the default.
 
 Any component of the search string beginning with a `+` or
 a `-` is treated like a tag. `+` means the tag is required, `-` means
