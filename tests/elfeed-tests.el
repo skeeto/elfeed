@@ -26,7 +26,7 @@
   <link>
     <![CDATA[http://nullprogram.com/]]>
   </link>
-  <author>John Doe &lt;john.doe@example.com&gt;</author>
+  <author>john.doe@example.com (John Doe)</author>
   <guid>84815091-a6a3-35d4-7f04-80a6610dc85c</guid>
   <pubDate>Mon, 06 Sep 2009 16:20:00 +0000 </pubDate>
   <category>example-entry</category>
@@ -38,6 +38,7 @@
   <description>Interesting description 2.</description>
   <link>http://www.wikipedia.org/</link>
   <dc:creator>Jane Doe &lt;jane.doe@example.com&gt;</dc:creator>
+  <dc:creator>Baby Doe &lt;baby.doe@example.com&gt;</dc:creator>
   <guid>5059196a-7f8e-3678-ecfe-dad84511d76f</guid>
   <pubDate>Mon,  2 Sep 2013 20:25:07 GMT</pubDate>
   <category>example-entry</category>
@@ -57,8 +58,12 @@
   <id>urn:uuid:60a76c80-d399-11d9-b91C-0003939e0af6</id>
   <updated>2003-12-13T18:30:02Z</updated>
   <author>
-    <name>Test Feed Author</name>
+    <name>John Doe (feed)</name>
     <email>johndoe@example.com</email>
+  </author>
+  <author>
+    <name>Jane Doe (feed)</name>
+    <email>janedoe@example.com</email>
   </author>
 
   <entry xml:base=\"/2003/12/13/\">
@@ -93,6 +98,11 @@
       <name>John Doe</name>
       <email>johndoe@example.com</email>
     </author>
+    <author>
+      <name>Jane Doe</name>
+      <email>janedoe@example.com</email>
+    </author>
+    <dc:creator>Foo Bar</dc:creator>
   </entry>
 </feed>")
 
@@ -223,15 +233,19 @@
           (should (equal (elfeed-entry-id a)
                          (cons namespace
                                "84815091-a6a3-35d4-7f04-80a6610dc85c")))
-          (should (equal (elfeed-meta a :author)
-                         "John Doe <john.doe@example.com>"))
+          (should (string= (plist-get (nth 0 (elfeed-meta a :authors)) :name)
+                           "John Doe"))
+          (should (string= (plist-get (nth 0 (elfeed-meta a :authors)) :email)
+                           "john.doe@example.com"))
           (should (string= (elfeed-entry-title b) "Example entry 2"))
           (should (= (elfeed-entry-date b) 1378153507.0))
           (should (equal (elfeed-entry-id b)
                          (cons namespace
                                "5059196a-7f8e-3678-ecfe-dad84511d76f")))
-          (should (equal (elfeed-meta b :author)
-                         "Jane Doe <jane.doe@example.com>"))
+          (should (string= (plist-get (nth 0 (elfeed-meta b :authors)) :name)
+                           "Jane Doe <jane.doe@example.com>"))
+          (should (string= (plist-get (nth 1 (elfeed-meta b :authors)) :name)
+                           "Baby Doe <baby.doe@example.com>"))
           (should (member "example-entry" (elfeed-meta b :categories)))
           (should (member "Example Two" (elfeed-meta b :categories))))))
     (with-temp-buffer
@@ -242,11 +256,21 @@
              (xml (elfeed-xml-parse-region))
              (feed (elfeed-db-get-feed url)))
         (cl-destructuring-bind (a b) (elfeed-entries-from-atom url xml)
-          (should (string= (elfeed-feed-author feed) "Test Feed Author"))
+          ;; Authors
+          (should (string= (plist-get (nth 0 (elfeed-feed-author feed)) :name)
+                           "John Doe (feed)"))
+          (should (string= (plist-get (nth 0 (elfeed-feed-author feed)) :email)
+                           "johndoe@example.com"))
+          (should (string= (plist-get (nth 1 (elfeed-feed-author feed)) :name)
+                           "Jane Doe (feed)"))
+          (should (string= (plist-get (nth 1 (elfeed-feed-author feed)) :email)
+                           "janedoe@example.com"))
+          ;; Titles
           (should (string= (elfeed-feed-title (elfeed-db-get-feed url))
                            "Example Feed"))
           (should (string= (elfeed-entry-title a)
                            "Atom-Powered Robots Run Amok"))
+          ;; Entry A
           (should (string= (elfeed-entry-link a)
                            "http://example.org/2003/atom03.html"))
           (should (= (elfeed-entry-date a) 1071340202.0))
@@ -256,13 +280,20 @@
                         "urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a")))
           (should (member "example" (elfeed-meta a :categories)))
           (should (member "cat-1" (elfeed-meta a :categories)))
+          ;; Entry B
           (should (string= (elfeed-entry-title b)
                            "It's Raining Cats and Dogs"))
           (should (string= (elfeed-entry-link b)
                            "http://example.org/2004/12/13/atom03.html"))
           (should (= (elfeed-entry-date b) 1102962602.0))
-          (should (equal (elfeed-meta b :author)
-                         "John Doe <johndoe@example.com>"))
+          (should (string= (plist-get (nth 0 (elfeed-meta b :authors)) :name)
+                           "John Doe"))
+          (should (string= (plist-get (nth 0 (elfeed-meta b :authors)) :email)
+                           "johndoe@example.com"))
+          (should (string= (plist-get (nth 1 (elfeed-meta b :authors)) :name)
+                           "Jane Doe"))
+          (should (string= (plist-get (nth 1 (elfeed-meta b :authors)) :email)
+                           "janedoe@example.com"))
           (should (member "example" (elfeed-meta b :categories)))
           (should (member "cat-2" (elfeed-meta b :categories)))
           (should

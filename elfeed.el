@@ -243,6 +243,28 @@ If PROTOCOL is nil, returns URL."
       (concat protocol ":" url)
     url))
 
+(defsubst elfeed--atom-authors-to-plist (authors)
+  "Parse list of author XML tags into list of plists."
+  (let ((result ()))
+    (dolist (author authors)
+      (let ((plist ())
+            (name (xml-query* (name *) author))
+            (uri (xml-query* (uri *) author))
+            (email (xml-query* (email *) author)))
+        (when email
+          (setf plist (list :email (elfeed-cleanup email))))
+        (when uri
+          (setf plist (nconc (list :uri (elfeed-cleanup uri)) plist)))
+        (when name
+          (setf plist (nconc (list :name (elfeed-cleanup name)) plist)))
+        (push plist result)))
+    (nreverse result)))
+
+(defsubst elfeed--creators-to-plist (creators)
+  "Convert Dublin Core list of creators into an authors plist."
+  (cl-loop for creator in creators
+           collect (list :name creator)))
+
 (defun elfeed-entries-from-atom (url xml)
   "Turn parsed Atom content into a list of elfeed-entry structs."
   (let* ((feed-id url)
@@ -250,12 +272,12 @@ If PROTOCOL is nil, returns URL."
          (namespace (elfeed-url-to-namespace url))
          (feed (elfeed-db-get-feed feed-id))
          (title (elfeed-cleanup (xml-query* (feed title *) xml)))
-         (author (elfeed-cleanup (xml-query* (feed author name *) xml)))
+         (authors (xml-query-all* (feed author) xml))
          (xml-base (or (xml-query* (feed :base) xml) url))
          (autotags (elfeed-feed-autotags url)))
     (setf (elfeed-feed-url feed) url
           (elfeed-feed-title feed) title
-          (elfeed-feed-author feed) author)
+          (elfeed-feed-author feed) (elfeed--atom-authors-to-plist authors))
     (cl-loop for entry in (xml-query-all* (feed entry) xml) collect
              (let* ((title (or (xml-query* (title *) entry) ""))
                     (xml-base (elfeed-update-location
@@ -271,13 +293,11 @@ If PROTOCOL is nil, returns URL."
                               (xml-query* (date *) entry)
                               (xml-query* (modified *) entry) ; Atom 0.3
                               (xml-query* (issued *) entry))) ; Atom 0.3
-                    (author-name (or (xml-query* (author name *) entry)
-                                     ;; Dublin Core
-                                     (xml-query* (creator *) entry)))
-                    (author-email (xml-query* (author email *) entry))
-                    (author (cond ((and author-name author-email)
-                                   (format "%s <%s>" author-name author-email))
-                                  (author-name)))
+                    (authors (nconc (elfeed--atom-authors-to-plist
+                                     (xml-query-all* (author) entry))
+                                    ;; Dublin Core
+                                    (elfeed--creators-to-plist
+                                     (xml-query-all* (creator *) entry))))
                     (categories (xml-query-all* (category :term) entry))
                     (content (elfeed--atom-content entry))
                     (id (or (xml-query* (id *) entry) link
@@ -305,13 +325,22 @@ If PROTOCOL is nil, returns URL."
                                :content content
                                :enclosures enclosures
                                :content-type content-type
-                               :meta `(,@(when author
-                                           (list :author author))
+                               :meta `(,@(when authors
+                                           (list :authors authors))
                                        ,@(when categories
                                            (list :categories categories))))))
                (dolist (hook elfeed-new-entry-parse-hook)
                  (funcall hook :atom entry db-entry))
                db-entry))))
+
+(defsubst elfeed--rss-author-to-plist (author)
+  "Parse an RSS author element into an authors plist."
+  (when author
+    (let ((clean (elfeed-cleanup author)))
+      (if (string-match "^\\(.*\\) (\\([^)]+\\))$" clean)
+          (list (list :name (match-string 2 clean)
+                      :email (match-string 1 clean)))
+        (list (list :email clean))))))
 
 (defun elfeed-entries-from-rss (url xml)
   "Turn parsed RSS content into a list of elfeed-entry structs."
@@ -331,9 +360,11 @@ If PROTOCOL is nil, returns URL."
                            (or (xml-query* (link *) item) guid)))
                     (date (or (xml-query* (pubDate *) item)
                               (xml-query* (date *) item)))
-                    (author (or (xml-query* (author *) item)
-                                ;; Dublin Core
-                                (xml-query* (creator *) item)))
+                    (authors (nconc (elfeed--rss-author-to-plist
+                                     (xml-query* (author *) item))
+                                    ;; Dublin Core
+                                    (elfeed--creators-to-plist
+                                     (xml-query-all* (creator *) item))))
                     (categories (xml-query-all* (category *) item))
                     (content (or (xml-query-all* (encoded *) item)
                                  (xml-query-all* (description *) item)))
@@ -362,8 +393,8 @@ If PROTOCOL is nil, returns URL."
                                :enclosures enclosures
                                :content description
                                :content-type 'html
-                               :meta `(,@(when author
-                                           (list :author author))
+                               :meta `(,@(when authors
+                                           (list :authors authors))
                                        ,@(when categories
                                            (list :categories categories))))))
                (dolist (hook elfeed-new-entry-parse-hook)

@@ -285,7 +285,7 @@ polymorphic `elfeed-meta` function. It's setf-able.
 Elfeed itself adds some entries to this plist, some for your use, some
 for its own use. Here are the properties that Elfeed uses:
 
-* `:author` : The entry's author of this entry.
+* `:authors` : A list of author plists (`:name`, `:uri`, `:email`).
 * `:canonical-url` : The final URL for the feed after all redirects.
 * `:categories` : The feed-supplied categories for this entry.
 * `:etag` : HTTP Etag header, for conditional GETs.
