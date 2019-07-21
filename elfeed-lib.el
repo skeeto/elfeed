@@ -76,7 +76,8 @@ Align should be a keyword :left or :right."
 (defun elfeed-cleanup (name)
   "Trim trailing and leading spaces and collapse multiple spaces."
   (let ((trim (replace-regexp-in-string "[\n\t]+" " " (or name ""))))
-    (replace-regexp-in-string "^ +\\| +$" "" trim)))
+    (replace-regexp-in-string "^ +\\| +$" "" trim)
+    (replace-regexp-in-string " +" " " trim)))
 
 (defun elfeed-parse-simple-iso-8601 (string)
   "Attempt to parse STRING as a simply formatted ISO 8601 date.
