@@ -107,6 +107,13 @@ When live editing the filter, it is bound to :live.")
   (elfeed-db-save)
   (quit-window))
 
+(defun elfeed-search-last-entry ()
+  (end-of-buffer)
+  (forward-line -2))
+
+(defun elfeed-search-first-entry ()
+  (beginning-of-buffer))
+
 (defvar elfeed-search-mode-map
   (let ((map (make-sparse-keymap)))
     (prog1 map
@@ -127,8 +134,8 @@ When live editing the filter, it is bound to :live.")
       (define-key map "p" #'previous-line)
       (define-key map "+" #'elfeed-search-tag-all)
       (define-key map "-" #'elfeed-search-untag-all)
-      (define-key map "<" #'beginning-of-buffer)
-      (define-key map ">" #'end-of-buffer)))
+      (define-key map "<" #'elfeed-search-first-entry)
+      (define-key map ">" #'elfeed-search-last-entry)))
   "Keymap for elfeed-search-mode.")
 
 (defun elfeed-search--intro-header ()
