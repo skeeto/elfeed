@@ -108,11 +108,15 @@ When live editing the filter, it is bound to :live.")
   (quit-window))
 
 (defun elfeed-search-last-entry ()
-  (end-of-buffer)
+  "Place point on first entry."
+  (interactive)
+  (setf (point) (point-max))
   (forward-line -2))
 
 (defun elfeed-search-first-entry ()
-  (beginning-of-buffer))
+  "Place point on last entry."
+  (interactive)
+  (setf (point) (point-min)))
 
 (defvar elfeed-search-mode-map
   (let ((map (make-sparse-keymap)))
