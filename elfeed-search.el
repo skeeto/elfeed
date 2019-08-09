@@ -582,7 +582,8 @@ Executing a filter in bytecode form is generally faster than
 (defun elfeed-search-clear-filter ()
   "Reset the search filter to the default value of `elfeed-search-filter'."
   (interactive)
-  (setf elfeed-search-filter (default-value 'elfeed-search-filter)))
+  (setf elfeed-search-filter (default-value 'elfeed-search-filter))
+  (elfeed-search-update--force))
 
 (defun elfeed-search-set-filter (new-filter)
   "Set a new search filter for the elfeed-search buffer.
