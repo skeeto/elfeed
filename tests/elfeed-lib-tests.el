@@ -26,17 +26,23 @@
 
 (ert-deftest elfeed-time-duration-absolute ()
   ;; fixed time for testing: assume U.S. eastern
-  (cl-letf (((symbol-function 'current-time)
-             (lambda () (encode-time 0 20 13 24 6 2019 (* -1 4 60 60)))))
+  (let ((now (float-time (encode-time 0 20 13 24 6 2019 (* -1 4 60 60)))))
     ;; "2019-06-24T13:20:00-04:00" is "2019-06-24T17:20:00Z" so 17h 20mins is
     ;; the time difference:
-    (should (= (+ (* 17 60 60) (* 20 60)) (elfeed-time-duration "2019-06-24")))
-    (should (= (* 10 60) (elfeed-time-duration "2019-06-24T17:10")))
-    (should (= (* 10 60) (elfeed-time-duration "2019-06-24T17:10:00")))
-    (should (= (+ (* 9 60) 30) (elfeed-time-duration "2019-06-24T17:10:30")))
-    (should (= (+ (* 9 60) 30) (elfeed-time-duration "2019-06-24T17:10:30Z")))
-    (should (= (+ (* 9 60) 30) (elfeed-time-duration "2019-06-24T17:10:30+00:00")))
-    (should (= (+ (* 9 60) 30) (elfeed-time-duration "20190624T17:10:30+00:00")))))
+    (should (= (+ (* 17 60 60) (* 20 60))
+               (elfeed-time-duration "2019-06-24" now)))
+    (should (= (* 10 60)
+               (elfeed-time-duration "2019-06-24T17:10" now)))
+    (should (= (* 10 60)
+               (elfeed-time-duration "2019-06-24T17:10:00" now)))
+    (should (= (+ (* 9 60) 30)
+               (elfeed-time-duration "2019-06-24T17:10:30" now)))
+    (should (= (+ (* 9 60) 30)
+               (elfeed-time-duration "2019-06-24T17:10:30Z" now)))
+    (should (= (+ (* 9 60) 30)
+               (elfeed-time-duration "2019-06-24T17:10:30+00:00" now)))
+    (should (= (+ (* 9 60) 30)
+               (elfeed-time-duration "20190624T17:10:30+00:00" now)))))
 
 (ert-deftest elfeed-format-column ()
   (should (string= (elfeed-format-column "foo" 10 :right) "       foo"))

@@ -36,13 +36,16 @@
     (end-of-line)
     (delete-region start (point))))
 
-(defun elfeed-time-duration (time)
+(defun elfeed-time-duration (time &optional now)
   "Turn a time expression into a number of seconds. Uses
-`timer-duration' but allows a bit more flair."
+`timer-duration' but allows a bit more flair.
+
+If `now' is non-nil, use it as the current time (`float-time'). This
+is mostly useful for testing."
   (cond
    ((numberp time) time)
    ((let ((iso-time (elfeed-parse-simple-iso-8601 time)))
-      (when iso-time (float-time (time-subtract (current-time) iso-time)))))
+      (when iso-time (- (or now (float-time)) iso-time))))
    ((string-match-p "[[:alpha:]]" time)
     (let* ((clean (replace-regexp-in-string "\\(ago\\|old\\|-\\)" " " time))
            (duration (timer-duration clean)))
