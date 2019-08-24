@@ -39,7 +39,7 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "3.1.0")
+(defconst elfeed-version "3.2.0")
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow.

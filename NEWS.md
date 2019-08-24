@@ -1,5 +1,28 @@
 # Changes
 
+## 3.2.0 (2019-08-24)
+
+* Support for absolute date/time expressions in filters. See README.md
+  for documentation and examples.
+
+* curl's `--disable` is now default. To load your .curlrc file, use
+  `--config` explicitly in `elfeed-curl-extra-arguments`.
+
+* Re-enable curl's HTTP/2 support.
+
+* Function `elfeed-next-link` was renamed to `elfeed-show-next-link`.
+
+* New search buffer bindings: <, >, h, c
+
+* Multiple authors are now parsed from entries. Reflecting this, the
+  meta key for authors is now `:authors` instead of `:author`. The
+  value is always a list of zero or more authors.
+
+* New variable: `elfeed-show-unique-buffers`. Allows for displaying
+  multiple show buffers at the same time.
+
+* Various minor fixes and improvements.
+
 ## 3.1.0 (2018-08-29)
 
 * Add `elfeed-show-enclosure-filename-function` for controlling
