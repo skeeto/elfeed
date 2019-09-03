@@ -396,8 +396,9 @@ The customization `elfeed-search-date-format' sets the formatting."
                         (when (elfeed-valid-regexp-p re)
                           (push re not-matches))))
                   (?# (setf limit (string-to-number (substring element 1))))
-                  (?= (let ((url (substring element 1)))
-                        (push url feeds)))
+                  (?= (let ((re (substring element 1)))
+                        (when (elfeed-valid-regexp-p re)
+                          (push re feeds))))
                   (otherwise (when (elfeed-valid-regexp-p element)
                                (push element matches)))))
     `(,@(when before
