@@ -159,7 +159,7 @@
 time parameter is provided don't respond until the time has
 advanced past it (long poll)."
   (let ((update-time (ffloor (elfeed-db-last-update))))
-    (if (= update-time (ffloor (string-to-number (or time ""))))
+    (if (= update-time (ffloor (float (string-to-number (or time "")))))
         (push (httpd-discard-buffer) elfeed-web-waiting)
       (princ (json-encode update-time)))))
 
