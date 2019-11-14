@@ -54,6 +54,13 @@ live filter editing is exited."
   :group 'elfeed
   :type '(choice function (const nil)))
 
+(defcustom elfeed-search-remain-on-entry nil
+  "When non-nil, keep point at entry after performing a command.
+
+When nil, move to next entry."
+  :group 'elfeed
+  :type 'boolean)
+
 (defcustom elfeed-search-clipboard-type 'PRIMARY
   "Selects the clipboard `elfeed-search-yank' should use.
 Choices are the symbols PRIMARY, SECONDARY, or CLIPBOARD."
@@ -764,7 +771,8 @@ browser defined by `browse-url-generic-program'."
                     (browse-url-generic it)
                   (browse-url it)))
     (mapc #'elfeed-search-update-entry entries)
-    (unless (use-region-p) (forward-line))))
+    (unless (or elfeed-search-remain-on-entry (use-region-p))
+      (forward-line))))
 
 (defun elfeed-search-yank ()
   "Copy the selected feed items to clipboard and kill-ring."
@@ -781,7 +789,8 @@ browser defined by `browse-url-generic-program'."
           (x-set-selection elfeed-search-clipboard-type links-str)))
       (message "Copied: %s" links-str)
       (mapc #'elfeed-search-update-entry entries)
-      (unless (use-region-p) (forward-line)))))
+      (unless (or elfeed-search-remain-on-entry (use-region-p))
+        (forward-line)))))
 
 (defun elfeed-search-tag-all (tag)
   "Apply TAG to all selected entries."
@@ -789,7 +798,8 @@ browser defined by `browse-url-generic-program'."
   (let ((entries (elfeed-search-selected)))
     (elfeed-tag entries tag)
     (mapc #'elfeed-search-update-entry entries)
-    (unless (use-region-p) (forward-line))))
+    (unless (or elfeed-search-remain-on-entry (use-region-p))
+      (forward-line))))
 
 (defun elfeed-search-untag-all (tag)
   "Remove TAG from all selected entries."
@@ -797,7 +807,8 @@ browser defined by `browse-url-generic-program'."
   (let ((entries (elfeed-search-selected)))
     (elfeed-untag entries tag)
     (mapc #'elfeed-search-update-entry entries)
-    (unless (use-region-p) (forward-line))))
+    (unless (or elfeed-search-remain-on-entry (use-region-p))
+      (forward-line))))
 
 (defun elfeed-search-toggle-all (tag)
   "Toggle TAG on all selected entries."
@@ -810,7 +821,8 @@ browser defined by `browse-url-generic-program'."
     (elfeed-tag entries-tag tag)
     (elfeed-untag entries-untag tag)
     (mapc #'elfeed-search-update-entry entries)
-    (unless (use-region-p) (forward-line))))
+    (unless (or elfeed-search-remain-on-entry (use-region-p))
+      (forward-line))))
 
 (defun elfeed-search-show-entry (entry)
   "Display the currently selected item in a buffer."
@@ -819,7 +831,7 @@ browser defined by `browse-url-generic-program'."
   (when (elfeed-entry-p entry)
     (elfeed-untag entry 'unread)
     (elfeed-search-update-entry entry)
-    (forward-line)
+    (unless elfeed-search-remain-on-entry (forward-line))
     (elfeed-show-entry entry)))
 
 (defun elfeed-search-set-entry-title (title)
