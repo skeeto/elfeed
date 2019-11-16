@@ -8,6 +8,7 @@
 (require 'browse-url)
 (require 'wid-edit) ; widget-inactive face
 (require 'bookmark)
+(bookmark-maybe-load-default-file)
 
 (require 'elfeed)
 (require 'elfeed-db)
