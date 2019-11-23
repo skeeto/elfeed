@@ -1,5 +1,15 @@
 # Changes
 
+## 3.3.0 (2019-11-23)
+
+* New option: `elfeed-search-remain-on-entry`.
+
+* More graceful handling of feed filters (=).
+
+* Fix minor time handling issue with Emacs >= 26.1
+
+* Load bookmarks before trying to use them.
+
 ## 3.2.0 (2019-08-24)
 
 * Support for absolute date/time expressions in filters. See README.md
