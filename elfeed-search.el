@@ -380,7 +380,8 @@ The customization `elfeed-search-date-format' sets the formatting."
         (matches ())
         (not-matches ())
         (limit nil)
-        (feeds ()))
+        (feeds ())
+        (not-feeds ()))
     (cl-loop for element in (split-string filter)
              for type = (aref element 0)
              do (cl-case type
@@ -407,6 +408,9 @@ The customization `elfeed-search-date-format' sets the formatting."
                   (?= (let ((re (substring element 1)))
                         (when (elfeed-valid-regexp-p re)
                           (push re feeds))))
+                  (?~ (let ((re (substring element 1)))
+                        (when (elfeed-valid-regexp-p re)
+                          (push re not-feeds))))
                   (otherwise (when (elfeed-valid-regexp-p element)
                                (push element matches)))))
     `(,@(when before
@@ -424,7 +428,9 @@ The customization `elfeed-search-date-format' sets the formatting."
       ,@(when limit
           (list :limit limit))
       ,@(when feeds
-          (list :feeds feeds)))))
+          (list :feeds feeds))
+      ,@(when not-feeds
+          (list :not-feeds not-feeds)))))
 
 (defun elfeed-search--recover-time (seconds)
   "Pick a reasonable filter representation for SECONDS."
@@ -466,7 +472,8 @@ original, but will be equal in its effect."
           (matches (plist-get filter :matches))
           (not-matches (plist-get filter :not-matches))
           (limit (plist-get filter :limit))
-          (feeds (plist-get filter :feeds)))
+          (feeds (plist-get filter :feeds))
+          (not-feeds (plist-get filter :not-feeds)))
       (when after
         (push (elfeed-search--recover-units after before) output))
       (dolist (tag must-have)
@@ -481,6 +488,8 @@ original, but will be equal in its effect."
         (push (format "#%d" limit) output))
       (dolist (feed feeds)
         (push (format "=%s" feed) output))
+      (dolist (feed not-feeds)
+        (push (format "~%s" feed) output))
       (mapconcat #'identity (nreverse output) " "))))
 
 (defun elfeed-search-filter (filter entry feed &optional count)
@@ -498,7 +507,8 @@ This function must *only* be called within the body of
         (matches (plist-get filter :matches))
         (not-matches (plist-get filter :not-matches))
         (limit (plist-get filter :limit))
-        (feeds (plist-get filter :feeds)))
+        (feeds (plist-get filter :feeds))
+        (not-feeds (plist-get filter :not-feeds)))
     (let* ((tags (elfeed-entry-tags entry))
            (date (elfeed-entry-date entry))
            (age (- (float-time) date))
@@ -527,7 +537,11 @@ This function must *only* be called within the body of
                (cl-some (lambda (f)
                           (or (string-match-p f feed-id)
                               (string-match-p f feed-title)))
-                        feeds))))))
+                        feeds))
+           (cl-notany (lambda (f)
+                        (or (string-match-p f feed-id)
+                            (string-match-p f feed-title)))
+                      not-feeds)))))
 
 (defun elfeed-search-compile-filter (filter)
   "Compile FILTER into a lambda function for `byte-compile'.
@@ -541,11 +555,12 @@ Executing a filter in bytecode form is generally faster than
         (matches (plist-get filter :matches))
         (not-matches (plist-get filter :not-matches))
         (limit (plist-get filter :limit))
-        (feeds (plist-get filter :feeds)))
+        (feeds (plist-get filter :feeds))
+        (not-feeds (plist-get filter :not-feeds)))
     `(lambda (,(if (or after matches not-matches must-have must-not-have)
                    'entry
                  '_entry)
-              ,(if feeds
+              ,(if (or feeds not-feeds)
                    'feed
                  '_feed)
               ,(if limit
@@ -560,7 +575,7 @@ Executing a filter in bytecode form is generally faster than
                   '((title (or (elfeed-meta entry :title)
                                (elfeed-entry-title entry)))
                     (link (elfeed-entry-link entry))))
-              ,@(when feeds
+              ,@(when (or feeds not-feeds)
                   '((feed-id (elfeed-feed-id feed))
                     (feed-title (or (elfeed-meta feed :title)
                                     (elfeed-feed-title feed) "")))))
@@ -586,6 +601,12 @@ Executing a filter in bytecode form is generally faster than
                            for regex in feeds
                            collect `(string-match-p ,regex feed-id)
                            collect `(string-match-p ,regex feed-title)))))
+              ,@(when not-feeds
+                  `((not
+                     (or ,@(cl-loop
+                            for regex in not-feeds
+                            collect `(string-match-p ,regex feed-id)
+                            collect `(string-match-p ,regex feed-title))))))
               ,@(when before
                   `((> age ,before))))))))
 

@@ -164,6 +164,10 @@ A component beginning with a `=` is a regular expression matching the
 entry's feed (title or URL). Only entries belonging to a feed that
 match at least one of the `=` expressions will be shown.
 
+A component beginning with a `~` is a regular expression matching the
+entry's feed (title or URL). Only entries belonging to a feed that
+match none of the `~` expressions will be shown.
+
 All other components are treated as a regular expression, and only
 entries matching it (title or URL) will be shown.
 
