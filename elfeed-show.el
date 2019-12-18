@@ -64,6 +64,7 @@ Defaults to `elfeed-kill-buffer'.")
       (define-key map (kbd "TAB") #'elfeed-show-next-link)
       (define-key map "\e\t" #'shr-previous-link)
       (define-key map [backtab] #'shr-previous-link)
+      (define-key map "c" #'elfeed-kill-link-url-at-point)
       (define-key map [mouse-2] #'shr-browse-url)
       (define-key map "A" #'elfeed-show-add-enclosure-to-playlist)
       (define-key map "P" #'elfeed-show-play-enclosure)))
@@ -452,6 +453,14 @@ Prompts for ENCLOSURE-INDEX when called interactively."
     (when (memq 'message-header-name properties)
       (forward-paragraph))
     (shr-next-link)))
+
+(defun elfeed-kill-link-url-at-point ()
+  "Get link URL at point and store in kill-ring."
+  (interactive)
+  (let ((url (or (elfeed-get-link-at-point)
+                 (elfeed-get-url-at-point))))
+    (kill-new url)
+    (message url)))
 
 (provide 'elfeed-show)
 
