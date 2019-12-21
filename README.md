@@ -42,6 +42,8 @@ These projects extend Elfeed with additional features:
 
 * [elfeed-org](https://github.com/remyhonig/elfeed-org)
 * [elfeed-goodies](https://github.com/algernon/elfeed-goodies)
+* [elfeed-protocol](https://github.com/fasheng/elfeed-protocol)
+* [elfeed-score](https://github.com/sp1ff/elfeed-score)
 * [Elfeed Android interface](https://github.com/areina/elfeed-cljsrn)
   ([Google Play](https://play.google.com/store/apps/details?id=com.elfeedcljsrn))
 
