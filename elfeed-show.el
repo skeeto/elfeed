@@ -459,8 +459,9 @@ Prompts for ENCLOSURE-INDEX when called interactively."
   (interactive)
   (let ((url (or (elfeed-get-link-at-point)
                  (elfeed-get-url-at-point))))
-    (kill-new url)
-    (message url)))
+    (if url
+        (progn (kill-new url) (message url))
+      (call-interactively 'shr-maybe-probe-and-copy-url))))
 
 (provide 'elfeed-show)
 
