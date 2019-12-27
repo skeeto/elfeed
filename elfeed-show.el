@@ -461,7 +461,7 @@ Prompts for ENCLOSURE-INDEX when called interactively."
                  (elfeed-get-url-at-point))))
     (if url
         (progn (kill-new url) (message url))
-      (call-interactively 'shr-maybe-probe-and-copy-url))))
+      (call-interactively 'shr-copy-url))))
 
 (provide 'elfeed-show)
 
