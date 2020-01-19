@@ -88,6 +88,12 @@ Each function should accept no arguments, and return a string or nil."
   :group 'elfeed
   :type '(repeat symbol))
 
+(defcustom elfeed-auto-idle-update-minutes 10
+  "Auto update elfeed feeds with an idle timer. Set to `nil' to disable this timer."
+  :type 'number
+  :safe #'numberp
+  :group 'elfeed)
+
 ;; Fetching:
 
 (defvar elfeed-http-error-hooks ()
@@ -547,6 +553,12 @@ called interactively, SAVE is set to t."
     (customize-save-variable 'elfeed-feeds elfeed-feeds))
   (elfeed-update-feed url))
 
+(defun elfeed-auto-idle-update ()
+  "Auto update elfeed feeds when Emacs idle."
+  (if elfeed-auto-idle-update-minutes
+      (run-with-idle-timer (* 60 elfeed-auto-idle-update-minutes)
+                           t 'elfeed-update)))
+
 ;;;###autoload
 (defun elfeed-update ()
   "Update all the feeds in `elfeed-feeds'."
@@ -556,7 +568,8 @@ called interactively, SAVE is set to t."
   (let ((elfeed--inhibit-update-init-hooks t))
     (mapc #'elfeed-update-feed (elfeed--shuffle (elfeed-feed-list))))
   (run-hooks 'elfeed-update-init-hooks)
-  (elfeed-db-save))
+  (elfeed-db-save)
+  (elfeed-auto-idle-update))
 
 ;;;###autoload
 (defun elfeed ()
