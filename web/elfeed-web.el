@@ -4,6 +4,7 @@
 
 ;; Author: Christopher Wellons <wellons@nullprogram.com>
 ;; URL: https://github.com/skeeto/elfeed
+;; Package-Requires: ((simple-httpd))
 
 ;;; Commentary:
 

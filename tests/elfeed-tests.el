@@ -5,9 +5,6 @@
 (require 'ert)
 (require 'elfeed)
 (require 'elfeed-lib)
-(require 'xml-query-tests)
-(require 'elfeed-db-tests)
-(require 'elfeed-lib-tests)
 
 (defvar elfeed-test-rss
   "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
@@ -204,6 +201,104 @@
     </outline>
   </body>
 </opml>")
+
+(defmacro with-elfeed-test (&rest body)
+  "Run BODY with a fresh, empty database that will be destroyed on exit."
+  (declare (indent defun))
+  `(let* ((elfeed-db nil)
+          (elfeed-db-feeds nil)
+          (elfeed-db-entries nil)
+          (elfeed-db-index nil)
+          (elfeed-feeds nil)
+          (temp-dir (make-temp-file "elfeed-test-" t))
+          (elfeed-db-directory temp-dir)
+          (elfeed-new-entry-hook nil)
+          (elfeed-db-update-hook nil)
+          (elfeed-initial-tags '(unread)))
+     (unwind-protect
+         (progn ,@body)
+       (delete-directory temp-dir :recursive))))
+
+(defun elfeed-test-generate-url ()
+  "Generate a random URL."
+  (let* ((tlds '(".com" ".net" ".org"))
+         (tld (nth (elfeed-random* (length tlds)) tlds))
+         (path (downcase (elfeed-test-generate-title nil 3))))
+    (url-recreate-url
+     (url-parse-make-urlobj
+      "http" nil nil
+      (concat (elfeed-test-generate-word nil 10) tld)
+      nil
+      (concat "/" (replace-regexp-in-string " " "/" path))
+      nil nil :full))))
+
+(defun elfeed-test-generate-feed ()
+  "Generate a random feed. Warning: run this in `with-elfeed-test'."
+  (let* ((url (elfeed-test-generate-url))
+         (id url)
+         (feed (elfeed-db-get-feed id)))
+    (prog1 feed
+      (push url elfeed-feeds)
+      (setf (elfeed-feed-title feed) (elfeed-test-generate-title))
+      (setf (elfeed-feed-url feed) url))))
+
+(cl-defun elfeed-test-generate-date (&optional (within "1 year"))
+  "Generate an epoch time within WITHIN time before now."
+  (let* ((duration (elfeed-time-duration within))
+         (min-time (- (float-time) duration)))
+    (+ min-time (elfeed-random* duration))))
+
+(cl-defun elfeed-test-generate-entry (feed &optional (within "1 year"))
+  "Generate a random entry. Warning: run this in `with-elfeed-test'."
+  (let* ((feed-id (elfeed-feed-id feed))
+         (namespace (elfeed-url-to-namespace feed-id))
+         (link (elfeed-test-generate-url)))
+    (elfeed-entry--create
+     :id (cons namespace link)
+     :title (elfeed-test-generate-title)
+     :link link
+     :date (elfeed-test-generate-date within)
+     :tags (list 'unread)
+     :feed-id feed-id)))
+
+(defun elfeed-test-generate-letter (&optional multibyte)
+  "Generate a single character from a-z or unicode."
+  (cl-flet ((control-p (char)
+                       (or (<= char #x001F) (and (>= char #x007F) (<= char #x009F)))))
+    (if multibyte
+        (cl-loop for char = (elfeed-random* (1+ #x10FF))
+                 unless (control-p char) return char)
+      (+ ?a (elfeed-random* 26)))))
+
+(cl-defun elfeed-test-random (n &optional (variance 1.0))
+  "Generate a random integer around N, minimum of 1."
+  (max 1 (floor (+ n (- (elfeed-random* (* 1.0 variance n))
+                        (* variance 0.5 n))))))
+
+(cl-defun elfeed-test-generate-word (&optional multibyte (length 6))
+  "Generate a word around LENGTH letters long."
+  (apply #'string
+         (cl-loop repeat (elfeed-test-random length)
+                  collect (elfeed-test-generate-letter multibyte))))
+
+(defvar elfeed-test-random-state
+  (if (functionp 'record) ; Emacs 26 or later?
+      (record 'cl--random-state -1 30 267466518)
+    (vector 'cl-random-state-tag -1 30 267466518))
+  "Use the same random state for each run.")
+
+(defun elfeed-random* (x)
+  "Generate a random number from `elfeed-test-random-state'."
+  (cl-random x elfeed-test-random-state))
+
+(cl-defun elfeed-test-generate-title (&optional multibyte (length 8))
+  "Generate a title around LENGTH words long, capitalized."
+  (mapconcat
+   #'identity
+   (cl-loop repeat (elfeed-test-random length)
+            collect (elfeed-test-generate-word multibyte) into words
+            finally (return (cons (capitalize (car words)) (cdr words))))
+   " "))
 
 (ert-deftest elfeed-feed-type ()
   (with-temp-buffer

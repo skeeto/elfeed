@@ -36,7 +36,7 @@ matches, nil otherwise."
      (cl-letf (((symbol-function 'current-time)
                 (lambda () test-time))
                ((symbol-function 'float-time)
-                (lambda (&optional time) (funcall orig-float-time test-time))))
+                (lambda (&optional _time) (funcall orig-float-time test-time))))
        (catch 'elfeed-db-done
          (let ((filter-fn (elfeed-search-compile-filter (elfeed-search-parse-filter ,filter))))
            (funcall filter-fn entry nil 0))))))
