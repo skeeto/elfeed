@@ -9,8 +9,9 @@ EL   = elfeed-csv.el elfeed-curl.el elfeed-db.el elfeed-lib.el	\
 DOC  = README.md NEWS.md UNLICENSE elfeed-pkg.el
 WEB  = web/elfeed-web-pkg.el web/elfeed-web.el web/elfeed.css	\
        web/elfeed.js web/index.html
-TEST = tests/elfeed-db-tests.el tests/elfeed-lib-tests.el	\
-       tests/elfeed-tests.el tests/xml-query-tests.el
+TEST = tests/elfeed-db-tests.el tests/elfeed-lib-tests.el       \
+       tests/elfeed-tests.el tests/elfeed-search-tests.el       \
+       tests/xml-query-tests.el
 
 compile: $(EL:.el=.elc) $(TEST:.el=.elc)
 
