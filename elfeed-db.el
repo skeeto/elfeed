@@ -147,6 +147,10 @@ update occurred, not counting content."
            for new-date = (elfeed-entry-date entry)
            for original-date = (and original (elfeed-entry-date original))
            do (elfeed-deref-entry entry)
+           do (let ((target (or original entry)))
+                (setf (elfeed-entry-meta target)
+                      (plist-put (elfeed-entry-meta target)
+                                 :last-seen (float-time))))
            when original count
            (if (= new-date original-date)
                (elfeed-entry-merge original entry)
