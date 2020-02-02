@@ -9,6 +9,8 @@
 (require 'url-parse)
 (require 'browse-url)
 (require 'message) ; faces
+(require 'bookmark)
+(bookmark-maybe-load-default-file)
 
 (require 'elfeed)
 (require 'elfeed-db)
@@ -81,6 +83,8 @@ Defaults to `elfeed-kill-buffer'.")
         buffer-read-only t)
   (buffer-disable-undo)
   (make-local-variable 'elfeed-show-entry)
+  (set (make-local-variable 'bookmark-make-record-function)
+       #'elfeed-show-bookmark-make-record)
   (run-mode-hooks 'elfeed-show-mode-hook))
 
 (defalias 'elfeed-show-tag--unread
@@ -462,6 +466,28 @@ Prompts for ENCLOSURE-INDEX when called interactively."
     (if url
         (progn (kill-new url) (message url))
       (call-interactively 'shr-copy-url))))
+
+;; Bookmarks
+
+;;;###autoload
+(defun elfeed-show-bookmark-handler (record)
+  "Show the bookmarked entry saved in the `RECORD'."
+  (let* ((id (bookmark-prop-get record 'id))
+         (entry (elfeed-db-get-entry id))
+         (position (bookmark-get-position record)))
+    (elfeed-show-entry entry)
+    (goto-char position)))
+
+(defun elfeed-show-bookmark-make-record ()
+  "Save the current position and the entry into a bookmark."
+  (let ((id (elfeed-entry-id elfeed-show-entry))
+        (position (point))
+        (title (elfeed-entry-title elfeed-show-entry)))
+    `(,(format "elfeed entry \"%s\"" title)
+      (id . ,id)
+      (location . ,title)
+      (position . ,position)
+      (handler . elfeed-show-bookmark-handler))))
 
 (provide 'elfeed-show)
 
