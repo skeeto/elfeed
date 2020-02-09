@@ -30,15 +30,20 @@
 (defvar elfeed-show-entry nil
   "The entry being displayed in this buffer.")
 
-(defvar elfeed-show-entry-switch #'switch-to-buffer
-  "Function to call to display and switch to the feed entry buffer.
-Defaults to `switch-to-buffer'.")
+(defcustom elfeed-show-entry-switch #'switch-to-buffer
+  "Function used to display the feed entry buffer."
+  :group 'elfeed
+  :type '(choice (function-item switch-to-buffer)
+                 (function-item pop-to-buffer)
+                 function))
 
-(defvar elfeed-show-entry-delete #'elfeed-kill-buffer
-  "Function called when quitting from the elfeed-entry
-buffer. Does not take any arguments.
-
-Defaults to `elfeed-kill-buffer'.")
+(defcustom elfeed-show-entry-delete #'elfeed-kill-buffer
+  "Function called when quitting from the elfeed-entry buffer.
+Called without arguments."
+  :group 'elfeed
+  :type '(choice (function-item elfeed-kill-buffer)
+                 (function-item delete-window)
+                 function))
 
 (defvar elfeed-show-refresh-function #'elfeed-show-refresh--mail-style
   "Function called to refresh the `*elfeed-entry*' buffer.")
