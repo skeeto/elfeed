@@ -967,7 +967,7 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
 (add-to-list 'desktop-buffer-mode-handlers
              '(elfeed-search-mode . elfeed-search-desktop-restore))
 
-;;;; Excerpt view
+;;;; Excerpts
 
 ;; This section implements inline viewing of entry excerpts in the
 ;; search buffer.  Ideally we would insert text directly into the
@@ -980,10 +980,15 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
 ;; interfere with the buffer's text.  However, this means that users
 ;; can't select text in the inline content, a minor inconvenience.
 
-(defcustom elfeed-excerpt-size 512
-  "Maximum size of excerpts displayed inline in search buffer."
-  :type 'integer
-  :group 'elfeed)
+;; However, overlays present a certain problem of their own: if they
+;; are longer than the window's text area, it can be impossible to
+;; scroll to the end of the overlay, depending on the overlay's size.
+;; And when that happens, the user can keep doing `forward-line', and
+;; the line number changes, but the cursor does not appear to move,
+;; and the buffer does not appear to scroll.  I'm not sure if it's a
+;; bug in Emacs or just an idiosyncrasy, and I haven't found a way to
+;; handle it well.  When it happens, the user will have to view the
+;; entry in its own buffer to see all of it.
 
 (defmacro elfeed-search-at-entry (entry &rest body)
   "If ENTRY is in search buffer, eval BODY with point at it."
@@ -999,12 +1004,6 @@ If ALL is non-nil (interactively, with prefix), toggle all
 excerpts: if any are present, hide all; otherwise, show as many
 as can fit in the window."
   (interactive "P")
-  ;; NOTE: Overlays present a certain problem: if they are longer than the
-  ;; window's text area, it can be impossible to scroll to the end of the
-  ;; overlay, depending on the overlay's size.  Until a better workaround is
-  ;; found, we do this: When showing all entries, the first one is shown
-  ;; unconditionally, even if it doesn't fit, and if it doesn't, it's truncated
-  ;; to fit.  The rest are only shown if they fit in the remaining space.
   (cl-labels ((present-p
                () (cl-loop for ov in (overlays-in (point-min) (point-max))
                            when (overlay-get ov :elfeed-excerpt)
@@ -1035,8 +1034,17 @@ as can fit in the window."
                ;; Show other entries as they fit.
                (forward-line 1)
                (setf (mark) (point-max))
-               (cl-loop for entry in (elfeed-search-selected)
-                        while (show-maybe entry))))
+               (cl-loop while (< (point) (mark))
+                        while (show-maybe (elfeed-search-selected t))
+                        do (forward-line 1))
+               ;; HACK: If point is inside an overlay (sort of), move back to entry
+               ;; to avoid weird behavior.  NOTE: This doesn't actually work, because
+               ;; for some weird reason, the overlays at point are nil until the
+               ;; command finishes.  Then, at the same point, the overlays are there.
+               (let ((ovs (overlays-at (point))))
+                 (when ovs
+                   (goto-char (1- (overlay-start (car ovs))))
+                   (beginning-of-line)))))
     (if all
         (if (present-p)
             (elfeed-search-excerpt-hide-all)
