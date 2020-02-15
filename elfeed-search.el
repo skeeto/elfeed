@@ -962,6 +962,66 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
 (add-to-list 'desktop-buffer-mode-handlers
              '(elfeed-search-mode . elfeed-search-desktop-restore))
 
+;;;; Inline view
+
+;; This section implements inline viewing of entries in the search
+;; buffer.
+
+(defmacro elfeed-search-at-entry (entry &rest body)
+  "If ENTRY is in search buffer, eval BODY with point at it."
+  (declare (indent defun))
+  `(let ((n (cl-position ,entry elfeed-search-entries)))
+     (when n
+       (elfeed-goto-line (+ elfeed-search--offset n))
+       ,@body)))
+
+(defun elfeed-search-inline-toggle ()
+  "Toggle display of current or selected entries inline."
+  (interactive)
+  (cl-labels
+      ((inline-bounds
+        ;; Return (beg . end) of ENTRY's inline entry text.
+        (entry) (elfeed-search-at-entry entry
+                  (let ((beg (next-property-pos (point) :elfeed-entry-inline)))
+                    (when beg
+                      (cons beg (or (next-property-pos beg :elfeed-entry-inline)
+                                    (save-excursion
+                                      (goto-char beg)
+                                      (forward-line 1)
+                                      (point))))))))
+       (next-property-pos
+        ;; Return next position from POS where PROPERTY changes (and matches VALUE, if set).
+        (pos property &optional value)
+        (let ((pos (next-single-property-change pos property)))
+          (when pos
+            (pcase value
+              ('nil pos)
+              (_ (equal value (get-text-property pos property)))))))
+       (toggle-entry (entry)
+                     (let ((bounds (inline-bounds entry)))
+                       (pcase bounds
+                         (`(,beg . ,end) ;; Remove inline text.
+                          (delete-region beg end))
+                         (_ (save-excursion
+                              (goto-char (1+ (line-end-position)))
+                              (elfeed-search-inline-insert entry)))))))
+    (let ((inhibit-read-only t))
+      (dolist (entry (elfeed-search-selected))
+        (toggle-entry entry)))))
+
+(defun elfeed-search-inline-insert (entry)
+  "Insert ENTRY at point."
+  (let* ((ref (elfeed-entry-content entry))
+         (content (elfeed-deref ref))
+         (string
+          (with-temp-buffer
+            (elfeed-insert-html
+             (concat "<blockquote>" content "</blockquote>"))
+            (propertize (concat (buffer-string) "\n")
+                        :elfeed-entry-inline entry
+                        'face '(:inherit (variable-pitch default))))))
+    (insert string)))
+
 (provide 'elfeed-search)
 
 ;;; elfeed-search.el ends here
