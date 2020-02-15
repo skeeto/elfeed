@@ -964,8 +964,16 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
 
 ;;;; Inline view
 
-;; This section implements inline viewing of entries in the search
-;; buffer.
+;; This section implements inline viewing of entry content in the
+;; search buffer.  Ideally we would insert text directly into the
+;; buffer and use text-properties to distinguish inline content from
+;; entry rows, because that would allow users to select and navigate
+;; the inline text.  But because of the way `elfeed-search--offset'
+;; works, inserting entry content between entry rows would cause
+;; havoc.  So unless and until that functionality is changed (which
+;; Chris is open to considering), we use overlays, which don't
+;; interfere with the buffer's text.  However, this means that users
+;; can't select text in the inline content, a minor inconvenience.
 
 (defmacro elfeed-search-at-entry (entry &rest body)
   "If ENTRY is in search buffer, eval BODY with point at it."
@@ -975,52 +983,48 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
        (elfeed-goto-line (+ elfeed-search--offset n))
        ,@body)))
 
-(defun elfeed-search-inline-toggle ()
-  "Toggle display of current or selected entries inline."
-  (interactive)
-  (cl-labels
-      ((inline-bounds
-        ;; Return (beg . end) of ENTRY's inline entry text.
-        (entry) (elfeed-search-at-entry entry
-                  (let ((beg (next-property-pos (point) :elfeed-entry-inline)))
-                    (when beg
-                      (cons beg (or (next-property-pos beg :elfeed-entry-inline)
-                                    (save-excursion
-                                      (goto-char beg)
-                                      (forward-line 1)
-                                      (point))))))))
-       (next-property-pos
-        ;; Return next position from POS where PROPERTY changes (and matches VALUE, if set).
-        (pos property &optional value)
-        (let ((pos (next-single-property-change pos property)))
-          (when pos
-            (pcase value
-              ('nil pos)
-              (_ (equal value (get-text-property pos property)))))))
-       (toggle-entry (entry)
-                     (let ((bounds (inline-bounds entry)))
-                       (pcase bounds
-                         (`(,beg . ,end) ;; Remove inline text.
-                          (delete-region beg end))
-                         (_ (save-excursion
-                              (goto-char (1+ (line-end-position)))
-                              (elfeed-search-inline-insert entry)))))))
-    (let ((inhibit-read-only t))
-      (dolist (entry (elfeed-search-selected))
-        (toggle-entry entry)))))
+(defun elfeed-search-inline-toggle (&optional hide-all)
+  "Toggle display of current or selected entries inline.
+If HIDE-ALL is non-nil (interactively, with prefix), hide all
+inline entries."
+  (interactive "P")
+  (if hide-all
+      (cl-loop for ov in (overlays-in (point-min) (point-max))
+               when (overlay-get ov :elfeed-inline)
+               do (delete-overlay ov))
+    (dolist (entry (elfeed-search-selected))
+      (elfeed-search-at-entry entry
+        (or (elfeed-search-inline-hide)
+            (elfeed-search-inline-show))))))
 
-(defun elfeed-search-inline-insert (entry)
-  "Insert ENTRY at point."
-  (let* ((ref (elfeed-entry-content entry))
+(defun elfeed-search-inline-hide ()
+  "Hide inline entry at point.
+Return t when inline entry was found and hidden."
+  (interactive)
+  (cl-loop with pos = (1+ (line-end-position))
+           for ov in (overlays-in pos pos)
+           when (overlay-get ov :elfeed-inline)
+           do (delete-overlay ov)
+           and return t))
+
+(defun elfeed-search-inline-show ()
+  "Show entry at point inline and mark it read."
+  (interactive)
+  (let* ((pos (1+ (line-end-position)))
+         (entry (elfeed-search-selected 'ignore-region))
+         (ref (elfeed-entry-content entry))
          (content (elfeed-deref ref))
          (string
           (with-temp-buffer
             (elfeed-insert-html
              (concat "<blockquote>" content "</blockquote>"))
             (propertize (concat (buffer-string) "\n")
-                        :elfeed-entry-inline entry
-                        'face '(:inherit (variable-pitch default))))))
-    (insert string)))
+                        'face '(:inherit (variable-pitch default)))))
+         (ov (make-overlay pos pos)))
+    (overlay-put ov :elfeed-inline entry)
+    (overlay-put ov 'after-string string)
+    (elfeed-untag entry 'unread)
+    (elfeed-search-update-entry entry)))
 
 (provide 'elfeed-search)
 
