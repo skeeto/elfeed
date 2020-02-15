@@ -130,6 +130,11 @@ When live editing the filter, it is bound to :live.")
   (let ((map (make-sparse-keymap)))
     (prog1 map
       (suppress-keymap map)
+      (define-key map "e" #'elfeed-search-excerpt-toggle)
+      (define-key map "E" (lambda ()
+                            (interactive)
+                            (elfeed-search-excerpt-toggle t)))
+      (define-key map (kbd "SPC") #'scroll-up)
       (define-key map "h" #'describe-mode)
       (define-key map "q" #'elfeed-search-quit-window)
       (define-key map "g" #'elfeed-search-update--force)
@@ -962,9 +967,9 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
 (add-to-list 'desktop-buffer-mode-handlers
              '(elfeed-search-mode . elfeed-search-desktop-restore))
 
-;;;; Inline view
+;;;; Excerpt view
 
-;; This section implements inline viewing of entry content in the
+;; This section implements inline viewing of entry excerpts in the
 ;; search buffer.  Ideally we would insert text directly into the
 ;; buffer and use text-properties to distinguish inline content from
 ;; entry rows, because that would allow users to select and navigate
@@ -975,6 +980,11 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
 ;; interfere with the buffer's text.  However, this means that users
 ;; can't select text in the inline content, a minor inconvenience.
 
+(defcustom elfeed-excerpt-size 512
+  "Maximum size of excerpts displayed inline in search buffer."
+  :type 'integer
+  :group 'elfeed)
+
 (defmacro elfeed-search-at-entry (entry &rest body)
   "If ENTRY is in search buffer, eval BODY with point at it."
   (declare (indent defun))
@@ -983,48 +993,119 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
        (elfeed-goto-line (+ elfeed-search--offset n))
        ,@body)))
 
-(defun elfeed-search-inline-toggle (&optional hide-all)
-  "Toggle display of current or selected entries inline.
-If HIDE-ALL is non-nil (interactively, with prefix), hide all
-inline entries."
+(defun elfeed-search-excerpt-toggle (&optional all)
+  "Toggle display of excerpts for current or selected entries.
+If ALL is non-nil (interactively, with prefix), toggle all
+excerpts: if any are present, hide all; otherwise, show as many
+as can fit in the window."
   (interactive "P")
-  (if hide-all
-      (cl-loop for ov in (overlays-in (point-min) (point-max))
-               when (overlay-get ov :elfeed-inline)
-               do (delete-overlay ov))
-    (dolist (entry (elfeed-search-selected))
-      (elfeed-search-at-entry entry
-        (or (elfeed-search-inline-hide)
-            (elfeed-search-inline-show))))))
+  ;; NOTE: Overlays present a certain problem: if they are longer than the
+  ;; window's text area, it can be impossible to scroll to the end of the
+  ;; overlay, depending on the overlay's size.  Until a better workaround is
+  ;; found, we do this: When showing all entries, the first one is shown
+  ;; unconditionally, even if it doesn't fit, and if it doesn't, it's truncated
+  ;; to fit.  The rest are only shown if they fit in the remaining space.
+  (cl-labels ((present-p
+               () (cl-loop for ov in (overlays-in (point-min) (point-max))
+                           when (overlay-get ov :elfeed-excerpt)
+                           return t))
+              (lines-remaining
+               () (- (save-excursion
+                       (move-to-window-line -1)
+                       (line-number-at-pos))
+                     (line-number-at-pos)))
+              (num-lines (s) (length (split-string s "\n" t)))
+              (unread-at-point-p
+               () (member 'unread (elfeed-entry-tags (elfeed-search-selected t))))
+              (show-maybe
+               (entry) (elfeed-search-at-entry entry
+                         (when (<= (num-lines (elfeed-search-entry-excerpt entry))
+                                   (lines-remaining))
+                           (elfeed-search-excerpt-show))))
+              (show-all-entries
+               ()
+               ;; Move to first unread entry.
+               (cl-loop until (unread-at-point-p)
+                        while (not (eobp))
+                        do (forward-line 1))
+               ;; Scroll line to top of window.
+               (recenter-top-bottom 0)
+               ;; Show first entry unconditionally.
+               (elfeed-search-excerpt-show)
+               ;; Show other entries as they fit.
+               (forward-line 1)
+               (setf (mark) (point-max))
+               (cl-loop for entry in (elfeed-search-selected)
+                        while (show-maybe entry))))
+    (if all
+        (if (present-p)
+            (elfeed-search-excerpt-hide-all)
+          (show-all-entries))
+      (dolist (entry (elfeed-search-selected))
+        (elfeed-search-at-entry entry
+          (or (elfeed-search-excerpt-hide)
+              (elfeed-search-excerpt-show)))))))
 
-(defun elfeed-search-inline-hide ()
-  "Hide inline entry at point.
-Return t when inline entry was found and hidden."
+(defun elfeed-search-excerpt-hide-all ()
+  "Hide all inline overlays."
+  (cl-loop for ov in (overlays-in (point-min) (point-max))
+           when (overlay-get ov :elfeed-excerpt)
+           do (delete-overlay ov)))
+
+;; Remove all overlays when search buffer is updated.
+(add-hook 'elfeed-search-update-hook #'elfeed-search-excerpt-hide-all)
+
+(defun elfeed-search-excerpt-hide ()
+  "Hide excerpt for entry at point.
+Return t when excerpt was found and hidden."
   (interactive)
   (cl-loop with pos = (1+ (line-end-position))
            for ov in (overlays-in pos pos)
-           when (overlay-get ov :elfeed-inline)
+           when (overlay-get ov :elfeed-excerpt)
            do (delete-overlay ov)
            and return t))
 
-(defun elfeed-search-inline-show ()
-  "Show entry at point inline and mark it read."
+(defun elfeed-search-excerpt-show (&optional max-lines)
+  "Show excerpt for entry at point and mark it read.
+If MAX-LINES, limit excerpt to that many lines."
   (interactive)
-  (let* ((pos (1+ (line-end-position)))
-         (entry (elfeed-search-selected 'ignore-region))
-         (ref (elfeed-entry-content entry))
-         (content (elfeed-deref ref))
-         (string
-          (with-temp-buffer
-            (elfeed-insert-html
-             (concat "<blockquote>" content "</blockquote>"))
-            (propertize (concat (buffer-string) "\n")
-                        'face '(:inherit (variable-pitch default)))))
-         (ov (make-overlay pos pos)))
-    (overlay-put ov :elfeed-inline entry)
-    (overlay-put ov 'after-string string)
+  (let* ((entry (elfeed-search-selected 'ignore-region))
+         (string (elfeed-search-entry-excerpt entry max-lines)))
+    (save-excursion
+      (goto-char (1+ (point-at-eol)))
+      (elfeed-search-excerpt-insert entry string))
     (elfeed-untag entry 'unread)
     (elfeed-search-update-entry entry)))
+
+(defun elfeed-search-excerpt-insert (entry string)
+  "Insert overlay at point showing STRING for ENTRY."
+  (declare (indent defun))
+  (let* ((ov (make-overlay (point) (point))))
+    (overlay-put ov :elfeed-excerpt entry)
+    (overlay-put ov 'after-string string)))
+
+(defun elfeed-search-entry-excerpt (entry &optional max-lines)
+  "Return excerpt string for ENTRY.
+If MAX-LINES, limit excerpt to that many lines."
+  (let* ((ref (elfeed-entry-content entry))
+         (content (elfeed-deref ref))
+         limit-reached-p
+         (string (with-temp-buffer
+                   (elfeed-insert-html
+                    (concat "<blockquote>" content "</blockquote>"))
+                   (when max-lines
+                     (let ((limit (save-excursion
+                                    (goto-char (point-min))
+                                    (forward-line max-lines)
+                                    (point-at-eol))))
+                       (when (> (point-max) limit)
+                         (setf limit-reached-p t)
+                         (narrow-to-region (point-min) limit))))
+                   (buffer-string))))
+    (when limit-reached-p
+      (setf string (concat string "...")))
+    (propertize (concat string "\n")
+                'face '(:inherit (variable-pitch default)))))
 
 (provide 'elfeed-search)
 
