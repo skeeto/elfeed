@@ -54,6 +54,17 @@
   :group 'elfeed
   :type 'directory)
 
+(defcustom elfeed-db-compression ".gz"
+  "Compression algorithm to use when compacting the db "
+  :group 'elfeed
+  :type '(choice
+          (const :tag "gzip"  ".gz")
+          (const :tag "bzip2" ".bz2")
+          (const :tag "lzip"   ".lz")
+          (const :tag "lzma"  ".lzma")
+          (const :tag "xz"    ".xz")
+          (const :tag "zstd"  ".zst")))
+
 (defvar elfeed-db nil
   "The core database for elfeed.")
 
@@ -513,7 +524,7 @@ Runs `elfeed-db-unload-hook' after unloading the database."
       ref
     (let ((index (and (hash-table-p elfeed-ref-archive)
                       (gethash (elfeed-ref-id ref) elfeed-ref-archive)))
-          (archive-file (elfeed-ref-archive-filename ".gz"))
+          (archive-file (elfeed-ref-archive-filename elfeed-db-compression))
           (coding-system-for-read 'utf-8))
       (if (and index (file-exists-p archive-file))
           (progn
@@ -601,7 +612,7 @@ If STATS is true, return the space cleared in bytes."
         (next-archive (make-hash-table :test 'equal))
         (packed ()))
     (make-directory (expand-file-name "data" elfeed-db-directory) t)
-    (with-temp-file (elfeed-ref-archive-filename ".gz")
+    (with-temp-file (elfeed-ref-archive-filename elfeed-db-compression)
       (with-elfeed-db-visit (entry _)
         (let ((ref (elfeed-entry-content entry))
               (start (1- (point))))
@@ -625,11 +636,11 @@ If STATS is true, return the space cleared in bytes."
 
 (defun elfeed-db-compact ()
   "Minimize the Elfeed database storage size on the filesystem.
-This requires that auto-compression-mode can handle
-gzip-compressed files, so the gzip program must be in your PATH."
+This requires that auto-compression-mode can handle the compression
+specified by elfeed-db-compression, so the appropriate program must be in your PATH."
   (interactive)
-  (unless (elfeed-gzip-supported-p)
-    (error "aborting compaction: gzip auto-compression-mode unsupported"))
+  (unless (elfeed-compression-supported-p elfeed-db-compression)
+    (error (format "aborting compaction: auto-compression-mode cannot handle %s files" elfeed-db-compression)))
   (elfeed-db-pack)
   (elfeed-db-gc))
 

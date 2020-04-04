@@ -188,28 +188,31 @@ XML encoding declaration."
       (insert string)
       (write-region nil nil file append 0))))
 
-(defvar elfeed-gzip-supported-p--cache :unknown
+(defvar elfeed-compression-supported-p--alist '()
   "To avoid running the relatively expensive test more than once.")
 
-(defun elfeed-gzip-supported-p ()
-  "Return non-nil if `auto-compression-mode' can handle gzip."
-  (if (not (eq elfeed-gzip-supported-p--cache :unknown))
-      elfeed-gzip-supported-p--cache
-    (setf elfeed-gzip-supported-p--cache
-          (and (executable-find "gzip")
-               (ignore-errors
-                 (save-window-excursion
-                   (let ((file (make-temp-file "gziptest" nil ".gz"))
-                         (data (cl-loop for i from 32 to 3200
-                                        collect i into chars
-                                        finally
-                                        (return (apply #'string chars)))))
-                     (unwind-protect
-                         (progn
-                           (elfeed-spit file data)
-                           (and (string= data (elfeed-slurp file))
-                                (not (string= data (elfeed-slurp file t)))))
-                       (delete-file file)))))))))
+(defun elfeed-compression-supported-p (extension)
+  "Return non-nil if `auto-compression-mode' can handle EXTENSION."
+  (unless (alist-get extension elfeed-compression-supported-p--alist nil nil 'equal)
+    (add-to-list
+     'elfeed-compression-supported-p--alist
+     (cons extension
+           (and (ignore-errors
+		  (executable-find (jka-compr-info-compress-program (jka-compr-get-compression-info extension))))
+                (ignore-errors
+                  (save-window-excursion
+                    (let ((file (make-temp-file "compressiontest" nil extension))
+                          (data (cl-loop for i from 32 to 3200
+                                         collect i into chars
+                                         finally
+                                         (return (apply #'string chars)))))
+                      (unwind-protect
+                          (progn
+                            (elfeed-spit file data)
+                            (and (string= data (elfeed-slurp file))
+                                 (not (string= data (elfeed-slurp file t)))))
+                        (delete-file file)))))))))
+  (alist-get extension elfeed-compression-supported-p--alist nil nil 'equal))
 
 (defun elfeed-libxml-supported-p ()
   "Return non-nil if `libxml-parse-html-region' is available."

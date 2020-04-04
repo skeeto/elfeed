@@ -201,8 +201,8 @@
            (matcher "^[a-z0-9]\\{2\\}$")
            (feed (elfeed-test-generate-feed))
            (data (expand-file-name "data" elfeed-db-directory)))
-       (unless (elfeed-gzip-supported-p)
-         (message "warning: gzip auto-compression unsupported, skipping")
+       (unless (elfeed-compression-supported-p elfeed-db-compression)
+         (message (format "warning: %s auto-compression unsupported, skipping" elfeed-db-compression))
          (throw 'test-abort nil))
        (cl-flet ((make-entries (n)
                    (cl-loop repeat n
