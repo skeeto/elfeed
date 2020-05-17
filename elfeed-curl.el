@@ -435,6 +435,7 @@ results will not."
            (args (elfeed-curl--args url elfeed-curl--token headers method data))
            (process (apply #'start-process "elfeed-curl" (current-buffer)
                            elfeed-curl-program-name args)))
+	  (elfeed-log 'debug "curl args %s" args)
       (prog1 process
         (if (listp url)
             (progn
