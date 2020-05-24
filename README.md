@@ -19,6 +19,9 @@ For a longer overview,
  * [Take Elfeed everywhere: Mobile rss reading Emacs-style (for free/cheap)](http://babbagefiles.blogspot.com/2017/03/take-elfeed-everywhere-mobile-rss.html)
  * [Elfeed Rules!](https://noonker.github.io/posts/2020-04-22-elfeed/) ([reddit](https://old.reddit.com/r/emacs/comments/g6oowz/elfeed_rules/))
  * [Elfeed with Tiny Tiny RSS](https://codingquark.com/emacs/2020/04/19/elfeed-protocol-ttrss.html) ([hn](https://news.ycombinator.com/item?id=22915200))
+ * [Open Emacs elfeed links in the background](http://xenodium.com/open-emacs-elfeed-links-in-background/)
+ * [Using Emacs 72](https://cestlaz.github.io/post/using-emacs-72-customizing-elfeed/)
+ * [Lazy Elfeed](https://karthinks.com/blog/lazy-elfeed/)
  * [... more ...](http://nullprogram.com/tags/elfeed/)
  * [... and more ...](http://pragmaticemacs.com/category/elfeed/)
 
