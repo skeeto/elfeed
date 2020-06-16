@@ -176,7 +176,6 @@ alignment). Possible alignments are :left and :right."
 	  (insert (propertize line 'feed item))
 	  (insert "\n")))
       (insert "End of summary.\n")
-      (pop-to-buffer (current-buffer))
       (goto-char p))))
 
 (defun elfeed-summary--update ()
@@ -197,7 +196,7 @@ alignment). Possible alignments are :left and :right."
   (buffer-disable-undo)
   (hl-line-mode)
   (elfeed-summary-update)
-  (add-hook 'elfeed-update-hooks #'elfeed-summary-update)
+  (add-hook 'elfeed-update-hooks #'elfeed-summary--update)
 )
 
 (defun elfeed-summary ()
