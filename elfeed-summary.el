@@ -178,7 +178,7 @@ alignment). Possible alignments are :left and :right."
       (insert "End of summary.\n")
       (goto-char p))))
 
-(defun elfeed-summary--update ()
+(defun elfeed-summary--update (&rest _)
   (when (buffer-live-p (elfeed-summary--buffer))
     (elfeed-summary-update)))
 
