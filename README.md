@@ -22,6 +22,7 @@ For a longer overview,
  * [Open Emacs elfeed links in the background](http://xenodium.com/open-emacs-elfeed-links-in-background/)
  * [Using Emacs 72](https://cestlaz.github.io/post/using-emacs-72-customizing-elfeed/)
  * [Lazy Elfeed](https://karthinks.com/blog/lazy-elfeed/)
+ * [Using Elfeed to View Videos](https://joshrollinswrites.com/help-desk-head-desk/20200611/)
  * [... more ...](http://nullprogram.com/tags/elfeed/)
  * [... and more ...](http://pragmaticemacs.com/category/elfeed/)
 
