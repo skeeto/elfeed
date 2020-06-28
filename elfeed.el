@@ -177,7 +177,8 @@ of `elfeed-use-curl'."
          (let* ((feed (elfeed-db-get-feed url))
                 (last-modified (elfeed-meta feed :last-modified))
                 (etag (elfeed-meta feed :etag))
-                (headers `(("User-Agent" . ,elfeed-user-agent))))
+                (headers `(("User-Agent" . ,elfeed-user-agent)
+                           ("Accept" . "application/atom+xml"))))
            (when etag
              (push `("If-None-Match" . ,etag) headers))
            (when last-modified
