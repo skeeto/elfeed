@@ -465,15 +465,12 @@ AFTER-SECONDS and BEFORE-SECONDS."
 The time (@n-units-ago) filter may not exactly match the
 original, but will be equal in its effect."
   (let ((output ()))
-    (let ((after (plist-get filter :after))
-          (before (plist-get filter :before))
-          (must-have (plist-get filter :must-have))
-          (must-not-have (plist-get filter :must-not-have))
-          (matches (plist-get filter :matches))
-          (not-matches (plist-get filter :not-matches))
-          (limit (plist-get filter :limit))
-          (feeds (plist-get filter :feeds))
-          (not-feeds (plist-get filter :not-feeds)))
+    (cl-destructuring-bind (&key after     before
+                                 must-have must-not-have
+                                 matches   not-matches
+                                 feeds     not-feeds
+                                 limit &allow-other-keys)
+        filter
       (when after
         (push (elfeed-search--recover-units after before) output))
       (dolist (tag must-have)
@@ -501,14 +498,11 @@ filtering against a limit filter (ex. #10).
 See `elfeed-search-set-filter' for format/syntax documentation.
 This function must *only* be called within the body of
 `with-elfeed-db-visit' because it may perform a non-local exit."
-  (let ((after (plist-get filter :after))
-        (must-have (plist-get filter :must-have))
-        (must-not-have (plist-get filter :must-not-have))
-        (matches (plist-get filter :matches))
-        (not-matches (plist-get filter :not-matches))
-        (limit (plist-get filter :limit))
-        (feeds (plist-get filter :feeds))
-        (not-feeds (plist-get filter :not-feeds)))
+  (cl-destructuring-bind (&key must-have must-not-have
+                               matches   not-matches
+                               feeds     not-feeds
+                               after limit &allow-other-keys)
+      filter
     (let* ((tags (elfeed-entry-tags entry))
            (date (elfeed-entry-date entry))
            (age (- (float-time) date))
@@ -548,15 +542,12 @@ This function must *only* be called within the body of
 
 Executing a filter in bytecode form is generally faster than
 \"interpreting\" the filter with `elfeed-search-filter'."
-  (let ((after (plist-get filter :after))
-        (before (plist-get filter :before))
-        (must-have (plist-get filter :must-have))
-        (must-not-have (plist-get filter :must-not-have))
-        (matches (plist-get filter :matches))
-        (not-matches (plist-get filter :not-matches))
-        (limit (plist-get filter :limit))
-        (feeds (plist-get filter :feeds))
-        (not-feeds (plist-get filter :not-feeds)))
+  (cl-destructuring-bind (&key after     before
+                               must-have must-not-have
+                               matches   not-matches
+                               feeds     not-feeds
+                               limit &allow-other-keys)
+      filter
     `(lambda (,(if (or after matches not-matches must-have must-not-have)
                    'entry
                  '_entry)

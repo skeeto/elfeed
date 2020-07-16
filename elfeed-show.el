@@ -128,9 +128,8 @@ Called without arguments."
 
 (defun elfeed--show-format-author (author)
   "Format author plist for the header."
-  (let ((name (plist-get author :name))
-        (uri (plist-get author :uri))
-        (email (plist-get author :email)))
+  (cl-destructuring-bind (&key name uri email &allow-other-keys)
+      author
     (cond ((and name uri email)
            (format "%s <%s> (%s)" name email uri))
           ((and name email)
