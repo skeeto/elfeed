@@ -183,19 +183,7 @@ When live editing the filter, it is bound to :live.")
                       unread-count entry-count
                       (hash-table-count feeds))))))
 
-(defvar elfeed-search--header-cache nil
-  "Cache of the last computed header.")
-
 (defun elfeed-search--header ()
-  "Returns the string to be used as the Elfeed header."
-  (if (eql (car elfeed-search--header-cache) (buffer-modified-tick))
-      (cdr elfeed-search--header-cache)
-    (let* ((header (elfeed-search--header-1))
-           (cache (cons (buffer-modified-tick) header)))
-      (prog1 header
-        (setf elfeed-search--header-cache cache)))))
-
-(defun elfeed-search--header-1 ()
   "Computes the string to be used as the Elfeed header."
   (cond
    ((zerop (elfeed-db-last-update))
