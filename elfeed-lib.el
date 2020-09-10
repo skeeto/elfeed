@@ -9,11 +9,12 @@
 
 ;;; Code:
 
-(require 'xml)
 (require 'cl-lib)
+(require 'thingatpt)
 (require 'time-date)
 (require 'url-parse)
 (require 'url-util)
+(require 'xml)
 
 (defun elfeed-expose (function &rest args)
   "Return an interactive version of FUNCTION, 'exposing' it to the user."
@@ -269,7 +270,9 @@ systems."
 
 (defun elfeed-get-url-at-point ()
   "Try to get a plain URL at point."
-  (or (url-get-url-at-point)
+  (or (if (fboundp 'thing-at-point-url-at-point)
+          (thing-at-point-url-at-point)
+        (with-no-warnings (url-get-url-at-point)))
       (thing-at-point 'url)))
 
 (defun elfeed-move-to-first-empty-line ()

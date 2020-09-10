@@ -25,7 +25,9 @@ entry metadata.  These can be used in the capture templates as
 %:elfeed-entry-<prop>.  See `elfeed-entry--create' for the list
 of available props."
   (cond ((derived-mode-p 'elfeed-search-mode)
-         (org-store-link-props
+         (funcall (if (fboundp 'org-link-store-props)
+                      #'org-link-store-props
+                    (with-no-warnings #'org-store-link-props))
           :type "elfeed"
           :link (format "elfeed:%s" elfeed-search-filter)
           :description elfeed-search-filter))
