@@ -338,12 +338,17 @@ DATA is the content to include in the request."
       (unwind-protect
           (progn
             (elfeed-curl--prepare-response url n)
-            (if (and (>= elfeed-curl-status-code 400)
-                     (<= elfeed-curl-status-code 599))
-                (setf elfeed-curl-error-message
-                      (format "HTTP %d" elfeed-curl-status-code))
-              (setf result t
-                    elfeed-curl-error-message nil)))
+            (if (and (null elfeed-curl-status-code)
+                     (string-prefix-p "file://" url :ignore-case))
+                ;; No status code is returned by curl for file:// urls
+                (setf result t
+                      elfeed-curl-error-message nil)
+              (if (and (>= elfeed-curl-status-code 400)
+                       (<= elfeed-curl-status-code 599))
+                  (setf elfeed-curl-error-message
+                        (format "HTTP %d" elfeed-curl-status-code))
+                (setf result t
+                      elfeed-curl-error-message nil))))
         ;; Always call callback
         (unwind-protect
             (funcall cb result)
