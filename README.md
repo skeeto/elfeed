@@ -53,6 +53,7 @@ These projects extend Elfeed with additional features:
 * [elfeed-score](https://github.com/sp1ff/elfeed-score)
 * [Elfeed Android interface](https://github.com/areina/elfeed-cljsrn)
   ([Google Play](https://play.google.com/store/apps/details?id=com.elfeedcljsrn))
+* [elfeed-dashboard](https://github.com/Manoj321/elfeed-dashboard)
 
 ## Getting Started
 
