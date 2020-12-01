@@ -223,6 +223,7 @@ The result depends on the value of `elfeed-show-unique-buffers'."
   (interactive)
   (funcall elfeed-show-entry-delete)
   (with-current-buffer (elfeed-search-buffer)
+    (when elfeed-search-remain-on-entry (forward-line 1))
     (call-interactively #'elfeed-search-show-entry)))
 
 (defun elfeed-show-prev ()
@@ -230,6 +231,7 @@ The result depends on the value of `elfeed-show-unique-buffers'."
   (interactive)
   (funcall elfeed-show-entry-delete)
   (with-current-buffer (elfeed-search-buffer)
+    (when elfeed-search-remain-on-entry (forward-line 1))
     (forward-line -2)
     (call-interactively #'elfeed-search-show-entry)))
 
