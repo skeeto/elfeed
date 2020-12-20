@@ -421,6 +421,7 @@ results will not."
                     elfeed-curl--refcount (length url)))
           (push (cons url cb) elfeed-curl--requests)
           (setf elfeed-curl--refcount 1))
+        (set-process-query-on-exit-flag process nil)
         (setf (process-sentinel process) #'elfeed-curl--sentinel)))))
 
 (defun elfeed-curl--request-key (url headers method data)
