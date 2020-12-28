@@ -354,10 +354,22 @@ The customization `elfeed-search-date-format' sets the formatting."
                         :left)))
     (insert (propertize date 'face 'elfeed-search-date-face) " ")
     (insert (propertize title-column 'face title-faces 'kbd-help title) " ")
+
+    ;; Use property `align-to' indent title pixel width, otherwise CJK title not alignment like expect.
+    (put-text-property
+     (point) (- (point) 1)
+     'display
+     (elfeed-indent-pixel (* title-width (window-font-width))))
+
     (when feed-title
       (insert (propertize feed-title 'face 'elfeed-search-feed-face) " "))
     (when tags
-      (insert "(" tags-str ")"))))
+      (insert "(" tags-str ")"))
+    ))
+
+(defsubst elfeed-indent-pixel (xpos)
+  "Return a display property that aligns to XPOS."
+  `(space :align-to (,xpos)))
 
 (defun elfeed-search-parse-filter (filter)
   "Parse the elements of a search filter into a plist."
