@@ -346,20 +346,19 @@ The customization `elfeed-search-date-format' sets the formatting."
                     (lambda (s) (propertize s 'face 'elfeed-search-tag-face))
                     tags ","))
          (title-width (- (window-width) 10 elfeed-search-trailing-width))
-         (title-column (elfeed-format-column
-                        title (elfeed-clamp
-                               elfeed-search-title-min-width
-                               title-width
-                               elfeed-search-title-max-width)
-                        :left)))
+         (title-format-width (elfeed-clamp
+                              elfeed-search-title-min-width
+                              title-width
+                              elfeed-search-title-max-width))
+         (title-column (elfeed-format-column title title-format-width :left))
+         (align-width (if (> (window-width) (/ (* 2 (frame-width)) 3))
+                          title-width
+                        (+ (string-width date) 5 title-format-width))))
     (insert (propertize date 'face 'elfeed-search-date-face) " ")
     (insert (propertize title-column 'face title-faces 'kbd-help title) " ")
 
     ;; Use property `align-to' indent title pixel width, otherwise CJK title not alignment like expect.
-    (put-text-property
-     (point) (- (point) 1)
-     'display
-     (elfeed-indent-pixel (* title-width (window-font-width))))
+    (put-text-property (point) (- (point) 1) 'display (elfeed-indent-pixel (* align-width (window-font-width))))
 
     (when feed-title
       (insert (propertize feed-title 'face 'elfeed-search-feed-face) " "))
