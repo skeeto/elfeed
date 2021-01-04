@@ -183,7 +183,8 @@ output format."
 (defun elfeed-curl-get-capabilities ()
   "Return capabilities plist for the curl at `elfeed-curl-program-name'.
 :version     -- cURL's version string
-:compression -- non-nil if --compressed is supported"
+:compression -- non-nil if --compressed is supported
+:gopher      -- non-nil if the gopher protocol is supported"
   (let* ((cache elfeed-curl--capabilities-cache)
          (cache-value (gethash elfeed-curl-program-name cache)))
     (if cache-value
@@ -198,9 +199,15 @@ output format."
               (compression
                (progn
                  (setf (point) (point-min))
-                 (not (null (re-search-forward "libz\\>" nil t))))))
+                 (not (null (re-search-forward "libz\\>" nil t)))))
+              (gopher
+               (progn
+                 (setf (point) (point-min))
+                 (not (null (re-search-forward "\\<gopher\\>" nil t))))))
           (setf (gethash elfeed-curl-program-name cache)
-                `(:version ,version :compression ,compression)))))))
+                (list :version version
+                      :compression compression
+                      :gopher gopher)))))))
 
 (defun elfeed-curl-get-version ()
   "Return the version of curl for `elfeed-curl-program-name'."
@@ -252,7 +259,7 @@ abcdefghijklmnopqrstuvwxyz|~"))
         (:header (narrow-to-region h-start h-end))
         (:content (narrow-to-region c-start c-end))))))
 
-(defun elfeed-curl--parse-headers ()
+(defun elfeed-curl--parse-http-headers ()
   "Parse the current HTTP response headers into buffer-locals.
 Sets `elfeed-curl-headers'and `elfeed-curl-status-code'.
 Use `elfeed-curl--narrow' to select a header."
@@ -306,10 +313,11 @@ URL can be a string or a list of URL strings."
         (nconc (nreverse args) url)
       (nreverse (cons url args)))))
 
-(defun elfeed-curl--prepare-response (url n)
+(defun elfeed-curl--prepare-response (url n protocol)
   "Prepare response N for delivery to user."
   (elfeed-curl--narrow :header n)
-  (elfeed-curl--parse-headers)
+  (when (eq protocol 'http)
+    (elfeed-curl--parse-http-headers))
   (setf elfeed-curl-location
         (elfeed-curl--final-location url elfeed-curl-headers))
   (elfeed-curl--narrow :content n)
@@ -328,33 +336,44 @@ DATA is the content to include in the request."
           (coding-system-for-read 'binary))
       (apply #'call-process elfeed-curl-program-name nil t nil args))
     (elfeed-curl--parse-write-out)
-    (elfeed-curl--prepare-response url 0)))
+    (elfeed-curl--prepare-response url 0 (elfeed-curl--protocol-type url))))
+
+(defun elfeed-curl--protocol-type (url)
+  (let ((scheme (intern (or (url-type (url-generic-parse-url url)) "nil"))))
+    (cl-case scheme
+      ((https nil) 'http)
+      (otherwise scheme))))
 
 (defun elfeed-curl--call-callback (buffer n url cb)
   "Prepare the buffer for callback N and call it."
-  (let ((result nil))
+  (let ((result nil)
+        (protocol (elfeed-curl--protocol-type url)))
     (with-current-buffer buffer
       (setf elfeed-curl-error-message "unable to parse curl response")
       (unwind-protect
           (progn
-            (elfeed-curl--prepare-response url n)
-            (if (and (null elfeed-curl-status-code)
-                     (string-prefix-p "file://" url :ignore-case))
-                ;; No status code is returned by curl for file:// urls
-                (setf result t
-                      elfeed-curl-error-message nil)
-              (if (and (>= elfeed-curl-status-code 400)
-                       (<= elfeed-curl-status-code 599))
-                  (setf elfeed-curl-error-message
-                        (format "HTTP %d" elfeed-curl-status-code))
-                (setf result t
-                      elfeed-curl-error-message nil))))
-        ;; Always call callback
-        (unwind-protect
-            (funcall cb result)
-          ;; Always clean up
-          (when (zerop (cl-decf elfeed-curl--refcount))
-            (kill-buffer)))))))
+            (elfeed-curl--prepare-response url n protocol)
+            (cond ((eq protocol 'file)
+                   ;; No status code is returned by curl for file:// urls
+                   (setf result t
+                         elfeed-curl-error-message nil))
+                  ((eq protocol 'gopher)
+                   (setf result t
+                         elfeed-curl-error-message nil
+                         elfeed-curl-status-code nil))
+                  ((and (>= elfeed-curl-status-code 400)
+                        (<= elfeed-curl-status-code 599))
+                   (setf elfeed-curl-error-message
+                         (format "HTTP %d" elfeed-curl-status-code)))
+                  (t
+                   (setf result t
+                         elfeed-curl-error-message nil)))
+            ;; Always call callback
+            (unwind-protect
+                (funcall cb result)
+              ;; Always clean up
+              (when (zerop (cl-decf elfeed-curl--refcount))
+                (kill-buffer))))))))
 
 (defun elfeed-curl--fail-callback (buffer cb)
   "Inform the callback the request failed."

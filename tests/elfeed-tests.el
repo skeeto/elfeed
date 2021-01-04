@@ -9,6 +9,7 @@
 (require 'elfeed-db-tests)
 (require 'elfeed-lib-tests)
 (require 'elfeed-search-tests)
+(require 'elfeed-curl-tests)
 
 (defvar elfeed-test-rss
   "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
