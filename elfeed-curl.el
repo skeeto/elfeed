@@ -184,7 +184,8 @@ output format."
   "Return capabilities plist for the curl at `elfeed-curl-program-name'.
 :version     -- cURL's version string
 :compression -- non-nil if --compressed is supported
-:gopher      -- non-nil if the gopher protocol is supported"
+:protocols   -- symbol list of supported protocols
+:features    -- string list of supported features"
   (let* ((cache elfeed-curl--capabilities-cache)
          (cache-value (gethash elfeed-curl-program-name cache)))
     (if cache-value
@@ -196,18 +197,21 @@ output format."
                  (setf (point) (point-min))
                  (when (re-search-forward "[.0-9]+" nil t)
                    (match-string 0))))
-              (compression
+              (protocols
                (progn
                  (setf (point) (point-min))
-                 (not (null (re-search-forward "libz\\>" nil t)))))
-              (gopher
+                 (when (re-search-forward "^Protocols: \\(.*\\)$" nil t)
+                   (mapcar #'intern (split-string (match-string 1))))))
+              (features
                (progn
                  (setf (point) (point-min))
-                 (not (null (re-search-forward "\\<gopher\\>" nil t))))))
+                 (when (re-search-forward "^Features: \\(.*\\)$")
+                   (split-string (match-string 1))))))
           (setf (gethash elfeed-curl-program-name cache)
                 (list :version version
-                      :compression compression
-                      :gopher gopher)))))))
+                      :compression (not (null (member "libz" features)))
+                      :protocols protocols
+                      :features features)))))))
 
 (defun elfeed-curl-get-version ()
   "Return the version of curl for `elfeed-curl-program-name'."
