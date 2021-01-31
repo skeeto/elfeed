@@ -10,14 +10,6 @@
 ;; Elfeed is a web feed client for Emacs, inspired by notmuch. See
 ;; the README for full documentation.
 
-;; Notice: Before stamping a new release the following places need to
-;; be updated:
-;; * NEWS.md
-;; * elfeed.el (`elfeed-version')
-;; * elfeed-pkg.el
-;; * web/elfeed-web-pkg.el
-;; * Makefile (VERSION)
-
 ;;; Code:
 
 (require 'cl-lib)
@@ -39,7 +31,7 @@
   "An Emacs web feed reader."
   :group 'comm)
 
-(defconst elfeed-version "3.3.0")
+(defconst elfeed-version "3.4.0")
 
 (defcustom elfeed-feeds ()
   "List of all feeds that Elfeed should follow.

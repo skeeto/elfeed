@@ -1,5 +1,25 @@
 # Changes
 
+## 3.4.0 (2021-01-30)
+
+* New search filter: ~ excludes matching feeds
+
+* Support fetching feeds via file://
+
+* Support fetching feeds via the Gopher protocol
+
+* "End of entries" no longer appears in elfeed-search
+
+* Support bookmarks in entries
+
+* New customizations: elfeed-show-entry-switch, elfeed-show-entry-delete
+
+* More extensive information from elfeed-curl-get-capabilities
+
+* New elfeed-show command: elfeed-kill-link-url-at-point (c)
+
+* Various other minor behavior improvements
+
 ## 3.3.0 (2019-11-23)
 
 * New option: `elfeed-search-remain-on-entry`.
