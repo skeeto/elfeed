@@ -116,13 +116,13 @@ When live editing the filter, it is bound to :live.")
   (quit-window))
 
 (defun elfeed-search-last-entry ()
-  "Place point on first entry."
+  "Place point on last entry."
   (interactive)
   (setf (point) (point-max))
-  (forward-line -2))
+  (forward-line -1))
 
 (defun elfeed-search-first-entry ()
-  "Place point on last entry."
+  "Place point on first entry."
   (interactive)
   (setf (point) (point-min)))
 
