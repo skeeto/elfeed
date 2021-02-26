@@ -1,5 +1,9 @@
 # Changes
 
+## 3.4.1 (2021-02-25)
+
+* Fix elfeed-search-last-entry and elfeed-search-first-entry
+
 ## 3.4.0 (2021-01-30)
 
 * New search filter: ~ excludes matching feeds
