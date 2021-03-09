@@ -222,6 +222,7 @@ When live editing the filter, it is bound to :live.")
         ;; so that it's not *really* a global variable.
         header-line-format
         (let ((symbol (make-symbol "dummy")))
+          (put symbol 'risky-local-variable t)
           `(:eval
             (prog1 ',symbol
               (set ',symbol (funcall elfeed-search-header-function))))))
