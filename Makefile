@@ -55,9 +55,11 @@ elfeed-search.elc: elfeed.elc elfeed-db.elc elfeed-lib.elc
 tests/elfeed-curl-tests.elc: elfeed-lib.elc elfeed-curl.elc
 tests/elfeed-db-tests.elc: elfeed.elc elfeed-db.elc elfeed-lib.elc
 tests/elfeed-lib-tests.elc: elfeed-lib.elc
-tests/elfeed-tests.elc: elfeed.elc elfeed-lib.elc tests/xml-query-tests.elc \
-    tests/elfeed-db-tests.elc tests/elfeed-lib-tests.elc \
-    tests/elfeed-search-tests.elc tests/elfeed-curl-tests.elc
+tests/elfeed-tests.elc: elfeed.elc elfeed-lib.elc elfeed-curl.elc \
+    tests/xml-query-tests.elc tests/elfeed-db-tests.elc \
+    tests/elfeed-lib-tests.elc tests/elfeed-search-tests.elc \
+    tests/elfeed-curl-tests.elc
+tests/elfeed-search-tests.elc: elfeed-search.elc
 tests/xml-query-tests.elc: xml-query.elc
 
 .SUFFIXES: .el .elc
