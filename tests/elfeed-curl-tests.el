@@ -2,6 +2,7 @@
 
 (require 'ert)
 (require 'elfeed-lib)
+(require 'elfeed-curl)
 
 (ert-deftest elfeed-curl--protocol-type ()
   (let ((table '((gopher . "gopher://sdf.org/1")
