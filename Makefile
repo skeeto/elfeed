@@ -11,7 +11,7 @@ WEB  = web/elfeed-web-pkg.el web/elfeed-web.el web/elfeed.css	\
        web/elfeed.js web/index.html
 TEST = tests/elfeed-db-tests.el tests/elfeed-lib-tests.el       \
        tests/elfeed-tests.el tests/elfeed-search-tests.el       \
-       tests/xml-query-tests.el
+       tests/elfeed-curl-tests.el tests/xml-query-tests.el
 
 compile: $(EL:.el=.elc) $(TEST:.el=.elc)
 
@@ -44,22 +44,21 @@ elfeed-web-$(VERSION).tar: $(WEB)
 	tar cf $@ elfeed-web-$(VERSION)/
 	rm -rf elfeed-web-$(VERSION)/
 
-elfeed-csv.elc: elfeed-csv.el elfeed-db.elc
-elfeed-curl.elc: elfeed-curl.el elfeed-lib.elc elfeed-log.elc
-elfeed-db.elc: elfeed-db.el elfeed-lib.elc
-elfeed-lib.elc: elfeed-lib.el
-elfeed-log.elc: elfeed-log.el
-elfeed-show.elc: elfeed-show.el elfeed.elc elfeed-db.elc elfeed-lib.elc \
-    elfeed-search.elc
-elfeed-link.elc: elfeed-link.el elfeed.elc elfeed-search.elc elfeed-show.elc
-elfeed.elc: elfeed.el elfeed-lib.elc elfeed-log.elc elfeed-curl.elc \
-    elfeed-db.elc xml-query.elc
-xml-query.elc: xml-query.el
-elfeed-search.elc: elfeed-search.el elfeed.elc elfeed-db.elc elfeed-lib.elc
-tests/elfeed-db-tests.elc: tests/elfeed-db-tests.el elfeed-db.elc
-tests/elfeed-lib-tests.elc: tests/elfeed-lib-tests.el elfeed-lib.elc
-tests/elfeed-tests.elc: tests/elfeed-tests.el elfeed.elc
-tests/xml-query-tests.elc: tests/xml-query-tests.el xml-query.elc
+elfeed-csv.elc: elfeed-db.elc
+elfeed-curl.elc: elfeed-lib.elc elfeed-log.elc
+elfeed-db.elc: elfeed-lib.elc
+elfeed-show.elc: elfeed.elc elfeed-db.elc elfeed-lib.elc elfeed-search.elc
+elfeed-link.elc: elfeed.elc elfeed-search.elc elfeed-show.elc
+elfeed.elc: elfeed-lib.elc elfeed-log.elc elfeed-curl.elc elfeed-db.elc \
+    xml-query.elc
+elfeed-search.elc: elfeed.elc elfeed-db.elc elfeed-lib.elc
+tests/elfeed-curl-tests.elc: elfeed-lib.elc elfeed-curl.elc
+tests/elfeed-db-tests.elc: elfeed.elc elfeed-db.elc elfeed-lib.elc
+tests/elfeed-lib-tests.elc: elfeed-lib.elc
+tests/elfeed-tests.elc: elfeed.elc elfeed-lib.elc tests/xml-query-tests.elc \
+    tests/elfeed-db-tests.elc tests/elfeed-lib-tests.elc \
+    tests/elfeed-search-tests.elc tests/elfeed-curl-tests.elc
+tests/xml-query-tests.elc: xml-query.elc
 
 .SUFFIXES: .el .elc
 
