@@ -8,6 +8,7 @@
 (require 'browse-url)
 (require 'wid-edit) ; widget-inactive face
 (require 'bookmark)
+(require 'crm)
 (bookmark-maybe-load-default-file)
 
 (require 'elfeed)
@@ -598,14 +599,38 @@ Executing a filter in bytecode form is generally faster than
                   `((> age ,before))))))))
 
 (defun elfeed-search--prompt (current)
-  "Prompt for a new filter, starting with CURRENT."
-  (read-from-minibuffer
-   "Filter: "
-   (if (or (string= "" current)
-           (string-match-p " $" current))
-       current
-     (concat current " "))
-   nil nil 'elfeed-search-filter-history))
+  (let* ((all-tag-list (mapcar #'symbol-name (elfeed-db-get-all-tags)))
+         (add-tag-list (mapcar (apply-partially #'concat "+") all-tag-list))
+         (remove-tag-list (mapcar (apply-partially #'concat "-") all-tag-list))
+         (all-titles-list (mapcar (apply-partially #'concat "=") (elfeed-db-get-all-titles)))
+	     (crm-separator " ")
+	     ;; By default, space is bound to "complete word" function.
+	     ;; Re-bind it to insert a space instead.  Note that <tab>
+	     ;; still does the completion.
+         (crm-local-completion-map
+	      (let ((map (make-sparse-keymap)))
+	        (set-keymap-parent map crm-local-completion-map)
+	        (define-key map " " 'self-insert-command)
+	        map))
+         (completion-list (append add-tag-list remove-tag-list all-titles-list)))
+    ;; `completing-read-multiple' return a list, we need
+    ;; a string. Concatenation will also hide trailing
+    ;; elements like ""
+    (mapconcat
+     #'identity
+     (completing-read-multiple
+      "Filter: "
+	  ;; Append the separator to each completion so when the
+	  ;; user completes a tag they can immediately begin
+	  ;; entering another.
+      (mapcar (lambda (tag-op) (concat tag-op crm-separator)) completion-list)
+      nil nil
+      (if (or (string= "" current)
+              (string-match-p " $" current))
+          current
+        (concat current " "))
+      'elfeed-search-filter-history)
+     " ")))
 
 (defun elfeed-search-clear-filter ()
   "Reset the search filter to the default value of `elfeed-search-filter'."
@@ -911,7 +936,7 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
   (unwind-protect
       (let ((elfeed-search-filter-active :live))
         (setq elfeed-search-filter
-              (read-from-minibuffer "Filter: " elfeed-search-filter)))
+              (elfeed-search--prompt elfeed-search-filter)))
     (elfeed-search-update :force)))
 
 ;; Bookmarks
