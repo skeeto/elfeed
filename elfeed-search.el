@@ -35,6 +35,25 @@
   :group 'elfeed
   :type 'string)
 
+(defcustom elfeed-search-completion-enabled t
+  "Enable autocompletion in elfeed search prompt."
+  :group 'elfeed
+  :type 'boolean)
+
+(defcustom elfeed-search-completion-cache t
+  "Cache autocompletion in elfeed search prompt.
+
+Enabling this speeds up the autocompletion, but the autocompletion
+won't take recently added tags into account that way."
+  :group 'elfeed
+  :type 'boolean)
+
+(defvar elfeed-search-completion-tags-cached ()
+  "Cached autocompletions for tags.")
+
+(defvar elfeed-search-completion-titles-cached ()
+  "Cached autocompletions for titles.")
+
 (defcustom elfeed-sort-order 'descending
   "The order in which entries should be displayed.
 
@@ -599,11 +618,67 @@ Executing a filter in bytecode form is generally faster than
                   `((> age ,before))))))))
 
 (defun elfeed-search--prompt (current)
-  (let* ((all-tag-list (mapcar #'symbol-name (elfeed-db-get-all-tags)))
+  "Prompt for a new filter, starting with CURRENT.
+
+If `elfeed-search-completion-enabled' is set, enable autocompletions
+for tags and titles."
+  (if elfeed-search-completion-enabled
+      (elfeed-search--prompt-completing
+       current
+       (append
+        (elfeed-search--completion-tag-list)
+        (mapcar (apply-partially #'concat "=") (elfeed-search--get-titles-list))))
+    (read-from-minibuffer
+     "Filter: "
+     (if (or (string= "" current)
+             (string-match-p " $" current))
+         current
+       (concat current " "))
+     nil nil 'elfeed-search-filter-history)))
+
+(defun elfeed-search--get-tags-list ()
+  "Return tag list, cached in the search buffer.
+
+If `elfeed-search-completion-cache' is t, use the
+`elfeed-search-completion-tags-cached' variable to cache the data.
+Otherwise the DB will be queired each time."
+  (let ((all-tag-list
+         (or
+          (and elfeed-search-completion-cache elfeed-search-completion-tags-cached)
+          (mapcar #'symbol-name (elfeed-db-get-all-tags)))))
+    (when elfeed-search-completion-cache
+      (setq-local elfeed-search-completion-tags-cached all-tag-list))
+    all-tag-list))
+
+(defun elfeed-search--get-titles-list ()
+  "Return titles list, cached in the search buffer.
+
+If `elfeed-search-completion-cache' is t, use the
+`elfeed-search-completion-titles-cached' variable to cache the data.
+Otherwise the DB will be queired each time."
+  (let ((all-titles-list
+         (or
+          (and elfeed-search-completion-cache elfeed-search-completion-titles-cached)
+          (elfeed-db-get-all-titles))))
+    (when elfeed-search-completion-cache
+      (setq-local elfeed-search-completion-titles-cached all-titles-list))
+    all-titles-list))
+
+(defun elfeed-search--completion-tag-list ()
+  "Return tag list for completion in search prompt.
+
+Each tag will be prepended with \"+\" and \"-\""
+  (let* ((all-tag-list (elfeed-search--get-tags-list))
          (add-tag-list (mapcar (apply-partially #'concat "+") all-tag-list))
          (remove-tag-list (mapcar (apply-partially #'concat "-") all-tag-list))
-         (all-titles-list (mapcar (apply-partially #'concat "=") (elfeed-db-get-all-titles)))
-	     (crm-separator " ")
+         (completion-list (append add-tag-list remove-tag-list)))
+    completion-list))
+
+(defun elfeed-search--prompt-completing (current completion-list &optional prompt)
+  "Prompt for a new filter with completions from COMPLETION-LIST.
+
+CURRENT is a staring filter state."
+  (let* ((crm-separator " ")
 	     ;; By default, space is bound to "complete word" function.
 	     ;; Re-bind it to insert a space instead.  Note that <tab>
 	     ;; still does the completion.
@@ -611,15 +686,14 @@ Executing a filter in bytecode form is generally faster than
 	      (let ((map (make-sparse-keymap)))
 	        (set-keymap-parent map crm-local-completion-map)
 	        (define-key map " " 'self-insert-command)
-	        map))
-         (completion-list (append add-tag-list remove-tag-list all-titles-list)))
+	        map)))
     ;; `completing-read-multiple' return a list, we need
     ;; a string. Concatenation will also hide trailing
     ;; elements like ""
     (mapconcat
      #'identity
      (completing-read-multiple
-      "Filter: "
+      (or prompt "Filter: ")
 	  ;; Append the separator to each completion so when the
 	  ;; user completes a tag they can immediately begin
 	  ;; entering another.
@@ -828,9 +902,15 @@ browser defined by `browse-url-generic-program'."
       (unless (or elfeed-search-remain-on-entry (use-region-p))
         (forward-line)))))
 
+(defun elfeed-search-tag--maybe-completion (prompt)
+  "Use `completing-read' on tags if `elfeed-search-completion-enabled' is t."
+  (if elfeed-search-completion-enabled
+      (completing-read prompt (elfeed-search--get-tags-list))
+    (read-from-minibuffer prompt)))
+
 (defun elfeed-search-tag-all (tag)
   "Apply TAG to all selected entries."
-  (interactive (list (intern (read-from-minibuffer "Tag: "))))
+  (interactive (list (intern (elfeed-search-tag--maybe-completion "Add tag: "))))
   (let ((entries (elfeed-search-selected)))
     (elfeed-tag entries tag)
     (mapc #'elfeed-search-update-entry entries)
@@ -839,7 +919,7 @@ browser defined by `browse-url-generic-program'."
 
 (defun elfeed-search-untag-all (tag)
   "Remove TAG from all selected entries."
-  (interactive (list (intern (read-from-minibuffer "Tag: "))))
+  (interactive (list (intern (elfeed-search-tag--maybe-completion "Remove tag: "))))
   (let ((entries (elfeed-search-selected)))
     (elfeed-untag entries tag)
     (mapc #'elfeed-search-update-entry entries)
@@ -848,7 +928,7 @@ browser defined by `browse-url-generic-program'."
 
 (defun elfeed-search-toggle-all (tag)
   "Toggle TAG on all selected entries."
-  (interactive (list (intern (read-from-minibuffer "Tag: "))))
+  (interactive (list (intern (elfeed-search-tag--maybe-completion "Toggle tag: "))))
   (let ((entries (elfeed-search-selected)) entries-tag entries-untag)
     (cl-loop for entry in entries
              when (elfeed-tagged-p tag entry)
