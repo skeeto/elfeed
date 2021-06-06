@@ -774,13 +774,18 @@ If IGNORE-REGION-P is non-nil, only return the entry under point."
 If there is a prefix argument, visit the current entry in the
 browser defined by `browse-url-generic-program'."
   (interactive "P")
-  (let ((entries (elfeed-search-selected)))
+  (let ((buf (current-buffer))
+        (entries (elfeed-search-selected)))
     (cl-loop for entry in entries
              do (elfeed-untag entry 'unread)
              when (elfeed-entry-link entry)
              do (if use-generic-p
                     (browse-url-generic it)
                   (browse-url it)))
+    ;; `browse-url' could have switched to another buffer if eww or another
+    ;; internal browser is used, but the remainder of the functions needs to
+    ;; run in the elfeed buffer.
+    (set-buffer buf)
     (mapc #'elfeed-search-update-entry entries)
     (unless (or elfeed-search-remain-on-entry (use-region-p))
       (forward-line))))
