@@ -266,6 +266,16 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
       (maphash (lambda (k _) (push k tags)) table)
       (cl-sort tags #'string< :key #'symbol-name))))
 
+(defun elfeed-db-get-all-titles ()
+  "Return a list of all titles currently in the database."
+  (let ((table (make-hash-table :test 'eq)))
+    (with-elfeed-db-visit (e _)
+      (let ((title (elfeed-feed-title (elfeed-entry-feed e))))
+        (setf (gethash title table) title)))
+    (let ((titles ()))
+      (maphash (lambda (k _) (push k titles)) table)
+      titles)))
+
 ;; Saving and Loading:
 
 (defun elfeed-db-save ()
