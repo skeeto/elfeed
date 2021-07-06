@@ -652,6 +652,7 @@ expression, matching against entry link, title, and feed title."
   (with-current-buffer (elfeed-search-buffer)
     (setf elfeed-search-filter
           (or new-filter (default-value 'elfeed-search-filter)))
+    (setq list-buffers-directory new-filter)
     (elfeed-search-update :force)))
 
 (defun elfeed-search--update-list ()
