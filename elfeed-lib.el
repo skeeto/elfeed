@@ -380,6 +380,22 @@ This includes expanding e.g. 3-5 into 3,4,5.  If the letter
         url
       host)))
 
+(defun elfeed-entry-other-window ()
+  "In elfeed-search mode, open elfeed entry in the other window
+if other window is present, else sensibly splits the frame if
+there is only a single window and opens the elfeed entry in the
+other window."
+
+  (interactive)
+  (if (get-buffer "*elfeed-search*")
+      (progn
+	(split-window-sensibly (selected-window))
+	(switch-to-buffer-other-window "*elfeed-search*")
+	(call-interactively #'elfeed-search-show-entry)
+	(other-window 1)
+	(forward-line))
+    (message "Start elfeed first!")))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here
