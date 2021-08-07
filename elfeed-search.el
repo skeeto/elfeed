@@ -85,6 +85,9 @@ Possible alignments are :left and :right."
   "When non-nil, Elfeed is currently reading a filter from the minibuffer.
 When live editing the filter, it is bound to :live.")
 
+(defvar elfeed-search-filter-history nil
+  "History list for `elfeed-search-set-filter' and `elfeed-search-live-filter'.")
+
 (defvar elfeed-search-filter-overflowing nil
   "When non-nil, the current live filter overflows the window.")
 
