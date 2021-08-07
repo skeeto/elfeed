@@ -916,7 +916,8 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
   (unwind-protect
       (let ((elfeed-search-filter-active :live))
         (setq elfeed-search-filter
-              (read-from-minibuffer "Filter: " elfeed-search-filter)))
+              (read-from-minibuffer "Filter: " elfeed-search-filter
+				    nil nil 'elfeed-search-filter-history)))
     (elfeed-search-update :force)))
 
 ;; Bookmarks
