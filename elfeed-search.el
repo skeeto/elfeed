@@ -14,6 +14,8 @@
 (require 'elfeed-db)
 (require 'elfeed-lib)
 
+(require 'all-the-icons)
+
 ;; Interface to elfeed-show (lazy required)
 (declare-function elfeed-show-entry 'elfeed-show (entry))
 
@@ -96,6 +98,9 @@ When live editing the filter, it is bound to :live.")
 
 (defvar elfeed-search-print-entry-function #'elfeed-search-print-entry--default
   "Function to print entries into the *elfeed-search* buffer.")
+
+(defvar elfeed-search-print-tags-function #'elfeed-search-print-entry--tags
+  "Function to print entry tags into the *elfeed-search* buffer.")
 
 (defalias 'elfeed-search-tag-all-unread
   (elfeed-expose #'elfeed-search-tag-all 'unread)
@@ -350,9 +355,7 @@ The customization `elfeed-search-date-format' sets the formatting."
           (when feed
             (or (elfeed-meta feed :title) (elfeed-feed-title feed))))
          (tags (mapcar #'symbol-name (elfeed-entry-tags entry)))
-         (tags-str (mapconcat
-                    (lambda (s) (propertize s 'face 'elfeed-search-tag-face))
-                    tags ","))
+         (tags-str (funcall elfeed-search-print-tags-function entry))
          (title-width (- (window-width) 10 elfeed-search-trailing-width))
          (title-column (elfeed-format-column
                         title (elfeed-clamp
@@ -366,6 +369,46 @@ The customization `elfeed-search-date-format' sets the formatting."
       (insert (propertize feed-title 'face 'elfeed-search-feed-face) " "))
     (when tags
       (insert "(" tags-str ")"))))
+
+(defcustom elfeed-search-print-entry--tags-icons-alist
+  '(("unread" ("folder-o" all-the-icons-faicon))
+    ("read" ("folder-open-o" all-the-icons-faicon))
+    ;; ("unread" ("circle" all-the-icons-faicon))
+    ;; ("read" ("circle-o" all-the-icons-faicon))
+    ;; ("unread" ("check-square" all-the-icons-faicon))
+    ;; ("read" ("check-square-o" all-the-icons-faicon))
+    ;; ("unread" ("square" all-the-icons-faicon))
+    ;; ("read" ("square-o" all-the-icons-faicon))
+    ("rss" ("rss-square" all-the-icons-faicon))
+    ("subscribe" ("rss-square" all-the-icons-faicon))
+    ("youtube" ("youtube" all-the-icons-faicon))
+    ("emacs" ("elisp" all-the-icons-fileicon))
+    ("linux" ("linux" all-the-icons-faicon))
+    ("macos" ("apple" all-the-icons-faicon))
+    ("windows" ("windows" all-the-icons-faicon))
+    ("lisp" ("lisp" all-the-icons-fileicon))
+    ;; ("clojure" ("clj" all-the-icons-fileicon))
+    ("clojure" ("clojure" all-the-icons-alltheicon))
+    ("clojurescript" ("cljs" all-the-icons-fileicon))
+    ("javascript" ("javascript" all-the-icons-alltheicon))
+    ("git" ("git" all-the-icons-faicon))
+    ("github" ("github" all-the-icons-faicon)))
+  "An alist of tag name pair with pair of icon name and font name function."
+  :type 'list
+  :safe #'listp)
+
+(defun elfeed-search-print-entry--tags (entry)
+  "Print ENTRY tags to the buffer."
+  (let ((tags (mapcar #'symbol-name (elfeed-entry-tags entry))))
+    (mapconcat
+     (lambda (s)
+       (let* ((icon-pair (car (alist-get s elfeed-search-print-entry--tags-icons-alist nil nil 'equal)))
+              (icon-name (car icon-pair))
+              (icon-func (cadr icon-pair)))
+         (if icon-pair
+             (apply icon-func (list icon-name ))
+           (propertize s 'face 'elfeed-search-tag-face))))
+     tags " ")))
 
 (defun elfeed-search-parse-filter (filter)
   "Parse the elements of a search filter into a plist."
