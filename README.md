@@ -85,7 +85,7 @@ database with entries.
 ;; Somewhere in your .emacs file
 (setq elfeed-feeds
       '("http://nullprogram.com/feed/"
-        "http://planet.emacsen.org/atom.xml"))
+        "https://planet.emacslife.com/atom.xml"))
 ```
 
 Another option for providing a feed list is with an OPML file. Running
