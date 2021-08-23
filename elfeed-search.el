@@ -402,7 +402,7 @@ The customization `elfeed-search-date-format' sets the formatting."
   (let ((tags (mapcar #'symbol-name (elfeed-entry-tags entry))))
     (mapconcat
      (lambda (s)
-       (let* ((icon-pair (car (alist-get s elfeed-search-print-entry--tags-icons-alist nil nil 'equal)))
+       (let* ((icon-pair (car (alist-get s elfeed-search-print-entry--tags-icons-alist nil nil 'string-match-p)))
               (icon-name (car icon-pair))
               (icon-func (cadr icon-pair)))
          (if icon-pair
