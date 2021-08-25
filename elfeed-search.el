@@ -707,34 +707,33 @@ When FORCE is non-nil, redraw even when the database hasn't changed."
     (when (or force (and (not elfeed-search-filter-active)
                          (< elfeed-search-last-update (elfeed-db-last-update))))
       (elfeed-save-excursion
+        (elfeed-search--update-list)
         (let ((inhibit-read-only t)
               (standard-output (current-buffer))
-              (sorter (or elfeed-search-sort-function #'elfeed-entries-compare)))
+              (sorter (or elfeed-search-sort-function #'elfeed-entries-compare))
+              (entries elfeed-search-entries))
           (when reset
             (erase-buffer))
-          (elfeed-search--update-list)
           (goto-char (point-min))
-          (dolist (entry elfeed-search-entries)
-            (while
-                (let ((saved-entry (get-text-property (point) 'saved-elfeed-entry))
-                      beg)
-                  (cond
-                   ((equal entry saved-entry)
-                    (forward-line 1)
-                    nil)
-                   ;; saved-entry sorts after new entry: insert new entry
-                   ((or (not saved-entry)
-                        (funcall sorter entry saved-entry))
-                    (setq beg (point))
-                    (funcall elfeed-search-print-entry-function entry)
-                    (put-text-property beg (point) 'saved-elfeed-entry (copy-elfeed-entry entry))
-                    (insert "\n")
-                    nil)
-                   ;; saved-entry sorts before new entry: delete saved-entry
-                   (t t)))
-              (let ((old (point)))
+          (while entries
+            (let ((entry (car entries))
+                  (saved-entry (get-text-property (point) 'saved-elfeed-entry))
+                  (beg (point)))
+              (cond
+               ((equal entry saved-entry)
                 (forward-line 1)
-                (delete-region old (point)))))
+                (setq entries (cdr entries)))
+               ;; saved-entry sorts after new entry: insert new entry
+               ((or (not saved-entry)
+                    (funcall sorter entry saved-entry))
+                (funcall elfeed-search-print-entry-function entry)
+                (put-text-property
+                 beg (point) 'saved-elfeed-entry (copy-elfeed-entry entry))
+                (insert "\n")
+                (setq entries (cdr entries)))
+               ;; saved-entry sorts before new entry: delete saved-entry
+               (t (forward-line 1)
+                  (delete-region beg (point))))))
           ;; delete excess entries
           (delete-region (point) (point-max))
           (setf elfeed-search-last-update (float-time))))
