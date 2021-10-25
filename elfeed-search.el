@@ -206,6 +206,8 @@ When live editing the filter, it is bound to :live.")
                                          'face 'elfeed-search-filter-face)))
                ("")))))))
 
+(put 'elfeed-search-mode 'mode-class 'special)
+
 (defun elfeed-search-mode ()
   "Major mode for listing elfeed feed entries.
 \\{elfeed-search-mode-map}"
