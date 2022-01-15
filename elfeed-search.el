@@ -659,7 +659,12 @@ Otherwise the DB will be queired each time."
   (let ((all-titles-list
          (or
           (and elfeed-search-completion-cache elfeed-search-completion-titles-cached)
-          (elfeed-db-get-all-titles))))
+          (mapcar
+           (lambda (title) (replace-regexp-in-string
+                            (rx space)
+                            "\\s-"
+                            (regexp-quote title) t t))
+           (elfeed-db-get-all-titles)))))
     (when elfeed-search-completion-cache
       (setq-local elfeed-search-completion-titles-cached all-titles-list))
     all-titles-list))
