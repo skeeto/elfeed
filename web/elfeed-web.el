@@ -114,7 +114,7 @@
 
 (defmacro with-elfeed-web (&rest body)
   "Only execute BODY if `elfeed-web-enabled' is true."
-  (declare (indent 0))
+  (declare (indent 0) (debug t))
   `(if (not elfeed-web-enabled)
        (progn
          (princ (json-encode '(:error 403)))

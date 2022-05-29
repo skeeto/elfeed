@@ -221,7 +221,7 @@ Use `elfeed-db-return' to exit early and optionally return data.
     (do-something entry)
     (when (some-date-criteria-p entry)
       (elfeed-db-return)))"
-  (declare (indent defun))
+  (declare (indent defun) (debug ((symbolp symbolp) body)))
   `(catch 'elfeed-db-done
      (prog1 nil
        (elfeed-db-ensure)
@@ -254,6 +254,7 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
 
 (defmacro elfeed-db-return (&optional value)
   "Use this to exit early and return VALUE from `with-elfeed-db-visit'."
+  (declare (debug (&optional sexp)))
   `(throw 'elfeed-db-done ,value))
 
 (defun elfeed-db-get-all-tags ()
