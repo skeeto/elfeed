@@ -194,17 +194,17 @@ output format."
         (call-process elfeed-curl-program-name nil t nil "--version")
         (let ((version
                (progn
-                 (setf (point) (point-min))
+                 (goto-char (point-min))
                  (when (re-search-forward "[.0-9]+" nil t)
                    (match-string 0))))
               (protocols
                (progn
-                 (setf (point) (point-min))
+                 (goto-char (point-min))
                  (when (re-search-forward "^Protocols: \\(.*\\)$" nil t)
                    (mapcar #'intern (split-string (match-string 1))))))
               (features
                (progn
-                 (setf (point) (point-min))
+                 (goto-char (point-min))
                  (when (re-search-forward "^Features: \\(.*\\)$")
                    (split-string (match-string 1))))))
           (setf (gethash elfeed-curl-program-name cache)
@@ -232,18 +232,18 @@ abcdefghijklmnopqrstuvwxyz|~"))
 (defun elfeed-curl--parse-write-out ()
   "Parse curl's write-out (-w) messages into `elfeed-curl--regions'."
   (widen)
-  (setf (point) (point-max)
-        elfeed-curl--regions ())
+  (goto-char (point-max))
+  (setf elfeed-curl--regions ())
   (while (> (point) (point-min))
     (search-backward elfeed-curl--token)
-    (cl-decf (point))
+    (goto-char (1- (point)))
     (let ((end (point)))
       (cl-destructuring-bind (_ . header) (read (current-buffer))
-        (setf (point) end)
+        (goto-char end)
         ;; Find next sentinel token
         (if (search-backward elfeed-curl--token nil t)
             (search-forward ")" nil t)
-          (setf (point) (point-min)))
+          (goto-char (point-min)))
         (let* ((header-start (point))
                (header-end (+ (point) header))
                (content-start (+ (point) header))
@@ -268,10 +268,10 @@ abcdefghijklmnopqrstuvwxyz|~"))
 Sets `elfeed-curl-headers'and `elfeed-curl-status-code'.
 Use `elfeed-curl--narrow' to select a header."
   (when (> (- (point-max) (point-min)) 0)
-    (setf (point) (point-max))
+    (goto-char (point-max))
     (re-search-backward "HTTP/[.0-9]+ +\\([0-9]+\\)")
     (setf elfeed-curl-status-code (string-to-number (match-string 1)))
-    (cl-loop initially (setf (point) (point-max))
+    (cl-loop initially (goto-char (point-max))
              while (re-search-backward "^\\([^:]+\\): +\\([^\r\n]+\\)" nil t)
              for key = (downcase (match-string 1))
              for value = (match-string 2)

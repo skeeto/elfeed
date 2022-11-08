@@ -136,7 +136,7 @@ be relative to now (`elfeed-time-duration')."
 XML encoding declaration."
   (unless beg (setq beg (point-min)))
   (unless end (setq end (point-max)))
-  (setf (point) beg)
+  (goto-char beg)
   (when (re-search-forward
          "<\\?xml.*?encoding=[\"']\\([^\"']+\\)[\"'].*?\\?>" nil t)
     (let ((coding-system (intern-soft (downcase (match-string 1)))))
@@ -279,9 +279,9 @@ systems."
   "Place point after first blank line, for use with `url-retrieve'.
 If no such line exists, point is left in place."
   (let ((start (point)))
-    (setf (point) (point-min))
+    (goto-char (point-min))
     (unless (search-forward-regexp "^$" nil t)
-      (setf (point) start))))
+      (goto-char start))))
 
 (defun elfeed--shuffle (seq)
   "Destructively shuffle SEQ."

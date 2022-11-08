@@ -328,10 +328,10 @@
   (with-elfeed-test
     (with-temp-buffer
       (insert elfeed-test-rss)
-      (setf (point) (point-min))
+      (goto-char (point-min))
       (while (search-forward "http://" nil t)
         (replace-match "//" nil t))
-      (setf (point) (point-min))
+      (goto-char (point-min))
       (let ((xml (elfeed-xml-parse-region)))
         (cl-destructuring-bind (a b)
             (elfeed-entries-from-rss "http://example.com/" xml)
@@ -347,10 +347,10 @@
                          "https://www.wikipedia.org/")))))
     (with-temp-buffer
       (insert elfeed-test-atom)
-      (setf (point) (point-min))
+      (goto-char (point-min))
       (while (search-forward "base=\"http://" nil t)
         (replace-match "base=\"//" nil t))
-      (setf (point) (point-min))
+      (goto-char (point-min))
       (let ((xml (elfeed-xml-parse-region)))
         (cl-destructuring-bind (a b)
             (elfeed-entries-from-atom "http://example.com/" xml)
