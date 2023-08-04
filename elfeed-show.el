@@ -316,7 +316,7 @@ directory and saves all attachments in the chosen directory."
          (lambda ()
            (url-copy-file url path t))
          (lambda (_)
-           (message (format "%s downloaded" url)))))
+           (message "%s" (format "%s downloaded" url)))))
     (url-copy-file url path t)))
 
 (defun elfeed--get-enclosure-num (prompt entry &optional multi)
