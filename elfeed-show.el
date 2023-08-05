@@ -77,6 +77,8 @@ Called without arguments."
       (define-key map "P" #'elfeed-show-play-enclosure)))
   "Keymap for `elfeed-show-mode'.")
 
+(put 'elfeed-show-mode 'mode-class 'special)
+
 (defun elfeed-show-mode ()
   "Mode for displaying Elfeed feed entries.
 \\{elfeed-show-mode-map}"
