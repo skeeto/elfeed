@@ -166,7 +166,7 @@
     (should (= (point) 12)))
   (with-temp-buffer
     (insert "aaaaa\nbbbb\ncccccc")
-    (setf (point) 5)
+    (goto-char 5)
     (elfeed-move-to-first-empty-line)
     (should (= (point) 5))))
 
