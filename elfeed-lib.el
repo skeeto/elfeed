@@ -17,7 +17,7 @@
 (require 'xml)
 
 (defun elfeed-expose (function &rest args)
-  "Return an interactive version of FUNCTION, 'exposing' it to the user."
+  "Return an interactive version of FUNCTION, \"exposing\" it to the user."
   (lambda () (interactive) (apply function args)))
 
 (defun elfeed-goto-line (n)

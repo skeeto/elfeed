@@ -86,10 +86,10 @@ A query is a list of matchers.
  - KEYWORD: filters to an attribute value (must be last)
  - * (an asterisk symbol): filters to content strings (must be last)
 
-For example, to find all the 'alternate' link URL in a typical
+For example, to find all the \"alternate\" link URL in a typical
 Atom feed:
 
-  (xml-query-all '(feed entry link [rel \"alternate\"] :href) xml)"
+  (xml-query-all \\='(feed entry link [rel \"alternate\"] :href) xml)"
   (if (null query)
       xml
     (cl-destructuring-bind (matcher . rest) query
