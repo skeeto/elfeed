@@ -42,7 +42,7 @@ Items in this list can also be list whose car is the feed URL
 and cdr is a list of symbols to be applied to all discovered
 entries as tags (\"autotags\"). For example,
 
-  (setq elfeed-feeds '(\"http://foo/\"
+  (setq elfeed-feeds \\='(\"http://foo/\"
                        \"http://bar/\"
                        (\"http://baz/\" comic)))
 
@@ -575,14 +575,14 @@ REMOVE.
 Examples,
 
   (elfeed-make-tagger :feed-url \"youtube\\\\.com\"
-                      :add '(video youtube))
+                      :add \\='(video youtube))
 
   (elfeed-make-tagger :before \"1 week ago\"
-                      :remove 'unread)
+                      :remove \\='unread)
 
   (elfeed-make-tagger :feed-url \"example\\\\.com\"
-                      :entry-title '(not \"something interesting\")
-                      :add 'junk)
+                      :entry-title \\='(not \"something interesting\")
+                      :add \\='junk)
 
 The returned function should be added to `elfeed-new-entry-hook'."
   (let ((after-time  (and after  (elfeed-time-duration after)))
