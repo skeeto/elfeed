@@ -272,6 +272,7 @@ If PROTOCOL is nil, returns URL."
           (elfeed-feed-author feed) (elfeed--atom-authors-to-plist authors))
     (cl-loop for entry in (xml-query-all* (feed entry) xml) collect
              (let* ((title (or (xml-query* (title *) entry) ""))
+                    (title-type (or (xml-query* (title :type) entry) ""))
                     (xml-base (elfeed-update-location
                                xml-base (xml-query* (:base) (list entry))))
                     (anylink (xml-query* (link :href) entry))
@@ -308,7 +309,10 @@ If PROTOCOL is nil, returns URL."
                               for length = (xml-query* (:length) wrap)
                               collect (list href type length)))
                     (db-entry (elfeed-entry--create
-                               :title (elfeed-cleanup title)
+                               :title (elfeed-cleanup
+                                       (if (string-match-p "html" title-type)
+                                           (xml-substitute-special title)
+                                         title))
                                :feed-id feed-id
                                :id (cons namespace (elfeed-cleanup id))
                                :link (elfeed-cleanup link)
