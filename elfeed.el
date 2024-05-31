@@ -205,11 +205,13 @@ This is a workaround for issues in `url-queue-retrieve'."
   (concat "urn:sha1:" (sha1 (format "%s" (or content (float-time))))))
 
 (defun elfeed--atom-content (entry)
-  "Get content string from ENTRY."
-  (let ((content-type (xml-query* (content :type) entry)))
+  "Get content string from ENTRY. If there is no content tag, use summary instead."
+  (let ((content-type (or (xml-query* (content :type) entry)
+			  (xml-query* (summary :type) entry))))
     (if (equal content-type "xhtml")
         (with-temp-buffer
-          (let ((xhtml (cddr (xml-query* (content) entry))))
+          (let ((xhtml (cddr (or (xml-query* (content) entry)
+				 (xml-query* (summary) entry)))))
             (dolist (element xhtml)
               (if (stringp element)
                   (insert element)
