@@ -45,6 +45,9 @@ Called without arguments."
                  (function-item delete-window)
                  function))
 
+(defvar elfeed-show-playlist-buffer-name "elfeed-enclosures"
+  "Emms playlist buffer name for enclosures.")
+
 (defvar elfeed-show-refresh-function #'elfeed-show-refresh--mail-style
   "Function called to refresh the `*elfeed-entry*' buffer.")
 
@@ -94,7 +97,7 @@ Called without arguments."
 
 (defalias 'elfeed-show-tag--unread
   (elfeed-expose #'elfeed-show-tag 'unread)
-  "Mark the current entry unread.")
+   "Mark the current entry unread.")
 
 (defun elfeed-insert-html (html &optional base-url)
   "Converted HTML markup to a propertized string."
@@ -453,8 +456,19 @@ Prompts for ENCLOSURE-INDEX when called interactively."
   (interactive (list (elfeed--enclosure-maybe-prompt-index elfeed-show-entry)))
   (require 'emms) ;; optional
   (with-no-warnings ;; due to lazy (require )
-    (emms-add-url   (car (elt (elfeed-entry-enclosures elfeed-show-entry)
-                              (- enclosure-index 1))))))
+    (let ((buf (get-buffer elfeed-show-playlist-buffer-name))
+	  (title (elfeed-entry-title elfeed-show-entry))
+	  (track (emms-track 'url (car (elt (elfeed-entry-enclosures elfeed-show-entry)
+					    (- enclosure-index 1))))))
+      (emms-track-set track 'info-title title)
+      (unless buf
+	(with-current-buffer (emms-playlist-new elfeed-show-playlist-buffer-name)
+	  (setq buf (current-buffer))
+	  (setq emms-playlist-buffer-p t)))
+      (emms-playlist-set-playlist-buffer buf)
+      (with-current-emms-playlist
+	(goto-char (point-max))
+	(emms-playlist-insert-track track)))))
 
 (defun elfeed-show-next-link ()
   "Skip to the next link, exclusive of the Link header."
