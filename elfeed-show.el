@@ -45,7 +45,7 @@ Called without arguments."
                  (function-item delete-window)
                  function))
 
-(defvar elfeed-show-playlist-buffer-name "elfeed-enclosures"
+(defvar elfeed-show-playlist-buffer-name " elfeed-enclosures"
   "Emms playlist buffer name for enclosures.")
 
 (defvar elfeed-show-refresh-function #'elfeed-show-refresh--mail-style
