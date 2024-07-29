@@ -1,5 +1,11 @@
 # Changes
 
+## 3.4.2 (2024-07-29)
+
+* Fix `browse-url` usage (243add9e)
+
+* Deal with various warnings from recent Emacs releases
+
 ## 3.4.1 (2021-02-25)
 
 * Fix elfeed-search-last-entry and elfeed-search-first-entry
