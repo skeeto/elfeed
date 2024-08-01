@@ -458,11 +458,21 @@ results will not."
             method
             data))))
 
+(defun elfeed-curl--queue-right-shape (queue condition)
+  (dolist (item queue)
+    (unless (and (listp item)
+                 (or (stringp (car item))
+                     (and (listp (car item))
+                          (cl-every #'stringp (car item)))))
+      (signal 'wrong-type-argument (list condition item))))
+  )
+
 (defun elfeed-curl--queue-consolidate (queue-in)
   "Group compatible requests together and return a new queue.
 Compatible means the requests have the same protocol, domain,
 port, headers, method, and body, allowing them to be used safely
 in the same curl invocation."
+  (elfeed-curl--queue-right-shape queue-in 'consolidate-input-queue-wrong-shape)
   (let ((table (make-hash-table :test 'equal))
         (keys ())
         (queue-out ()))
@@ -474,13 +484,14 @@ in the same curl invocation."
     (dolist (key (nreverse keys))
       (let ((entry (gethash key table)))
         (when entry
-          (let ((rotated (list (nreverse (cl-mapcar #'car entry))
-                               (nreverse (cl-mapcar #'cadr entry))
+          (let ((rotated (list (nreverse (flatten-tree (cl-mapcar #'car entry)))
+                               (nreverse (flatten-tree (cl-mapcar #'cadr entry)))
                                (cl-caddar entry)
                                (elt (car entry) 3)
                                (elt (car entry) 4))))
             (push rotated queue-out)
             (setf (gethash key table) nil)))))
+    (elfeed-curl--queue-right-shape queue-out 'consolidate-output-queue-wrong-shape)
     (nreverse queue-out)))
 
 (defun elfeed-curl--queue-wrap (cb)
