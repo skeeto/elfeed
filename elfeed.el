@@ -554,8 +554,8 @@ called interactively, SAVE is set to t."
 (defun elfeed ()
   "Enter elfeed."
   (interactive)
-  (switch-to-buffer (elfeed-search-buffer))
-  (unless (eq major-mode 'elfeed-search-mode)
+  (display-buffer (elfeed-search-buffer))
+  (with-current-buffer (elfeed-search-buffer)
     (elfeed-search-mode)))
 
 ;; New entry filtering
