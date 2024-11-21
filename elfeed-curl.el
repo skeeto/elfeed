@@ -430,7 +430,8 @@ DNS failure in one will cause all to fail, but 4xx and 5xx
 results will not."
   (with-current-buffer (generate-new-buffer " *curl*")
     (setf elfeed-curl--token (elfeed-curl--token))
-    (let* ((coding-system-for-read 'binary)
+    (let* ((default-directory temporary-file-directory)
+           (coding-system-for-read 'binary)
            (process-connection-type nil)
            (args (elfeed-curl--args url elfeed-curl--token headers method data))
            (process (apply #'start-process "elfeed-curl" (current-buffer)
