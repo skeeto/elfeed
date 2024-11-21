@@ -440,8 +440,9 @@ offer to save a range of enclosures."
 Prompts for ENCLOSURE-INDEX when called interactively."
   (interactive (list (elfeed--enclosure-maybe-prompt-index elfeed-show-entry)))
   (elfeed-show-add-enclosure-to-playlist enclosure-index)
+  (require 'emms) ;; optional
   (with-no-warnings
-    (with-current-emms-playlist
+    (with-current-buffer emms-playlist-buffer
       (save-excursion
         (emms-playlist-last)
         (emms-playlist-mode-play-current-track)))))
