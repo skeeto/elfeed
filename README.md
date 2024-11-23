@@ -281,6 +281,48 @@ filter. Emacs automatically persists bookmarks across sessions.
 
 [bm]: https://www.gnu.org/software/emacs/manual/html_node/emacs/Bookmarks.html
 
+## Org-store-link and Org-capture
+
+When `org-store-link` is called from an Elfeed search or an Elfeed
+entry, a link to the serach or entry is stored in Org-mode format.
+
+This link can be inserted into an Org-mode document. If the link is
+openned, the search or entry will be shown in Elfeed.
+
+In addition to the link, `org-store-link` also store some additonnal
+properties. You can access them in an Org-capture template with the
+template expansion `%:keyword`. (`org-store-link` is automatically
+called when you do a capture.)
+
+List of available keywords, when link is stored from an Elfeed search:
+- `type`               : Type of Org-mode link
+- `link`               : Org-mode link to this search, also available
+                         with %a, %A, %l and %L
+- `description`        : The search filter
+
+
+List of available keywords, when link is stored from an Elfeed entry:
+- `type`               : Type of Org-mode link
+- `link`               : Org-mode link to this entry, also available
+                         with %a, %A, %l and %L
+- `title`              : Feed entry title
+- `description`        : Feed entry description, same as title
+- `external-link`      : Feed entry external link
+- `date`               : Date time of the feed entry publication, in
+                         full ISO 8601 format
+- `authors`            : List of feed entry authors names, joint by a
+                         comma
+- `tags`               : List of feed entry tags, in Org-mode tags
+                         format
+- `content`            : Content of the feed entry
+- `feed-title`         : Title of the feed
+- `feed-external-link` : Feed external link
+- `feed-authors`       : List of feed authors names, joint by a comma
+
+If `content` type is HTML, it is automatically embedded into an
+Org-mode HTML quote.
+
+
 ## Metadata Plist
 
 All feed and entry objects have plist where you can store your own
