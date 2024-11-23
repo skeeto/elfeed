@@ -295,29 +295,33 @@ template expansion `%:keyword`. (`org-store-link` is automatically
 called when you do a capture.)
 
 List of available keywords, when link is stored from an Elfeed search:
-- `type`               : Type of Org-mode link
-- `link`               : Org-mode link to this search, also available
-                         with %a, %A, %l and %L
-- `description`        : The search filter
+- `type`        : Type of Org-mode link
+- `link`        : Org-mode link to this search, also available
+                  with %a, %A, %l and %L
+- `description` : The search filter
 
 
 List of available keywords, when link is stored from an Elfeed entry:
-- `type`               : Type of Org-mode link
-- `link`               : Org-mode link to this entry, also available
-                         with %a, %A, %l and %L
-- `title`              : Feed entry title
-- `description`        : Feed entry description, same as title
-- `external-link`      : Feed entry external link
-- `date`               : Date time of the feed entry publication, in
-                         full ISO 8601 format
-- `authors`            : List of feed entry authors names, joint by a
-                         comma
-- `tags`               : List of feed entry tags, in Org-mode tags
-                         format
-- `content`            : Content of the feed entry
-- `feed-title`         : Title of the feed
-- `feed-external-link` : Feed external link
-- `feed-authors`       : List of feed authors names, joint by a comma
+- `type`                    : Type of Org-mode link
+- `link`                    : Org-mode link to this entry, also available
+                              with %a, %A, %l and %L
+- `title`                   : Feed entry title
+- `description`             : Feed entry description, same as title
+- `external-link`           : Feed entry external link
+- `date`                    : Date time of the feed entry publication, in
+                              full ISO 8601 format
+- `date-timestamp`          : Date time of the feed entry publication, in
+                              Org-mode active timestamp format
+- `date-inactive-timestamp` : Date time of the feed entry publication, in
+                              Org-mode inactive timestamp format
+- `authors`                 : List of feed entry authors names, joint by a
+                              comma
+- `tags`                    : List of feed entry tags, in Org-mode tags
+                              format
+- `content`                 : Content of the feed entry
+- `feed-title`              : Title of the feed
+- `feed-external-link`      : Feed external link
+- `feed-authors`            : List of feed authors names, joint by a comma
 
 If `content` type is HTML, it is automatically embedded into an
 Org-mode HTML quote.
