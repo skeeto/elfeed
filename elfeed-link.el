@@ -78,7 +78,7 @@ Org-mode HTML quote."
                  "%FT%T"
                  (elfeed-entry-date elfeed-show-entry))
           ;; Concatenate authors names
-          :authors (mapconcat 'identity
+          :authors (mapconcat #'identity
                               ;; Loop on each author and extract its name
                               ;; Authors list get from Elfeed entry's meta
                               (cl-loop for author
@@ -87,12 +87,12 @@ Org-mode HTML quote."
                               ", ") ;; Join names using a comma
           ;; Concatenate tags in Org-mode tags format
           :tags (format ":%s:"
-                        (mapconcat 'symbol-name
+                        (mapconcat #'symbol-name
                                    (elfeed-entry-tags elfeed-show-entry)
                                    ":"))
           ;; Prepare support of different content type, only HTML for now
           :content (pcase (elfeed-entry-content-type elfeed-show-entry)
-                     ('html
+                     (`html
                       ;; Embed the text into Org-mode HTML quote
                       (format
                        "#+BEGIN_EXPORT html\n%s\n#+END_EXPORT"
@@ -100,7 +100,7 @@ Org-mode HTML quote."
           :feed-title (elfeed-feed-title (elfeed-entry-feed elfeed-show-entry))
           :feed-external-link (elfeed-feed-url (elfeed-entry-feed elfeed-show-entry))
           ;; Concatenate feed authors names
-          :feed-authors (mapconcat 'identity
+          :feed-authors (mapconcat #'identity
                                    ;; Loop on each feed author and extract its name
                                    ;; Authors list get from Elfeed feed
                                    (cl-loop for author
