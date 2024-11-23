@@ -32,20 +32,14 @@ of available props."
           :link (format "elfeed:%s" elfeed-search-filter)
           :description elfeed-search-filter))
         ((derived-mode-p 'elfeed-show-mode)
-         (apply
-          'org-store-link-props
+         (funcall (if (fboundp 'org-link-store-props)
+                      #'org-link-store-props
+                    (with-no-warnings #'org-store-link-props))
           :type "elfeed"
           :link (format "elfeed:%s#%s"
                         (car (elfeed-entry-id elfeed-show-entry))
                         (cdr (elfeed-entry-id elfeed-show-entry)))
-          :description (elfeed-entry-title elfeed-show-entry)
-           (cl-loop for prop in
-                    (list 'id 'title 'link 'date 'content 'content-type 'enclosures 'tags 'feed-id 'meta)
-                    nconc (list
-                           (intern (concat ":elfeed-entry-" (symbol-name prop)))
-                           (funcall
-                            (intern (concat "elfeed-entry-" (symbol-name prop)))
-                            elfeed-show-entry)))))))
+          :description (elfeed-entry-title elfeed-show-entry)))))
 
 ;;;###autoload
 (defun elfeed-link-open (filter-or-id)
