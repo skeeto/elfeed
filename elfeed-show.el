@@ -146,6 +146,9 @@ Called without arguments."
   (interactive)
   (let* ((inhibit-read-only t)
          (title (elfeed-entry-title elfeed-show-entry))
+         (title (decode-coding-string title
+                                      (detect-coding-string title t)
+                                      t))
          (date (seconds-to-time (elfeed-entry-date elfeed-show-entry)))
          (authors (elfeed-meta elfeed-show-entry :authors))
          (link (elfeed-entry-link elfeed-show-entry))
