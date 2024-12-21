@@ -1,9 +1,12 @@
-;;; elfeed.el --- an Emacs Atom/RSS feed reader -*- lexical-binding: t; -*-
+;;; elfeed.el --- An Emacs Atom/RSS feed reader -*- lexical-binding: t; -*-
 
 ;; This is free and unencumbered software released into the public domain.
 
 ;; Author: Christopher Wellons <wellons@nullprogram.com>
 ;; URL: https://github.com/skeeto/elfeed
+
+;; Package-Version: 3.4.2
+;; Package-Requires: ((emacs "24.3"))
 
 ;;; Commentary:
 
