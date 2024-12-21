@@ -120,7 +120,7 @@ Links are relative to BASE-URL if non-nil."
       (setq content (format "%s[...]%s"
                             (substring content 0 len)
                             (substring content (- len))))))
-  (elfeed-insert-html (format "<a href=\"%s\">%s</a>" url content)))
+  (shr-tag-a `(a ((href . ,url)) ,content)))
 
 (defun elfeed-compute-base (url)
   "Return the base URL for URL, useful for relative paths."
