@@ -183,6 +183,4 @@
     (t "http://foo.example/a/b/" ".././c" "http://foo.example/a/c")
     (t "http://foo.example/a/b/" "../c/../../d" "http://foo.example/d")))
 
-(provide 'elfeed-lib-tests)
-
 ;;; elfeed-lib-tests.el ends here

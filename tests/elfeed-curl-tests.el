@@ -13,6 +13,4 @@
     (cl-loop for (type . url) in table
              do (should (eq (elfeed-curl--protocol-type url) type)))))
 
-(provide 'elfeed-curl-tests)
-
 ;;; elfeed-curl-tests.el ends here

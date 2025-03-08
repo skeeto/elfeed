@@ -5,11 +5,6 @@
 (require 'ert)
 (require 'elfeed)
 (require 'elfeed-lib)
-(require 'xml-query-tests)
-(require 'elfeed-db-tests)
-(require 'elfeed-lib-tests)
-(require 'elfeed-search-tests)
-(require 'elfeed-curl-tests)
 
 (defvar elfeed-test-rss
   "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
@@ -466,7 +461,5 @@
              (entry (cl-first (elfeed-entries-from-atom "http://foo/" xml))))
         (should (equal (elfeed-entry-tags entry)
                        (elfeed-normalize-tags '(unread tag-a tag-b))))))))
-
-(provide 'elfeed-tests)
 
 ;;; elfeed-tests.el ends here

@@ -61,6 +61,4 @@
   (should (string-equal "@5-minutes-ago" (elfeed-search-unparse-filter '(:after 300))))
   (should (string-equal "@5-minutes-ago--1-minute-ago" (elfeed-search-unparse-filter '(:after 300 :before 60)))))
 
-(provide 'elfeed-search-tests)
-
 ;;; elfeed-search-tests.el ends here

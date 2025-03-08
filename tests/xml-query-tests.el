@@ -22,6 +22,4 @@
     (should (equal (xml-query-all '(foo (baz bar) *) xml)
                    '("FOOBAZ" "FOO" "BAR")))))
 
-(provide 'xml-query-tests)
-
 ;;; xml-query-tests.el ends here

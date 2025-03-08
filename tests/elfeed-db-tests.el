@@ -260,6 +260,4 @@
         (should (equal (tsort (elfeed-feed-entries feed-b-id))
                        (tsort feed-b-entries)))))))
 
-(provide 'elfeed-db-tests)
-
 ;;; elfeed-db-tests.el ends here
