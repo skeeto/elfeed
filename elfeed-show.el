@@ -291,9 +291,7 @@ browser defined by `browse-url-generic-program'."
 
 (defcustom elfeed-enclosure-default-dir (expand-file-name "~")
   "Default directory for saving enclosures.
-This can be either a string (a file system path), or a function
-that takes a filename and the mime-type as arguments, and returns
-the enclosure dir."
+This should be a string (a file system path)."
   :type 'directory
   :group 'elfeed
   :safe 'stringp)
