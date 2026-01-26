@@ -699,7 +699,7 @@ expression, matching against entry link, title, and feed title."
                              line))
          (move-to-column column)))))
 
-(defun elfeed-search-update (&optional force)
+(defun elfeed-search-update (&optional force reset)
   "Update the elfeed-search buffer listing to match the database.
 When FORCE is non-nil, redraw even when the database hasn't changed."
   (interactive)
@@ -707,18 +707,49 @@ When FORCE is non-nil, redraw even when the database hasn't changed."
     (when (or force (and (not elfeed-search-filter-active)
                          (< elfeed-search-last-update (elfeed-db-last-update))))
       (elfeed-save-excursion
+        (elfeed-search--update-list)
         (let ((inhibit-read-only t)
-              (standard-output (current-buffer)))
-          (erase-buffer)
-          (elfeed-search--update-list)
-          (dolist (entry elfeed-search-entries)
-            (funcall elfeed-search-print-entry-function entry)
-            (insert "\n"))
+              (standard-output (current-buffer))
+              (sorter (or elfeed-search-sort-function #'elfeed-entries-compare))
+              (entries elfeed-search-entries))
+          (when reset
+            (erase-buffer))
+          (goto-char (point-min))
+          (while entries
+            (let ((entry (car entries))
+                  (saved-entry (get-text-property (point) 'saved-elfeed-entry))
+                  (beg (point)))
+              (cond
+               ((equal entry saved-entry)
+                (forward-line 1)
+                (setq entries (cdr entries)))
+               ;; saved-entry sorts after new entry: insert new entry
+               ((or (not saved-entry)
+                    (funcall sorter entry saved-entry))
+                (funcall elfeed-search-print-entry-function entry)
+                (put-text-property
+                 beg (point) 'saved-elfeed-entry (copy-elfeed-entry entry))
+                (insert "\n")
+                (setq entries (cdr entries)))
+               ;; saved-entry sorts before new entry: delete saved-entry
+               (t (forward-line 1)
+                  (delete-region beg (point))))))
+          ;; delete excess entries
+          (delete-region (point) (point-max))
           (setf elfeed-search-last-update (float-time))))
       (when (zerop (buffer-size))
         ;; If nothing changed, force a header line update
         (force-mode-line-update))
       (run-hooks 'elfeed-search-update-hook))))
+
+(defun elfeed-entries-compare (entry-a entry-b)
+  (let* ((a (elfeed-entry-id entry-a))
+         (b (elfeed-entry-id entry-b))
+         (date-a (elfeed-entry-date entry-a))
+         (date-b (elfeed-entry-date entry-b)))
+    (if (= date-a date-b)
+        (string< (prin1-to-string b) (prin1-to-string a))
+      (> date-a date-b))))
 
 (defun elfeed-search-fetch (prefix)
   "Update all feeds via `elfeed-update', or only visible feeds with PREFIX.
