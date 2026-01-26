@@ -158,10 +158,11 @@
   "Return the current :last-update time for the database. If a
 time parameter is provided don't respond until the time has
 advanced past it (long poll)."
-  (let ((update-time (ffloor (elfeed-db-last-update))))
-    (if (= update-time (ffloor (float (string-to-number (or time "")))))
-        (push (httpd-discard-buffer) elfeed-web-waiting)
-      (princ (json-encode update-time)))))
+  (with-elfeed-web
+    (let ((update-time (ffloor (elfeed-db-last-update))))
+      (if (= update-time (ffloor (float (string-to-number (or time "")))))
+          (push (httpd-discard-buffer) elfeed-web-waiting)
+        (princ (json-encode update-time))))))
 
 (defservlet* elfeed/mark-all-read application/json ()
   "Marks all entries in the database as read (quick-and-dirty)."
