@@ -410,6 +410,16 @@ DATA is the content to include in the request."
                  for (_ . cb) in elfeed-curl--requests
                  do (run-at-time 0 nil handler buffer cb))))))
 
+(defun elfeed-curl--normalize-url-and-cb (url cb)
+  "Normalize URL and CB into a list of (URL . CB) pairs."
+  (cond
+   ((and (listp url) (listp cb))
+    (cl-mapcar #'cons url cb))
+   ((listp url)
+    (cl-mapcar #'cons url (make-list (length url) cb)))
+   (t
+    (list (cons url cb)))))
+
 (cl-defun elfeed-curl-retrieve (url cb &key headers method data)
   "Retrieve URL contents asynchronously, calling CB with one status argument.
 
@@ -436,27 +446,22 @@ results will not."
            (process (apply #'start-process "elfeed-curl" (current-buffer)
                            elfeed-curl-program-name args)))
       (prog1 process
-        (if (listp url)
-            (progn
-              (when (functionp cb)
-                (setf cb (make-list (length url) cb)))
-              (setf elfeed-curl--requests (cl-mapcar #'cons url cb)
-                    elfeed-curl--refcount (length url)))
-          (push (cons url cb) elfeed-curl--requests)
-          (setf elfeed-curl--refcount 1))
+        (let ((url-cb-pairs (elfeed-curl--normalize-url-and-cb url cb)))
+          (setf elfeed-curl--requests url-cb-pairs
+                elfeed-curl--refcount (length url-cb-pairs)))
         (set-process-query-on-exit-flag process nil)
         (setf (process-sentinel process) #'elfeed-curl--sentinel)))))
 
 (defun elfeed-curl--request-key (url headers method data)
-  "Try to fetch URLs with matching keys at the same time."
-  (unless (listp url)
-    (let* ((urlobj (url-generic-parse-url url)))
-      (list (url-type urlobj)
-            (url-host urlobj)
-            (url-portspec urlobj)
-            headers
-            method
-            data))))
+  "Construct a key based on the request details (protocol, domain,
+port, headers, method, and body)."
+  (let* ((urlobj (url-generic-parse-url url)))
+    (list (url-type urlobj)
+          (url-host urlobj)
+          (url-portspec urlobj)
+          headers
+          method
+          data)))
 
 (defun elfeed-curl--queue-consolidate (queue-in)
   "Group compatible requests together and return a new queue.
@@ -467,16 +472,20 @@ in the same curl invocation."
         (keys ())
         (queue-out ()))
     (dolist (entry queue-in)
-      (cl-destructuring-bind (url _ headers method data) entry
-        (let* ((key (elfeed-curl--request-key url headers method data)))
+      (cl-destructuring-bind (urls _ headers method data) entry
+        ;; We construct entries either as a single item (in
+        ;; `elfeed-url-enqueue'), or by combining entries with
+        ;; matching keys (in this function). Thus, we can use the
+        ;; first entry as a representative for the whole set.
+        (let* ((key (elfeed-curl--request-key (car urls) headers method data)))
           (push key keys)
           (push entry (gethash key table nil)))))
     (dolist (key (nreverse keys))
       (let ((entry (gethash key table)))
         (when entry
-          (let ((rotated (list (nreverse (cl-mapcar #'car entry))
-                               (nreverse (cl-mapcar #'cadr entry))
-                               (cl-caddar entry)
+          (let ((rotated (list (flatten-list (nreverse (cl-mapcar #'car entry)))
+                               (flatten-list (nreverse (cl-mapcar #'cadr entry)))
+                               (elt (car entry) 2)
                                (elt (car entry) 3)
                                (elt (car entry) 4))))
             (push rotated queue-out)
@@ -521,11 +530,12 @@ in the same curl invocation."
               (and (listp url) (cl-every #'stringp url)))
     ;; Signal error synchronously instead of asynchronously in the timer
     (signal 'wrong-type-argument (list 'string-p-or-string-list-p url)))
-  (let ((entry (list url cb headers method data)))
-    (setf elfeed-curl-queue (nconc elfeed-curl-queue (list entry)))
-    (unless elfeed-curl--run-queue-queued
-      (run-at-time 0 nil #'elfeed-curl--run-queue)
-      (setf elfeed-curl--run-queue-queued t))))
+  (let ((entries (cl-loop for (url . cb) in (elfeed-curl--normalize-url-and-cb url cb)
+                          collect (list (list url) (list cb) headers method data))))
+    (setf elfeed-curl-queue (nconc elfeed-curl-queue entries)))
+  (unless elfeed-curl--run-queue-queued
+    (run-at-time 0 nil #'elfeed-curl--run-queue)
+    (setf elfeed-curl--run-queue-queued t)))
 
 (provide 'elfeed-curl)
 
