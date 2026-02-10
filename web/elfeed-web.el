@@ -1,9 +1,12 @@
-;;; elfeed-web.el --- web interface to Elfeed -*- lexical-binding: t; -*-
+;;; elfeed-web.el --- Web interface to Elfeed -*- lexical-binding: t; -*-
 
 ;; This is free and unencumbered software released into the public domain.
 
 ;; Author: Christopher Wellons <wellons@nullprogram.com>
 ;; URL: https://github.com/skeeto/elfeed
+
+;; Package-Version: 3.4.2
+;; Package-Requires: ((emacs "24.3") (elfeed "3.2.0") (simple-httpd "1.5.1"))
 
 ;;; Commentary:
 
