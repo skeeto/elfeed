@@ -309,15 +309,8 @@ directory and saves all attachments in the chosen directory."
   "Function called to generate the filename for an enclosure.")
 
 (defun elfeed--download-enclosure (url path)
-  "Download asynchronously the enclosure from URL to PATH."
-  (if (require 'async nil :noerror)
-      (with-no-warnings
-        (async-start
-         (lambda ()
-           (url-copy-file url path t))
-         (lambda (_)
-           (message (format "%s downloaded" url)))))
-    (url-copy-file url path t)))
+  "Download the enclosure from URL to PATH."
+  (elfeed-with-fetch url (write-region (point-min) (point-max) path))
 
 (defun elfeed--get-enclosure-num (prompt entry &optional multi)
   "Ask the user with PROMPT for an enclosure number for ENTRY.
