@@ -843,7 +843,6 @@ browser defined by `browse-url-generic-program'."
 (defun elfeed-search-show-entry (entry)
   "Display the currently selected item in a buffer."
   (interactive (list (elfeed-search-selected :ignore-region)))
-  (require 'elfeed-show)
   (when (elfeed-entry-p entry)
     (elfeed-untag entry 'unread)
     (elfeed-search-update-entry entry)
