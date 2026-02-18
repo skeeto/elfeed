@@ -468,9 +468,13 @@ in the same curl invocation."
         (queue-out ()))
     (dolist (entry queue-in)
       (cl-destructuring-bind (url _ headers method data) entry
-        (let* ((key (elfeed-curl--request-key url headers method data)))
-          (push key keys)
-          (push entry (gethash key table nil)))))
+        (if (listp url)
+            ;; Already-consolidated entry, pass through unchanged to
+            ;; avoid wrapping its URL list in another list layer.
+            (push entry queue-out)
+          (let* ((key (elfeed-curl--request-key url headers method data)))
+            (push key keys)
+            (push entry (gethash key table nil))))))
     (dolist (key (nreverse keys))
       (let ((entry (gethash key table)))
         (when entry
