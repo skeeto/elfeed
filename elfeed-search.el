@@ -687,7 +687,7 @@ expression, matching against entry link, title, and feed title."
 
 (defmacro elfeed-save-excursion (&rest body)
   "Like `save-excursion', but by entry/line/column instead of point."
-  (declare (indent defun))
+  (declare (indent defun) (debug t))
   `(let ((entry (elfeed-search-selected :single))
          (line (line-number-at-pos))
          (column (current-column)))
