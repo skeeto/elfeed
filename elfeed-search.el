@@ -26,8 +26,18 @@
 (defvar elfeed-search-last-update 0
   "The last time the buffer was redrawn in epoch seconds.")
 
+(defvar elfeed-search--update-timer nil
+  "Timer for debouncing `elfeed-search-update' calls.")
+
 (defvar elfeed-search-update-hook ()
   "List of functions to run immediately following a search buffer update.")
+
+(defcustom elfeed-search-update-delay 1.5
+  "Seconds to wait before updating the search buffer after a feed fetch.
+Multiple feed completions within this window are coalesced into a
+single buffer update, avoiding redundant full redraws."
+  :group 'elfeed
+  :type 'number)
 
 (defcustom elfeed-search-filter "@6-months-ago +unread"
   "Query string filtering shown entries."
@@ -232,7 +242,7 @@ When live editing the filter, it is bound to :live.")
   (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)
   (make-local-variable 'elfeed-search-filter)
-  (add-hook 'elfeed-update-hooks #'elfeed-search-update)
+  (add-hook 'elfeed-update-hooks #'elfeed-search--update-debounced)
   (add-hook 'elfeed-update-init-hooks #'elfeed-search-update--force)
   (add-hook 'kill-buffer-hook #'elfeed-db-save t t)
   (add-hook 'elfeed-db-unload-hook #'elfeed-search--unload)
@@ -244,6 +254,9 @@ When live editing the filter, it is bound to :live.")
 
 (defun elfeed-search--unload ()
   "Hook function for `elfeed-db-unload-hook'."
+  (when (timerp elfeed-search--update-timer)
+    (cancel-timer elfeed-search--update-timer)
+    (setf elfeed-search--update-timer nil))
   (with-current-buffer (elfeed-search-buffer)
     ;; don't try to save the database in this case
     (remove-hook 'kill-buffer-hook #'elfeed-db-save t)
@@ -701,8 +714,23 @@ expression, matching against entry link, title, and feed title."
 
 (defun elfeed-search-update (&optional force)
   "Update the elfeed-search buffer listing to match the database.
-When FORCE is non-nil, redraw even when the database hasn't changed."
+When FORCE is non-nil, redraw even when the database hasn't changed.
+When FORCE is nil, the update is debounced: multiple calls within
+`elfeed-search-update-delay' seconds are coalesced into one redraw."
   (interactive)
+  (if force
+      (elfeed-search--update-now force)
+    (when (timerp elfeed-search--update-timer)
+      (cancel-timer elfeed-search--update-timer))
+    (setf elfeed-search--update-timer
+          (run-at-time elfeed-search-update-delay nil
+                       #'elfeed-search--update-now nil))))
+
+(defun elfeed-search--update-now (&optional force)
+  "Immediately update the search buffer, canceling any pending debounce."
+  (when (timerp elfeed-search--update-timer)
+    (cancel-timer elfeed-search--update-timer)
+    (setf elfeed-search--update-timer nil))
   (with-current-buffer (elfeed-search-buffer)
     (when (or force (and (not elfeed-search-filter-active)
                          (< elfeed-search-last-update (elfeed-db-last-update))))
@@ -719,6 +747,12 @@ When FORCE is non-nil, redraw even when the database hasn't changed."
         ;; If nothing changed, force a header line update
         (force-mode-line-update))
       (run-hooks 'elfeed-search-update-hook))))
+
+(defun elfeed-search--update-debounced (&rest _)
+  "Schedule a debounced search buffer update.
+Intended for use on `elfeed-update-hooks', where the URL argument
+should not be treated as a force flag."
+  (elfeed-search-update))
 
 (defun elfeed-search-fetch (prefix)
   "Update all feeds via `elfeed-update', or only visible feeds with PREFIX.
