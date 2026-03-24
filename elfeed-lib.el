@@ -131,6 +131,16 @@ be relative to now (`elfeed-time-duration')."
     (integer date)
     (otherwise nil)))
 
+(defun elfeed-xml--libxml-unwrap (node)
+  "Unwrap libxml's synthetic `top' wrapper, returning a list of nodes.
+When comments or processing instructions precede the root element,
+libxml-parse-xml-region wraps everything in a (top nil ...) node."
+  (if (eq (car node) 'top)
+      (cl-loop for child in (cddr node)
+               when (and (listp child) (not (eq (car child) 'comment)))
+               collect child)
+    (list node)))
+
 (defun elfeed-xml-parse-region (&optional beg end buffer parse-dtd _parse-ns)
   "Decode (if needed) and parse XML file. Uses coding system from
 XML encoding declaration."
@@ -150,8 +160,10 @@ XML encoding declaration."
           (recode-region mark-beg mark-end coding-system 'raw-text)
           (setf beg (marker-position mark-beg)
                 end (marker-position mark-end))))))
-  (let ((xml-default-ns ()))
-    (xml-parse-region beg end buffer parse-dtd 'symbol-qnames)))
+  (if (fboundp 'libxml-parse-xml-region)
+      (elfeed-xml--libxml-unwrap (libxml-parse-xml-region beg end))
+    (let ((xml-default-ns ()))
+      (xml-parse-region beg end buffer parse-dtd 'symbol-qnames))))
 
 (defun elfeed-xml-unparse (element)
   "Inverse of `elfeed-xml-parse-region', writing XML to the buffer."

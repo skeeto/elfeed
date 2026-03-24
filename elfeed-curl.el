@@ -325,6 +325,15 @@ URL can be a string or a list of URL strings."
   (setf elfeed-curl-location
         (elfeed-curl--final-location url elfeed-curl-headers))
   (elfeed-curl--narrow :content n)
+  (when (eq protocol 'file)
+    ;; curl -D- emits pseudo-headers for file:// URLs but %{size_header}
+    ;; reports 0, so they end up in the content region. Skip past them.
+    ;; The pseudo-headers use \r\n line endings, so match \r\n\r\n.
+    ;; Only strip when content starts with headers, not XML.
+    (goto-char (point-min))
+    (when (and (not (eq (char-after) ?<))
+               (search-forward "\r\n\r\n" nil t))
+      (narrow-to-region (point) (point-max))))
   (elfeed-curl--decode)
   (current-buffer))
 
