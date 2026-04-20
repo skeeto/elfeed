@@ -10,12 +10,42 @@
 
 (eval-when-compile (require 'subr-x))
 (require 'shr)
-(require 'message) ; faces
+(require 'font-lock) ; faces
 
 (require 'elfeed)
 (require 'elfeed-db)
 (require 'elfeed-lib)
 (require 'elfeed-search)
+
+(defface elfeed-show-entry-header-face
+  '((t :inherit font-lock-keyword-face))
+  "Face for showing headers in the elfeed-entry buffer."
+  :group 'elfeed)
+
+(defface elfeed-show-entry-body-title-face
+  '((t :weight bold :inherit font-lock-string-face))
+  "Face for showing the title name in the elfeed-entry buffer."
+  :group 'elfeed)
+
+(defface elfeed-show-entry-body-author-face
+  '((t :weight bold :inherit font-lock-string-face))
+  "Face for showing the author name in the elfeed-entry buffer."
+  :group 'elfeed)
+
+(defface elfeed-show-entry-body-date-face
+  '((t :inherit font-lock-string-face))
+  "Face for showing the date in the elfeed-entry buffer."
+  :group 'elfeed)
+
+(defface elfeed-show-entry-body-feed-face
+  '((t :inherit font-lock-string-face))
+  "Face for showing the feed name in the elfeed-entry buffer."
+  :group 'elfeed)
+
+(defface elfeed-show-entry-body-tags-face
+  '((t :inherit font-lock-string-face))
+  "Face for showing the tag names in the elfeed-entry buffer."
+  :group 'elfeed)
 
 (defcustom elfeed-show-truncate-long-urls t
   "When non-nil, use an ellipsis to shorten very long displayed URLs."
@@ -166,26 +196,26 @@ Links are relative to BASE-URL if non-nil."
          (base (and feed (elfeed-compute-base (elfeed-feed-url feed)))))
     (setq list-buffers-directory title)
     (erase-buffer)
-    (insert (format (propertize "Title: %s\n" 'face 'message-header-name)
-                    (propertize title 'face 'message-header-subject)))
+    (insert (format (propertize "Title: %s\n" 'face 'elfeed-show-entry-header-face)
+                    (propertize title 'face 'elfeed-show-entry-body-title-face)))
     (when elfeed-show-entry-author
       (dolist (author authors)
         (let ((formatted (elfeed--show-format-author author)))
           (insert
-           (format (propertize "Author: %s\n" 'face 'message-header-name)
-                   (propertize formatted 'face 'message-header-to))))))
-    (insert (format (propertize "Date: %s\n" 'face 'message-header-name)
-                    (propertize nicedate 'face 'message-header-other)))
-    (insert (format (propertize "Feed: %s\n" 'face 'message-header-name)
-                    (propertize feed-title 'face 'message-header-other)))
+           (format (propertize "Author: %s\n" 'face 'elfeed-show-entry-header-face)
+                   (propertize formatted 'face 'elfeed-show-entry-body-author-face))))))
+    (insert (format (propertize "Date: %s\n" 'face 'elfeed-show-entry-header-face)
+                    (propertize nicedate 'face 'elfeed-show-entry-body-date-face)))
+    (insert (format (propertize "Feed: %s\n" 'face 'elfeed-show-entry-header-face)
+                    (propertize feed-title 'face 'elfeed-show-entry-body-feed-face)))
     (when tags
-      (insert (format (propertize "Tags: %s\n" 'face 'message-header-name)
-                      (propertize tagsstr 'face 'message-header-other))))
-    (insert (propertize "Link: " 'face 'message-header-name))
+      (insert (format (propertize "Tags: %s\n" 'face 'elfeed-show-entry-header-face)
+                      (propertize tagsstr 'face 'elfeed-show-entry-body-tags-face))))
+    (insert (propertize "Link: " 'face 'elfeed-show-entry-header-face))
     (elfeed-insert-link link link)
     (insert "\n")
     (cl-loop for enclosure in (elfeed-entry-enclosures elfeed-show-entry)
-             do (insert (propertize "Enclosure: " 'face 'message-header-name))
+             do (insert (propertize "Enclosure: " 'face 'elfeed-show-entry-header-face))
              do (elfeed-insert-link (car enclosure))
              do (insert "\n"))
     (insert "\n")
@@ -470,7 +500,7 @@ Prompts for ENCLOSURE-INDEX when called interactively."
   "Skip to the next link, exclusive of the Link header."
   (interactive nil elfeed-show-mode)
   (let ((properties (text-properties-at (line-beginning-position))))
-    (when (memq 'message-header-name properties)
+    (when (memq 'elfeed-show-entry-header-face properties)
       (forward-paragraph))
     (shr-next-link)))
 
