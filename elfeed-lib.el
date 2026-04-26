@@ -16,6 +16,16 @@
 (require 'url-util)
 (require 'xml)
 
+;; Emacs < 27 compatibility
+(if (fboundp 'elfeed-libxml-supported-p)
+    (defalias 'elfeed-libxml-supported-p #'libxml-available-p)
+  (defun elfeed-libxml-supported-p ()
+    "Return non-nil if `libxml-parse-html-region' is available."
+    (with-temp-buffer
+      (insert "<html></html>")
+      (and (fboundp 'libxml-parse-html-region)
+           (not (null (libxml-parse-html-region (point-min) (point-max))))))))
+
 (defun elfeed-expose (function &rest args)
   "Return an interactive version of FUNCTION, \"exposing\" it to the user."
   (lambda () (interactive) (apply function args)))
@@ -211,13 +221,6 @@ XML encoding declaration."
                            (and (string= data (elfeed-slurp file))
                                 (not (string= data (elfeed-slurp file t)))))
                        (delete-file file)))))))))
-
-(defun elfeed-libxml-supported-p ()
-  "Return non-nil if `libxml-parse-html-region' is available."
-  (with-temp-buffer
-    (insert "<html></html>")
-    (and (fboundp 'libxml-parse-html-region)
-         (not (null (libxml-parse-html-region (point-min) (point-max)))))))
 
 (defun elfeed-keyword->symbol (keyword)
   "If a keyword, convert KEYWORD into a plain symbol (remove the colon)."
