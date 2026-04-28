@@ -6,8 +6,8 @@ VERSION = 3.4.2
 EL   = elfeed-csv.el elfeed-curl.el elfeed-db.el elfeed-lib.el	\
        elfeed-log.el elfeed-show.el elfeed.el xml-query.el	\
        elfeed-search.el elfeed-link.el
-DOC  = README.md NEWS.md UNLICENSE elfeed-pkg.el
-WEB  = web/elfeed-web-pkg.el web/elfeed-web.el web/elfeed.css	\
+DOC  = README.md NEWS.md UNLICENSE
+WEB  = web/elfeed-web.el web/elfeed.css	\
        web/elfeed.js web/index.html
 TEST = tests/elfeed-db-tests.el tests/elfeed-lib-tests.el       \
        tests/elfeed-tests.el tests/elfeed-search-tests.el       \

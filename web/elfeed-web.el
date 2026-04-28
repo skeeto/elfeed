@@ -4,6 +4,9 @@
 
 ;; Author: Christopher Wellons <wellons@nullprogram.com>
 ;; URL: https://github.com/skeeto/elfeed
+;; Version: 3.4.2
+;; Package-Requires: ((emacs "24.3") (elfeed "3.4.2") (simple-httpd "1.5.1"))
+;; Keywords: network, hypermedia
 
 ;;; Commentary:
 
