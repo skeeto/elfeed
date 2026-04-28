@@ -371,13 +371,13 @@ DATA is the content to include in the request."
                          (format "HTTP %d" elfeed-curl-status-code)))
                   (t
                    (setf result t
-                         elfeed-curl-error-message nil)))
-            ;; Always call callback
-            (unwind-protect
-                (funcall cb result)
-              ;; Always clean up
-              (when (zerop (cl-decf elfeed-curl--refcount))
-                (kill-buffer))))))))
+                         elfeed-curl-error-message nil))))
+        ;; Always call callback
+        (unwind-protect
+            (funcall cb result)
+          ;; Always clean up
+          (when (zerop (cl-decf elfeed-curl--refcount))
+            (kill-buffer)))))))
 
 (defun elfeed-curl--fail-callback (buffer cb)
   "Inform the callback the request failed."
