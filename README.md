@@ -11,7 +11,7 @@ For a longer overview,
  * [Introducing Elfeed, an Emacs Web Feed Reader](http://nullprogram.com/blog/2013/09/04/).
  * [Tips and Tricks](http://nullprogram.com/blog/2013/11/26/)
  * [Read your RSS feeds in Emacs with Elfeed
-](http://pragmaticemacs.com/emacs/read-your-rss-feeds-in-emacs-with-elfeed/)
+](http://pragmaticemacs.wordpress.com/emacs/read-your-rss-feeds-in-emacs-with-elfeed/)
  * [Scoring Elfeed articles](http://kitchingroup.cheme.cmu.edu/blog/2017/01/05/Scoring-elfeed-articles/)
  * [Using Emacs 29](https://www.youtube.com/watch?v=pOFqzK1Ymr4),
    [30](https://www.youtube.com/watch?v=tjnK1rkO7RU),
@@ -20,12 +20,12 @@ For a longer overview,
  * [Elfeed Rules!](https://noonker.github.io/posts/2020-04-22-elfeed/) ([reddit](https://old.reddit.com/r/emacs/comments/g6oowz/elfeed_rules/))
  * [Elfeed with Tiny Tiny RSS](https://codingquark.com/emacs/2020/04/19/elfeed-protocol-ttrss.html) ([hn](https://news.ycombinator.com/item?id=22915200))
  * [Open Emacs elfeed links in the background](http://xenodium.com/open-emacs-elfeed-links-in-background/)
- * [Using Emacs 72](https://cestlaz.github.io/post/using-emacs-72-customizing-elfeed/)
+ * [Using Emacs 72](https://www.youtube.com/watch?v=G1NGNR40lB4)
  * [Lazy Elfeed](https://karthinks.com/blog/lazy-elfeed/)
- * [Using Elfeed to View Videos](https://joshrollinswrites.com/help-desk-head-desk/20200611/)
+ * [Using Elfeed to View Videos](https://medium.com/emacs/using-elfeed-to-view-videos-6dfc798e51e6)
  * [Manage podcasts in Emacs with Elfeed and Bongo](https://protesilaos.com/codelog/2020-09-11-emacs-elfeed-bongo/)
  * [... more ...](http://nullprogram.com/tags/elfeed/)
- * [... and more ...](http://pragmaticemacs.com/category/elfeed/)
+ * [... and more ...](http://pragmaticemacs.wordpress.com/category/elfeed/)
 
 [![](http://i.imgur.com/kxgF5AH.png)](http://i.imgur.com/kxgF5AH.png)
 
