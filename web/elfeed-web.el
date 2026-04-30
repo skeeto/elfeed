@@ -53,11 +53,6 @@
 (require 'elfeed-db)
 (require 'elfeed-search)
 
-(defcustom elfeed-web-enabled nil
-  "If true, serve a web interface Elfeed with simple-httpd."
-  :group 'elfeed
-  :type 'boolean)
-
 (defvar elfeed-web-limit 512
   "Maximum number of entries to serve at once.")
 
@@ -116,44 +111,32 @@
            :title  (elfeed-feed-title thing)
            :author (elfeed-feed-author thing)))))
 
-(defmacro with-elfeed-web (&rest body)
-  "Only execute BODY if `elfeed-web-enabled' is true."
-  (declare (indent 0))
-  `(if (not elfeed-web-enabled)
-       (progn
-         (princ (json-encode '(:error 403)))
-         (httpd-send-header t "application/json" 403))
-     ,@body))
-
 (defservlet* elfeed/things/:webid application/json ()
   "Return a requested thing (entry or feed)."
-  (with-elfeed-web
-    (princ (json-encode (elfeed-web-for-json (elfeed-web-lookup webid))))))
+  (princ (json-encode (elfeed-web-for-json (elfeed-web-lookup webid)))))
 
 (defservlet* elfeed/content/:ref text/html ()
   "Serve content-addressable content at REF."
-  (with-elfeed-web
-    (let ((content (elfeed-deref (elfeed-ref--create :id ref))))
-      (if content
-          (princ content)
-        (princ (json-encode '(:error 404)))
-        (httpd-send-header t "application/json" 404)))))
+  (let ((content (elfeed-deref (elfeed-ref--create :id ref))))
+    (if content
+        (princ content)
+      (princ (json-encode '(:error 404)))
+      (httpd-send-header t "application/json" 404))))
 
 (defservlet* elfeed/search application/json (q)
   "Perform a search operation with Q and return the results."
-  (with-elfeed-web
-    (let* ((results ())
-           (modified-q (format "#%d %s" elfeed-web-limit q))
-           (filter (elfeed-search-parse-filter modified-q))
-           (count 0))
-      (with-elfeed-db-visit (entry feed)
-        (when (elfeed-search-filter filter entry feed count)
-          (push entry results)
-          (cl-incf count)))
-      (princ
-       (json-encode
-        (cl-coerce
-         (mapcar #'elfeed-web-for-json (nreverse results)) 'vector))))))
+  (let* ((results ())
+         (modified-q (format "#%d %s" elfeed-web-limit q))
+         (filter (elfeed-search-parse-filter modified-q))
+         (count 0))
+    (with-elfeed-db-visit (entry feed)
+      (when (elfeed-search-filter filter entry feed count)
+        (push entry results)
+        (cl-incf count)))
+    (princ
+     (json-encode
+      (cl-coerce
+       (mapcar #'elfeed-web-for-json (nreverse results)) 'vector)))))
 
 (defvar elfeed-web-waiting ()
   "Clients waiting for an update.")
@@ -162,18 +145,16 @@
   "Return the current :last-update time for the database. If a
 time parameter is provided don't respond until the time has
 advanced past it (long poll)."
-  (with-elfeed-web
-    (let ((update-time (ffloor (elfeed-db-last-update))))
-      (if (= update-time (ffloor (float (string-to-number (or time "")))))
-          (push (httpd-discard-buffer) elfeed-web-waiting)
-        (princ (json-encode update-time))))))
+  (let ((update-time (ffloor (elfeed-db-last-update))))
+    (if (= update-time (ffloor (float (string-to-number (or time "")))))
+        (push (httpd-discard-buffer) elfeed-web-waiting)
+      (princ (json-encode update-time)))))
 
 (defservlet* elfeed/mark-all-read application/json ()
   "Marks all entries in the database as read (quick-and-dirty)."
-  (with-elfeed-web
-    (with-elfeed-db-visit (e _)
-      (elfeed-untag e 'unread))
-    (princ (json-encode t))))
+  (with-elfeed-db-visit (e _)
+    (elfeed-untag e 'unread))
+  (princ (json-encode t)))
 
 (defservlet* elfeed/tags application/json ()
   "Endpoint for adding and removing tags on zero or more entries.
@@ -185,41 +166,37 @@ object with any of these properties:
   entries : array of web IDs for entries to be modified
 
 The current set of tags for each entry will be returned."
-  (with-elfeed-web
-    (let* ((request (caar httpd-request))
-           (content (cadr (assoc "Content" httpd-request)))
-           (json (ignore-errors (json-read-from-string content)))
-           (add (cdr (assoc 'add json)))
-           (remove (cdr (assoc 'remove json)))
-           (webids (cdr (assoc 'entries json)))
-           (entries (cl-map 'list #'elfeed-web-lookup webids))
-           (status
-            (cond
-             ((not (equal request "PUT")) 405)
-             ((null json) 400)
-             ((cl-some #'null entries) 404)
-             (t 200))))
-      (if (not (eql status 200))
-          (progn
-            (princ (json-encode `(:error ,status)))
-            (httpd-send-header t "application/json" status))
-        (cl-loop for entry in entries
-                 for webid = (elfeed-web-make-webid entry)
-                 do (apply #'elfeed-tag entry (cl-map 'list #'intern add))
-                 do (apply #'elfeed-untag entry (cl-map 'list #'intern remove))
-                 collect (cons webid (elfeed-entry-tags entry)) into result
-                 finally (princ (if result (json-encode result) "{}")))))))
+  (let* ((request (caar httpd-request))
+         (content (cadr (assoc "Content" httpd-request)))
+         (json (ignore-errors (json-read-from-string content)))
+         (add (cdr (assoc 'add json)))
+         (remove (cdr (assoc 'remove json)))
+         (webids (cdr (assoc 'entries json)))
+         (entries (cl-map 'list #'elfeed-web-lookup webids))
+         (status
+          (cond
+           ((not (equal request "PUT")) 405)
+           ((null json) 400)
+           ((cl-some #'null entries) 404)
+           (t 200))))
+    (if (not (eql status 200))
+        (progn
+          (princ (json-encode `(:error ,status)))
+          (httpd-send-header t "application/json" status))
+      (cl-loop for entry in entries
+               for webid = (elfeed-web-make-webid entry)
+               do (apply #'elfeed-tag entry (cl-map 'list #'intern add))
+               do (apply #'elfeed-untag entry (cl-map 'list #'intern remove))
+               collect (cons webid (elfeed-entry-tags entry)) into result
+               finally (princ (if result (json-encode result) "{}"))))))
 
 (defservlet elfeed text/plain (uri-path _ request)
   "Serve static files from `elfeed-web-data-root'."
-  (if (not elfeed-web-enabled)
-      (insert "Elfeed web interface is disabled.\n"
-              "Set `elfeed-web-enabled' to true to enable it.")
-    (let ((base "/elfeed/"))
-      (if (< (length uri-path) (length base))
-          (httpd-redirect t base)
-        (let ((path (substring uri-path (1- (length base)))))
-          (httpd-serve-root t elfeed-web-data-root path request))))))
+  (let ((base "/elfeed/"))
+    (if (< (length uri-path) (length base))
+        (httpd-redirect t base)
+      (let ((path (substring uri-path (1- (length base)))))
+        (httpd-serve-root t elfeed-web-data-root path request)))))
 
 (defun elfeed-web-update ()
   "Update waiting clients about database changes."
@@ -235,13 +212,14 @@ The current set of tags for each entry will be returned."
 (defun elfeed-web-start ()
   "Start the Elfeed web interface server."
   (interactive)
-  (httpd-start)
-  (setf elfeed-web-enabled t))
+  (httpd-start))
 
 (defun elfeed-web-stop ()
   "Stop the Elfeed web interface server."
   (interactive)
-  (setf elfeed-web-enabled nil))
+  (unload-feature 'elfeed-web))
+
+(message "elfeed-web is loaded and accessible via simple-httpd")
 
 (provide 'elfeed-web)
 
