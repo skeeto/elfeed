@@ -3,6 +3,7 @@
 ;; This is free and unencumbered software released into the public domain.
 
 ;; Author: Christopher Wellons <wellons@nullprogram.com>
+;; Maintainer: Karthik Chikmagalur <karthik.chikmagalur@gmail.com>, Ihor Radchenko <yantar92@posteo.net>, Daniel Mendler <mail@daniel-mendler.de>
 ;; URL: https://github.com/skeeto/elfeed
 ;; Version: 3.4.2
 ;; Package-Requires: ((emacs "24.3") (elfeed "3.4.2") (simple-httpd "1.5.1"))
