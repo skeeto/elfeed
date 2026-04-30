@@ -1,6 +1,8 @@
 ;;; elfeed-curl.el --- curl backend for Elfeed -*- lexical-binding: t; -*-
 
-;;; Comments:
+;; This is free and unencumbered software released into the public domain.
+
+;;; Commentary:
 
 ;; An alternative to `url-retrieve' and `url-queue' that fetches URLs
 ;; using the curl command line program.
@@ -18,20 +20,20 @@
 ;; * `elfeed-curl-error-message'
 ;; * `elfeed-curl-location'
 
-;; The buffer delivered to callbacks may contain multiple requests. It
+;; The buffer delivered to callbacks may contain multiple requests.  It
 ;; will be narrowed to the specific content for the current request.
 ;; It's vitally important that callbacks do not kill the buffer
-;; because it may be needed for other callbacks. It also means the
+;; because it may be needed for other callbacks.  It also means the
 ;; buffer won't necessarily be around when the callback returns.
 ;; Callbacks should also avoid editing the buffer, though this
 ;; generally shouldn't impact other requests.
 
 ;; Sometimes Elfeed asks curl to retrieve multiple requests and
-;; deliver them concatenated. Due to the possibility of HTTP/1.0 being
+;; deliver them concatenated.  Due to the possibility of HTTP/1.0 being
 ;; involved — and other ambiguous-length protocols — there's no
-;; perfectly unambiguous way to split the output. To work around this,
+;; perfectly unambiguous way to split the output.  To work around this,
 ;; I use curl's --write-out to insert a randomly-generated token after
-;; each request. It's highly unlikely (1 in ~1e38) that this token
+;; each request.  It's highly unlikely (1 in ~1e38) that this token
 ;; will appear in content, so I can use it to identify the end of each
 ;; request.
 
@@ -60,7 +62,7 @@
 (defcustom elfeed-curl-extra-arguments ()
   "A list of additional arguments to pass to cURL.
 These extra arguments are appended after Elfeed's own arguments,
-and care must be taken to not interfere with Elfeed's needs. The
+and care must be taken to not interfere with Elfeed's needs.  The
 guideline is to avoid arguments that change anything about cURL's
 output format."
   :group 'elfeed
@@ -220,7 +222,7 @@ output format."
 
 (defun elfeed-curl--token ()
   "Return a unique, random string that prints as a symbol without escapes.
-This token is used to split requests. The % is excluded since
+This token is used to split requests.  The % is excluded since
 it's special to --write-out."
   (let* ((token (make-string 22 ?=))
          (set "!$&*+-/0123456789:<>@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_\
@@ -423,9 +425,9 @@ METHOD is the HTTP method to use.
 DATA is the content to include in the request.
 
 URL can be a list of URLs, which will fetch them all in the same
-curl process. In this case, CB can also be either a list of the
+curl process.  In this case, CB can also be either a list of the
 same length, or just a single function to be called once for each
-URL in the list. Headers will be common to all requests. A TCP or
+URL in the list.  Headers will be common to all requests.  A TCP or
 DNS failure in one will cause all to fail, but 4xx and 5xx
 results will not."
   (with-current-buffer (generate-new-buffer " *curl*")
