@@ -847,6 +847,7 @@ browser defined by `browse-url-generic-program'."
   (when (elfeed-entry-p entry)
     (elfeed-untag entry 'unread)
     (elfeed-search-update-entry entry)
+    (set-mark-command nil)
     (unless elfeed-search-remain-on-entry (forward-line))
     (elfeed-show-entry entry)))
 
