@@ -2,6 +2,10 @@
 
 ;; This is free and unencumbered software released into the public domain.
 
+;;; Commentary:
+
+;; Code to display feed entries.
+
 ;;; Code:
 
 (require 'cl-lib)
@@ -97,7 +101,8 @@ Called without arguments."
   "Mark the current entry unread.")
 
 (defun elfeed-insert-html (html &optional base-url)
-  "Converted HTML markup to a propertized string."
+  "Converted HTML markup to a propertized string.
+Links are relative to BASE-URL if non-nil."
   (shr-insert-document
    (if (elfeed-libxml-supported-p)
        (with-temp-buffer
@@ -127,7 +132,7 @@ Called without arguments."
     (url-recreate-url obj)))
 
 (defun elfeed--show-format-author (author)
-  "Format author plist for the header."
+  "Format AUTHOR plist for the header."
   (cl-destructuring-bind (&key name uri email &allow-other-keys)
       author
     (cond ((and name uri email)
@@ -245,8 +250,8 @@ The result depends on the value of `elfeed-show-unique-buffers'."
 
 (defun elfeed-show-visit (&optional use-generic-p)
   "Visit the current entry in your browser using `browse-url'.
-If there is a prefix argument, visit the current entry in the
-browser defined by `browse-url-generic-program'."
+If there is a prefix argument USE-GENERIC-P, visit the current entry in
+the browser defined by `browse-url-generic-program'."
   (interactive "P")
   (let ((link (elfeed-entry-link elfeed-show-entry)))
     (when link
@@ -300,8 +305,8 @@ the enclosure dir."
   :safe 'stringp)
 
 (defcustom elfeed-save-multiple-enclosures-without-asking nil
-  "If non-nil, saving multiple enclosures asks once for a
-directory and saves all attachments in the chosen directory."
+  "If non-nil, saving multiple enclosures asks once for a directory.
+All attachments are saved in the chosen directory."
   :type 'boolean
   :group 'elfeed)
 
@@ -322,11 +327,10 @@ directory and saves all attachments in the chosen directory."
 
 (defun elfeed--get-enclosure-num (prompt entry &optional multi)
   "Ask the user with PROMPT for an enclosure number for ENTRY.
-The number is [1..n] for enclosures \[0..(n-1)] in the entry. If
-MULTI is nil, return the number for the enclosure;
-otherwise (MULTI is non-nil), accept ranges of enclosure numbers,
-as per `elfeed-split-ranges-to-numbers', and return the
-corresponding string."
+The number is [1..n] for enclosures \[0..(n-1)] in the entry.  If MULTI
+is nil, return the number for the enclosure; otherwise (MULTI is
+non-nil), accept ranges of enclosure numbers, as per
+`elfeed-split-ranges-to-numbers', and return the corresponding string."
   (let* ((count (length (elfeed-entry-enclosures entry)))
          def)
     (when (zerop count)
@@ -357,7 +361,7 @@ corresponding string."
         fpath)))
 
 (defun elfeed-show-enclosure-filename-remote (_entry url-enclosure)
-  "Returns the remote filename as local filename for an enclosure."
+  "Returns the remote filename as local filename for URL-ENCLOSURE."
   (file-name-nondirectory
    (url-unhex-string
     (car (url-path-and-query (url-generic-parse-url
@@ -365,7 +369,7 @@ corresponding string."
 
 (defun elfeed-show-save-enclosure-single (&optional entry enclosure-index)
   "Save enclosure number ENCLOSURE-INDEX from ENTRY.
-If ENTRY is nil use the elfeed-show-entry variable.
+If ENTRY is nil use the variable `elfeed-show-entry'.
 If ENCLOSURE-INDEX is nil ask for the enclosure number."
   (interactive)
   (let* ((path elfeed-enclosure-default-dir)
@@ -387,7 +391,8 @@ If ENCLOSURE-INDEX is nil ask for the enclosure number."
     (elfeed--download-enclosure url-enclosure fpath)))
 
 (defun elfeed-show-save-enclosure-multi (&optional entry)
-  "Offer to save multiple entry enclosures from the current entry.
+  "Offer to save multiple entry enclosures from ENTRY.
+ENTRY defaults to the current entry.
 Default is to save all enclosures, [1..n], where n is the number of
 enclosures.  You can type multiple values separated by space, e.g.
   1 3-6 8
@@ -466,7 +471,7 @@ Prompts for ENCLOSURE-INDEX when called interactively."
     (shr-next-link)))
 
 (defun elfeed-kill-link-url-at-point ()
-  "Get link URL at point and store in kill-ring."
+  "Get link URL at point and store in `kill-ring'."
   (interactive)
   (let ((url (or (elfeed-get-link-at-point)
                  (elfeed-get-url-at-point))))
