@@ -39,7 +39,7 @@
 
 Changing this from the default will lead to misleading results
 during live filter editing, but the results be will correct when
-live filter editing is exited. "
+live filter editing is exited."
   :group 'elfeed
   :type '(choice (const descending) (const ascending)))
 
@@ -148,7 +148,7 @@ When live editing the filter, it is bound to :live.")
       (define-key map "-" #'elfeed-search-untag-all)
       (define-key map "<" #'elfeed-search-first-entry)
       (define-key map ">" #'elfeed-search-last-entry)))
-  "Keymap for elfeed-search-mode.")
+  "Keymap for `elfeed-search-mode'.")
 
 (defun elfeed-search--intro-header ()
   "Return the header shown to new users."
@@ -250,7 +250,7 @@ When live editing the filter, it is bound to :live.")
     (kill-buffer )))
 
 (defun elfeed-search-format-date (date)
-  "Format a date for printing in `elfeed-search-mode'.
+  "Format DATE for printing in `elfeed-search-mode'.
 The customization `elfeed-search-date-format' sets the formatting."
   (cl-destructuring-bind (format target alignment) elfeed-search-date-format
     (let* ((string (format-time-string format (seconds-to-time date)))
@@ -368,7 +368,7 @@ The customization `elfeed-search-date-format' sets the formatting."
       (insert "(" tags-str ")"))))
 
 (defun elfeed-search-parse-filter (filter)
-  "Parse the elements of a search filter into a plist."
+  "Parse the elements of a search FILTER into a plist."
   (let ((must-have ())
         (must-not-have ())
         (before nil)
@@ -621,23 +621,23 @@ When NEW-FILTER is nil, reset the filter to the default value.
 When given a prefix argument, the current filter is not displayed
 in the minibuffer when prompting for a new filter.
 
-Any component beginning with a + or - is treated as a tag. If +
-the tag must be present on the entry. If - the tag must *not* be
-present on the entry. Ex. \"+unread\" or \"+unread -comic\".
+Any component beginning with a + or - is treated as a tag.  If +
+the tag must be present on the entry.  If - the tag must *not* be
+present on the entry.  Ex. \"+unread\" or \"+unread -comic\".
 
 Any component beginning with an @ is an age limit or an age
-range. If a limit, no posts older than this are allowed. If a
+range.  If a limit, no posts older than this are allowed.  If a
 range, posts dates have to be inbetween the specified date
-range. Examples:
+range.  Examples:
 - \"@3-days-ago\"
 - \"@1-year-old\"
 - \"@2019-06-24\"
 - \"@2019-06-24--2019-06-24\"
 - \"@5-days-ago--1-day-ago\"
 
-Any component beginning with a # is an entry count maximum. The
+Any component beginning with a # is an entry count maximum.  The
 number following # determines the maxiumum number of entries
-to be shown (descending by date). Ex. \"#20\" or \"#100\".
+to be shown (descending by date).  Ex. \"#20\" or \"#100\".
 
 Any component beginning with a = is a regular expression matching
 the entry's feed (title or URL). Only entries belonging to a feed
@@ -749,7 +749,7 @@ Given a prefix, this function becomes `elfeed-search-fetch-visible'."
           (funcall elfeed-search-print-entry-function entry))))))
 
 (defun elfeed-search-update-entry (entry)
-  "Redraw a specific entry."
+  "Redraw ENTRY in the elfeed-search buffer."
   (let ((n (cl-position entry elfeed-search-entries)))
     (when n (elfeed-search-update-line (+ elfeed-search--offset n)))))
 
@@ -771,8 +771,8 @@ If IGNORE-REGION-P is non-nil, only return the entry under point."
 
 (defun elfeed-search-browse-url (&optional use-generic-p)
   "Visit the current entry in your browser using `browse-url'.
-If there is a prefix argument, visit the current entry in the
-browser defined by `browse-url-generic-program'."
+If there is a prefix argument USE-GENERIC-P, visit the current entry in
+the browser defined by `browse-url-generic-program'."
   (interactive "P")
   (let ((buffer (current-buffer))
         (entries (elfeed-search-selected)))
@@ -852,7 +852,7 @@ browser defined by `browse-url-generic-program'."
 
 (defun elfeed-search-set-entry-title (title)
   "Manually set the title for the entry under point.
-Sets the :title key of the entry's metadata. See `elfeed-meta'."
+Sets the :title key of the entry's metadata.  See `elfeed-meta'."
   (interactive "sTitle: ")
   (let ((entry (elfeed-search-selected :ignore-region)))
     (unless entry
@@ -862,7 +862,7 @@ Sets the :title key of the entry's metadata. See `elfeed-meta'."
 
 (defun elfeed-search-set-feed-title (title)
   "Manually set the title for the feed belonging to the entry under point.
-Sets the :title key of the feed's metadata. See `elfeed-meta'."
+Sets the :title key of the feed's metadata.  See `elfeed-meta'."
   (interactive "sTitle: ")
   (let ((entry (elfeed-search-selected :ignore-region)))
     (unless entry
@@ -939,9 +939,9 @@ Sets the :title key of the feed's metadata. See `elfeed-meta'."
 ;; Desktop Save
 
 (defun elfeed-search-desktop-save (_desktop-dirname)
-  "Save the state of the current elfeed-search buffer so that it
-  may be restored as part of a saved desktop. Also save the state
-  of the db for when `desktop-auto-save-timeout' is enabled."
+  "Save the state of the current elfeed-search buffer.
+The state may be restored as part of a saved desktop.  Also save the
+state of the db for when `desktop-auto-save-timeout' is enabled."
   (elfeed-db-save)
   elfeed-search-filter)
 
