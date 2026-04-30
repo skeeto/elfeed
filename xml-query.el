@@ -5,8 +5,8 @@
 ;;; Commentary:
 
 ;; This provides a very rudimentary, jQuery-like, XML selector
-;; s-expression language. It operates on the output of the xml
-;; package, such as `xml-parse-region' and `xml-parse-file'. It was
+;; s-expression language.  It operates on the output of the xml
+;; package, such as `xml-parse-region' and `xml-parse-file'.  It was
 ;; written to support Elfeed.
 
 ;; See the docstring for `xml-query-all'.
@@ -49,7 +49,7 @@
 
 (defun xml-query--keyword (matcher xml)
   (cl-loop with match = (intern (substring (symbol-name matcher) 1))
-           for (tag attribs . content) in (cl-remove-if-not #'listp xml)
+           for (_tag attribs . content) in (cl-remove-if-not #'listp xml)
            when (cdr (assoc match attribs))
            collect it))
 
@@ -68,7 +68,7 @@
                                    (list matcher)) xml)))
 
 (defun xml-query--append (xml)
-  (cl-loop for (tag attribs . content) in (cl-remove-if-not #'listp xml)
+  (cl-loop for (_tag _attribs . content) in (cl-remove-if-not #'listp xml)
            append content))
 
 (defun xml-query--stringp (thing)
@@ -76,8 +76,7 @@
   (and (stringp thing) (string-match "[^ \t\r\n]" thing)))
 
 (defun xml-query-all (query xml)
-  "Given a list of tags, XML, apply QUERY and return a list of
-matching tags.
+  "Given a list of tags, XML, apply QUERY and return a list of matching tags.
 
 A query is a list of matchers.
  - SYMBOL: filters to matching tags
@@ -113,7 +112,8 @@ Atom feed:
            (:else (xml-query-all rest matches)))))))))
 
 (defun xml-query (query xml)
-  "Like `xml-query-all' but only return the first result."
+  "Like `xml-query-all' but only return the first result.
+See `xml-query-all' for the arguments QUERY and XML."
   (let ((result (xml-query-all query xml)))
     (if (xml-query--stringp result)
         result
@@ -197,7 +197,7 @@ Atom feed:
   "Like `xml-query' but generate code to execute QUERY on SEXP.
 
 Unlike `xml-query', QUERY must be a static, compile-time
-s-expression. See `xml-query-all*' for more information.
+s-expression.  See `xml-query-all*' for more information.
 
 QUERY is *not* evaluated, so it should not be quoted."
   (xml-query--compile query sexp))
@@ -212,7 +212,7 @@ QUERY is *not* evaluated, so it should not be quoted."
   "Like `xml-query-all' but generate code to execute QUERY on SEXP.
 
 Unlike `xml-query-all', QUERY must be a static, compile-time
-s-expression. This macro compiles the query into actual code. The
+s-expression.  This macro compiles the query into actual code.  The
 result is faster since the query will be compiled into byte-code
 rather than \"interpreted\" at run time.
 
