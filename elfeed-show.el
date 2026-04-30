@@ -157,6 +157,7 @@ Called without arguments."
          (feed (elfeed-entry-feed elfeed-show-entry))
          (feed-title (elfeed-feed-title feed))
          (base (and feed (elfeed-compute-base (elfeed-feed-url feed)))))
+    (setq list-buffers-directory title)
     (erase-buffer)
     (insert (format (propertize "Title: %s\n" 'face 'message-header-name)
                     (propertize title 'face 'message-header-subject)))

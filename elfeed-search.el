@@ -718,6 +718,7 @@ When FORCE is non-nil, redraw even when the database hasn't changed."
       (when (zerop (buffer-size))
         ;; If nothing changed, force a header line update
         (force-mode-line-update))
+      (setq list-buffers-directory elfeed-search-filter)
       (run-hooks 'elfeed-search-update-hook))))
 
 (defun elfeed-search-fetch (prefix)
