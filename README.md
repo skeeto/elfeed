@@ -20,7 +20,7 @@ For a longer overview,
  * [Elfeed Rules!](https://noonker.github.io/posts/2020-04-22-elfeed/) ([reddit](https://old.reddit.com/r/emacs/comments/g6oowz/elfeed_rules/))
  * [Elfeed with Tiny Tiny RSS](https://codingquark.com/emacs/2020/04/19/elfeed-protocol-ttrss.html) ([hn](https://news.ycombinator.com/item?id=22915200))
  * [Open Emacs elfeed links in the background](http://xenodium.com/open-emacs-elfeed-links-in-background/)
- * [Using Emacs 72](https://www.youtube.com/watch?v=G1NGNR40lB4)
+ * [Using Emacs 72](https://web.archive.org/web/20241126185125/https://cestlaz.github.io/post/using-emacs-72-customizing-elfeed/)
  * [Lazy Elfeed](https://karthinks.com/blog/lazy-elfeed/)
  * [Using Elfeed to View Videos](https://medium.com/emacs/using-elfeed-to-view-videos-6dfc798e51e6)
  * [Manage podcasts in Emacs with Elfeed and Bongo](https://protesilaos.com/codelog/2020-09-11-emacs-elfeed-bongo/)
