@@ -4,7 +4,7 @@
 
 ;;; Commentary:
 
-;; These are general functions that aren't specific to web feeds. It's
+;; These are general functions that aren't specific to web feeds.  It's
 ;; a library of useful functions to Elfeed.
 
 ;;; Code:
@@ -17,11 +17,13 @@
 (require 'xml)
 
 (defun elfeed-expose (function &rest args)
-  "Return an interactive version of FUNCTION, \"exposing\" it to the user."
+  "Return an interactive version of FUNCTION, \"exposing\" it to the user.
+ARGS are passed to FUNCTION."
   (lambda () (interactive) (apply function args)))
 
 (defun elfeed-goto-line (n)
-  "Like `goto-line' but for non-interactive use."
+  "Like `goto-line' but for non-interactive use.
+N is the destination line."
   (goto-char (point-min))
   (forward-line (1- n)))
 
@@ -38,11 +40,11 @@
     (delete-region start (point))))
 
 (defun elfeed-time-duration (time &optional now)
-  "Turn a time expression into a number of seconds. Uses
-`timer-duration' but allows a bit more flair.
+  "Turn a TIME expression into a number of seconds.
 
-If `now' is non-nil, use it as the current time (`float-time'). This
-is mostly useful for testing."
+Uses `timer-duration' but allows a bit more flair.  If NOW is non-nil,
+use it as the current time (`float-time').  This is mostly useful for
+testing."
   (cond
    ((numberp time) time)
    ((let ((iso-time (elfeed-parse-simple-iso-8601 time)))
@@ -54,21 +56,21 @@ is mostly useful for testing."
       (when duration (float duration))))))
 
 (defun elfeed-looks-like-url-p (string)
-  "Return true if STRING looks like it could be a URL."
+  "Return non-nil if STRING looks like it could be a URL."
   (and (stringp string)
        (not (string-match-p "[ \n\t\r]" string))
        (not (null (url-type (url-generic-parse-url string))))))
 
 (defun elfeed-format-column (string width &optional align)
-  "Return STRING truncated or padded to WIDTH following ALIGNment.
-Align should be a keyword :left or :right."
+  "Return STRING truncated or padded to WIDTH following alignment.
+ALIGN should be a keyword :left or :right."
   (if (<= width 0)
       ""
     (format (format "%%%s%d.%ds" (if (eq align :left) "-" "") width width)
             string)))
 
 (defun elfeed-clamp (min value max)
-  "Clamp a value between two values."
+  "Clamp VALUE between MIN and MAX."
   (min max (max min value)))
 
 (defun elfeed-valid-regexp-p (regexp)
@@ -78,7 +80,7 @@ Align should be a keyword :left or :right."
       (string-match-p regexp ""))))
 
 (defun elfeed-cleanup (name)
-  "Trim trailing and leading spaces and collapse multiple spaces."
+  "Trim trailing and leading spaces and collapse multiple spaces in NAME string."
   (let ((trim (replace-regexp-in-string "[\f\n\r\t\v ]+" " " (or name ""))))
     (replace-regexp-in-string "^ +\\| +$" "" trim)))
 
@@ -106,7 +108,7 @@ Examples: 2015-02-22, 2015-02, 20150222"
 (defun elfeed-new-date-for-entry (old-date new-date)
   "Decide entry date, given an existing date (nil for new) and a new date.
 Existing entries' dates are unchanged if the new date is not
-parseable. New entries with unparseable dates default to the
+parseable.  New entries with unparseable dates default to the
 current time."
   (or (elfeed-float-time new-date)
       old-date
@@ -114,7 +116,7 @@ current time."
 
 (defun elfeed-float-time (date)
   "Like `float-time' but accept anything reasonable for DATE.
-Defaults to nil if DATE could not be parsed. Date is allowed to
+Defaults to nil if DATE could not be parsed.  Date is allowed to
 be relative to now (`elfeed-time-duration')."
   (cl-typecase date
     (string
@@ -132,8 +134,8 @@ be relative to now (`elfeed-time-duration')."
     (otherwise nil)))
 
 (defun elfeed-xml-parse-region (&optional beg end buffer parse-dtd _parse-ns)
-  "Decode (if needed) and parse XML file. Uses coding system from
-XML encoding declaration."
+  "Decode (if needed) and parse XML file.
+Uses coding system from XML encoding declaration."
   (unless beg (setq beg (point-min)))
   (unless end (setq end (point-max)))
   (goto-char beg)
@@ -154,7 +156,7 @@ XML encoding declaration."
     (xml-parse-region beg end buffer parse-dtd 'symbol-qnames)))
 
 (defun elfeed-xml-unparse (element)
-  "Inverse of `elfeed-xml-parse-region', writing XML to the buffer."
+  "Inverse of `elfeed-xml-parse-region', writing XML ELEMENT to the buffer."
   (cl-destructuring-bind (tag attrs . body) element
     (insert (format "<%s" tag))
     (dolist (attr attrs)
@@ -174,7 +176,8 @@ XML encoding declaration."
   (null (cddr (directory-files dir))))
 
 (defun elfeed-slurp (file &optional literally)
-  "Return the contents of FILE as a string."
+  "Return the contents of FILE as a string.
+If LITERALLY is non-nil return the content literally."
   (with-temp-buffer
     (if literally
         (insert-file-contents-literally file)
