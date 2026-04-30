@@ -19,10 +19,8 @@ function entryFill(entry) {
 }
 
 function SearchCtrl($scope, $http) {
-    // Populate query scope with value passed in URL query parameters, if any.
-    var query_via_url = new URLSearchParams(window.location.search).get("q");
-
-    $scope.query = query_via_url || INITIAL_QUERY;
+    $scope.query = new URLSearchParams(window.location.search).get("q")
+        || INITIAL_QUERY;
     $scope.busy = false;
     $scope.dirty = true;
 
