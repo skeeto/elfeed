@@ -21,7 +21,7 @@
   "Store a link to an elfeed search or entry buffer.
 
 When storing a link to an entry, automatically extract all the
-entry metadata. These can be used in the capture templates as
+entry metadata.  These can be used in the capture templates as
 `%:keyword` expansion.
 
 List of available keywords, when store from an Elfeed search:
