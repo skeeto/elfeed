@@ -1,4 +1,4 @@
-;;; elfeed-web.el --- web interface to Elfeed -*- lexical-binding: t; -*-
+;;; elfeed-web.el --- Web interface to Elfeed -*- lexical-binding: t; -*-
 
 ;; This is free and unencumbered software released into the public domain.
 
@@ -11,14 +11,14 @@
 
 ;;; Commentary:
 
-;; This is a very early work in progress. The long-term goal is to
+;; This is a very early work in progress.  The long-term goal is to
 ;; provide a web interface view of the database with optional remote
-;; tag updating. An AngularJS client accesses the database over a few
+;; tag updating.  An AngularJS client accesses the database over a few
 ;; RESTful endpoints with JSON for serialization.
 
-;; The IDs provided by RSS and Atom are completely arbitrary. To avoid
+;; The IDs provided by RSS and Atom are completely arbitrary.  To avoid
 ;; ugly encoding issues they're normalized into short, unique,
-;; alphanumeric codes called webids. Both feeds and entries fall into
+;; alphanumeric codes called webids.  Both feeds and entries fall into
 ;; the same webid namespace so they share a single endpoint.
 
 ;; Endpoints:
@@ -41,8 +41,8 @@
 ;;     entries based on a JSON entry passed as the content.
 
 ;; /elfeed/update
-;;     Accepts a time parameter. If time < `elfeed-db-last-update',
-;;     respond with time. Otherwise don't respond until database
+;;     Accepts a time parameter.  If time < `elfeed-db-last-update',
+;;     respond with time.  Otherwise don't respond until database
 ;;     updates (long poll).
 
 ;;; Code:
