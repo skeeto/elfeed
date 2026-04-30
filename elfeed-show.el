@@ -205,8 +205,8 @@ time."
 The result depends on the value of `elfeed-show-unique-buffers'."
   (if elfeed-show-unique-buffers
       (format "*elfeed-entry-<%s %s>*"
-	      (elfeed-entry-title entry)
-	      (format-time-string "%F" (elfeed-entry-date entry)))
+              (elfeed-entry-title entry)
+              (format-time-string "%F" (elfeed-entry-date entry)))
     "*elfeed-entry*"))
 
 (defun elfeed-show-entry (entry)
@@ -316,7 +316,7 @@ directory and saves all attachments in the chosen directory."
          (lambda ()
            (url-copy-file url path t))
          (lambda (_)
-           (message (format "%s downloaded" url)))))
+           (message "%s downloaded" url))))
     (url-copy-file url path t)))
 
 (defun elfeed--get-enclosure-num (prompt entry &optional multi)
@@ -470,7 +470,7 @@ Prompts for ENCLOSURE-INDEX when called interactively."
   (let ((url (or (elfeed-get-link-at-point)
                  (elfeed-get-url-at-point))))
     (if url
-        (progn (kill-new url) (message url))
+        (progn (kill-new url) (message "%s" url))
       (call-interactively 'shr-copy-url))))
 
 ;; Bookmarks
