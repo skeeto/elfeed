@@ -106,7 +106,7 @@ Examples: 2015-02-22, 2015-02, 20150222"
                                  (or day 1) month year t))))))
 
 (defun elfeed-new-date-for-entry (old-date new-date)
-  "Decide entry date, given an existing date (nil for new) and a new date.
+  "Decide entry date, given an existing OLD-DATE (nil for new) and a NEW-DATE.
 Existing entries' dates are unchanged if the new date is not
 parseable.  New entries with unparseable dates default to the
 current time."
@@ -135,7 +135,8 @@ be relative to now (`elfeed-time-duration')."
 
 (defun elfeed-xml-parse-region (&optional beg end buffer parse-dtd _parse-ns)
   "Decode (if needed) and parse XML file.
-Uses coding system from XML encoding declaration."
+Uses coding system from XML encoding declaration.  See
+`xml-parse-region' for the arguments BEG, END, BUFFER, PARSE-DTD."
   (unless beg (setq beg (point-min)))
   (unless end (setq end (point-max)))
   (goto-char beg)
@@ -317,7 +318,8 @@ This includes expanding e.g. 3-5 into 3,4,5.  If the letter
         (push (string-to-number elem) list)))))
 
 (defun elfeed-remove-dot-segments (input)
-  "Relative URL algorithm as described in RFC 3986 §5.2.4."
+  "Remove dots from INPUT path.
+The relative URL algorithm is described in RFC 3986 §5.2.4."
   (cl-loop
    with output = ""
    for s = input
