@@ -171,7 +171,8 @@ Return non-nil if an actual update occurred, not counting content."
   (elfeed-db-get-feed (elfeed-entry-feed-id entry)))
 
 (defun elfeed-normalize-tags (tags &rest more-tags)
-  "Return the normalized tag list for TAGS."
+  "Return the normalized tag list for TAGS.
+Additional tag lists can be given as MORE-TAGS."
   (let ((all (apply #'append tags (nconc more-tags (list ())))))
     (cl-delete-duplicates (cl-sort all #'string< :key #'symbol-name))))
 
@@ -212,9 +213,10 @@ Return non-nil if an actual update occurred, not counting content."
   (elfeed-db-ensure)
   (or (plist-get elfeed-db :last-update) 0))
 
-(defmacro with-elfeed-db-visit (entry-and-feed &rest body)
+(defmacro with-elfeed-db-visit (binds &rest body)
   "Visit each entry in the database from newest to oldest.
 Use `elfeed-db-return' to exit early and optionally return data.
+BINDS are bound to entry and feed around BODY.
 
   (with-elfeed-db-visit (entry feed)
     (do-something entry)
@@ -226,9 +228,8 @@ Use `elfeed-db-return' to exit early and optionally return data.
        (elfeed-db-ensure)
        (avl-tree-mapc
         (lambda (id)
-          (let* ((,(cl-first entry-and-feed) (elfeed-db-get-entry id))
-                 (,(cl-second entry-and-feed)
-                  (elfeed-entry-feed ,(cl-first entry-and-feed))))
+          (let* ((,(car binds) (elfeed-db-get-entry id))
+                 (,(cadr binds) (elfeed-entry-feed ,(car binds))))
             ,@body))
         elfeed-db-index))))
 
@@ -449,7 +450,8 @@ Runs `elfeed-db-unload-hook' after unloading the database."
            collect k and collect v))
 
 (defun elfeed-meta (thing key &optional default)
-  "Access metadata for THING (entry, feed) under KEY."
+  "Access metadata for THING (entry, feed) under KEY.
+Return DEFAULT if unavailable."
   (or (plist-get (elfeed-meta--plist thing) key)
       default))
 
