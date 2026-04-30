@@ -11,7 +11,7 @@
 
 ;;; Commentary:
 
-;; Elfeed is a web feed client for Emacs, inspired by notmuch. See
+;; Elfeed is a web feed client for Emacs, inspired by notmuch.  See
 ;; the README for full documentation.
 
 ;;; Code:
@@ -44,7 +44,7 @@ You must add your feeds to this list.
 In its simplest form this will be a list of strings of feed URLs.
 Items in this list can also be list whose car is the feed URL
 and cdr is a list of symbols to be applied to all discovered
-entries as tags (\"autotags\"). For example,
+entries as tags (\"autotags\").  For example,
 
   (setq elfeed-feeds \\='(\"http://foo/\"
                        \"http://bar/\"
@@ -88,18 +88,18 @@ Each function should accept no arguments, and return a string or nil."
 
 (defvar elfeed-http-error-hooks ()
   "Hooks to run when an http connection error occurs.
-It is called with 2 arguments. The first argument is the url of
-the failing feed. The second argument is the http status code.")
+It is called with 2 arguments.  The first argument is the url of
+the failing feed.  The second argument is the http status code.")
 
 (defvar elfeed-parse-error-hooks ()
   "Hooks to run when an error occurs during the parsing of a feed.
-It is called with 2 arguments. The first argument is the url of
-the failing feed. The second argument is the error message .")
+It is called with 2 arguments.  The first argument is the url of
+the failing feed.  The second argument is the error message .")
 
 (defvar elfeed-update-hooks ()
   "Hooks to run any time a feed update has completed a request.
 It is called with 1 argument: the URL of the feed that was just
-updated. The hook is called even when no new entries were
+updated.  The hook is called even when no new entries were
 found.")
 
 (defvar elfeed-update-init-hooks ()
@@ -109,13 +109,13 @@ updates are pending.")
 
 (defvar elfeed-tag-hooks ()
   "Hooks called when one or more entries add tags.
-It is called with 2 arguments. The first argument is the entry
-list. The second argument is the tag list.")
+It is called with 2 arguments.  The first argument is the entry
+list.  The second argument is the tag list.")
 
 (defvar elfeed-untag-hooks ()
   "Hooks called when one or more entries remove tags.
-It is called with 2 arguments. The first argument is the entry
-list. The second argument is the tag list.")
+It is called with 2 arguments.  The first argument is the entry
+list.  The second argument is the tag list.")
 
 (defvar elfeed--inhibit-update-init-hooks nil
   "When non-nil, don't run `elfeed-update-init-hooks'.")
@@ -229,7 +229,7 @@ This is a workaround for issues in `url-queue-retrieve'."
   "Hook to be called after parsing a new entry.
 
 Take three arguments: the feed TYPE, the XML structure for the
-entry, and the Elfeed ENTRY object. Return value is ignored, and
+entry, and the Elfeed ENTRY object.  Return value is ignored, and
 is called for side-effects on the ENTRY object.")
 
 (defsubst elfeed--fixup-protocol (protocol url)
@@ -257,12 +257,13 @@ If PROTOCOL is nil, returns URL."
     (nreverse result)))
 
 (defsubst elfeed--creators-to-plist (creators)
-  "Convert Dublin Core list of creators into an authors plist."
+  "Convert Dublin Core list of CREATORS into an authors plist."
   (cl-loop for creator in creators
            collect (list :name creator)))
 
 (defun elfeed-entries-from-atom (url xml)
-  "Turn parsed Atom content into a list of elfeed-entry structs."
+  "Turn parsed Atom content into a list of elfeed-entry structs.
+URL identifies the feed and XML is the parsed content."
   (let* ((feed-id url)
          (protocol (url-type (url-generic-parse-url url)))
          (namespace (elfeed-url-to-namespace url))
@@ -330,7 +331,7 @@ If PROTOCOL is nil, returns URL."
                db-entry))))
 
 (defsubst elfeed--rss-author-to-plist (author)
-  "Parse an RSS author element into an authors plist."
+  "Parse an RSS AUTHOR element into an authors plist."
   (when author
     (let ((clean (elfeed-cleanup author)))
       (if (string-match "^\\(.*\\) (\\([^)]+\\))$" clean)
@@ -339,7 +340,8 @@ If PROTOCOL is nil, returns URL."
         (list (list :email clean))))))
 
 (defun elfeed-entries-from-rss (url xml)
-  "Turn parsed RSS content into a list of elfeed-entry structs."
+  "Turn parsed RSS content into a list of elfeed-entry structs.
+URL identifies the feed and XML is the parsed content."
   (let* ((feed-id url)
          (protocol (url-type (url-generic-parse-url url)))
          (namespace (elfeed-url-to-namespace url))
@@ -398,7 +400,8 @@ If PROTOCOL is nil, returns URL."
                db-entry))))
 
 (defun elfeed-entries-from-rss1.0 (url xml)
-  "Turn parsed RSS 1.0 content into a list of elfeed-entry structs."
+  "Turn parsed RSS 1.0 content into a list of elfeed-entry structs.
+URL identifies the feed and XML is the parsed content."
   (let* ((feed-id url)
          (namespace (elfeed-url-to-namespace url))
          (feed (elfeed-db-get-feed feed-id))
@@ -473,7 +476,7 @@ Only a list of strings will be returned."
   (elfeed-log 'error "%s: %s" url error))
 
 (defun elfeed-update-feed (url)
-  "Update a specific feed."
+  "Update a specific feed identified by URL."
   (interactive (list (completing-read "Feed: " (elfeed-feed-list))))
   (unless elfeed--inhibit-update-init-hooks
     (run-hooks 'elfeed-update-init-hooks))
@@ -524,7 +527,7 @@ Only a list of strings will be returned."
     (nreverse res)))
 
 (cl-defun elfeed-add-feed (url &key save)
-  "Manually add a feed to the database.
+  "Manually add a feed at URL to the database.
 If SAVE is non-nil the new value of ‘elfeed-feeds’ is saved.  When
 called interactively, SAVE is set to t."
   (interactive
@@ -571,9 +574,9 @@ called interactively, SAVE is set to t."
 
 FEED-TITLE, FEED-URL, ENTRY-TITLE, and ENTRY-LINK are regular
 expressions or a list (not <regex>), which indicates a negative
-match. AFTER and BEFORE are relative times (see
-`elfeed-time-duration'). Entries must match all provided
-expressions. If an entry matches, add tags ADD and remove tags
+match.  AFTER and BEFORE are relative times (see
+`elfeed-time-duration').  Entries must match all provided
+expressions.  If an entry matches, add tags ADD and remove tags
 REMOVE.
 
 Examples,
