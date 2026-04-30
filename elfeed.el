@@ -157,7 +157,8 @@ list.  The second argument is the tag list.")
     url-queue-timeout))
 
 (defun elfeed-is-status-error (status use-curl)
-  "Check if HTTP request returned status means a error."
+  "Check if HTTP request returned STATUS means a error.
+USE-CURL is needed since the interpretation depends on if curl is used."
   (or (and use-curl (null status)) ; nil = error
       (and (not use-curl) (eq (car status) :error))))
 
@@ -198,7 +199,7 @@ This is a workaround for issues in `url-queue-retrieve'."
 ;; Parsing:
 
 (defun elfeed-feed-type (content)
-  "Return the feed type (:atom, :rss, :rss1.0) or nil for unknown."
+  "Obtain the feed type (:atom, :rss, :rss1.0) or nil for unknown from CONTENT."
   (let ((top (xml-query-strip-ns (caar content))))
     (cadr (assoc top '((feed :atom)
                        (rss :rss)
@@ -240,7 +241,7 @@ If PROTOCOL is nil, returns URL."
     url))
 
 (defsubst elfeed--atom-authors-to-plist (authors)
-  "Parse list of author XML tags into list of plists."
+  "Parse list of AUTHORS as XML tags into list of plists."
   (let ((result ()))
     (dolist (author authors)
       (let ((plist ())
@@ -577,7 +578,7 @@ expressions or a list (not <regex>), which indicates a negative
 match.  AFTER and BEFORE are relative times (see
 `elfeed-time-duration').  Entries must match all provided
 expressions.  If an entry matches, add tags ADD and remove tags
-REMOVE.
+REMOVE.  Call CALLBACK for each entry.
 
 Examples,
 
@@ -631,7 +632,7 @@ The returned function should be added to `elfeed-new-entry-hook'."
 
 ;;;###autoload
 (defun elfeed-load-opml (file)
-  "Load feeds from an OPML file into `elfeed-feeds'.
+  "Load feeds from FILE in OPML format into `elfeed-feeds'.
 When called interactively, the changes to `elfeed-feeds' are
 saved to your customization file."
   (interactive "fOPML file: ")

@@ -216,7 +216,7 @@ Additional tag lists can be given as MORE-TAGS."
 (defmacro with-elfeed-db-visit (binds &rest body)
   "Visit each entry in the database from newest to oldest.
 Use `elfeed-db-return' to exit early and optionally return data.
-BINDS are bound to entry and feed around BODY.
+BINDS are the bindings for entry and feed around BODY.
 
   (with-elfeed-db-visit (entry feed)
     (do-something entry)
