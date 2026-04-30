@@ -4,43 +4,43 @@
 
 ;;; Commentary:
 
-;; Elfeed is aware of two type of things: feeds and entries. All dates
+;; Elfeed is aware of two type of things: feeds and entries.  All dates
 ;; are stored as floating point epoch seconds.
 
 ;; Feeds are keyed by their user-provided feed URL, which acts as the
-;; feed identity regardless of any other stated identity. Feeds have a
+;; feed identity regardless of any other stated identity.  Feeds have a
 ;; list of entries.
 
 ;; Entries are keyed in order of preference by id (Atom), guid (RSS),
-;; or link. To avoid circular references, entries refer to their
+;; or link.  To avoid circular references, entries refer to their
 ;; parent feeds by URL.
 
 ;; Feed content is stored in a content-addressable loose-file
-;; database, very similar to an unpacked Git object database. Entries
+;; database, very similar to an unpacked Git object database.  Entries
 ;; have references to items in this database (elfeed-ref), keeping the
-;; actual entry struct memory footprint small. Most importantly, this
+;; actual entry struct memory footprint small.  Most importantly, this
 ;; keeps the core index small so that it can quickly be written as a
-;; whole to the filesystem. The wire format is just the s-expression
+;; whole to the filesystem.  The wire format is just the s-expression
 ;; print form of the top-level hash table.
 
 ;; The database can be compacted into a small number of compressed
-;; files with the interactive function `elfeed-db-compact'. This could
+;; files with the interactive function `elfeed-db-compact'.  This could
 ;; be used as a kill-emacs hook.
 
 ;; An AVL tree containing all database entries ordered by date is
-;; maintained as part of the database. We almost always want to look
+;; maintained as part of the database.  We almost always want to look
 ;; at entries ordered by date and this step accomplished that very
-;; efficiently with the AVL tree. This is the reasoning behind the
+;; efficiently with the AVL tree.  This is the reasoning behind the
 ;; `with-elfeed-db-visit' interface.
 
 ;; Unfortunately there's a nasty bug (bug#15190) in the reader that
-;; makes hash tables and `print-circle' incompatible. It's been fixed
+;; makes hash tables and `print-circle' incompatible.  It's been fixed
 ;; in trunk, but many users will likely be stuck with this bug for the
-;; next few years. This means the database format can't exploit
+;; next few years.  This means the database format can't exploit
 ;; circular references.
 
 ;; Entry and feed objects can have arbitrary metadata attached,
-;; automatically stored in the database. The setf-able `elfeed-meta'
+;; automatically stored in the database.  The setf-able `elfeed-meta'
 ;; function is used to access these.
 
 ;;; Code:
@@ -78,8 +78,7 @@
 This is a chance to add custom tags to new entries.")
 
 (defvar elfeed-db-update-hook ()
-  "Functions in this list are called with no arguments any time
-the :last-update time is updated.")
+  "Functions which are called without arguments when :last-update time is updated.")
 
 (defvar elfeed-db-unload-hook ()
   "Hook to run immediately after `elfeed-db-unload'.")
@@ -95,8 +94,8 @@ the :last-update time is updated.")
   id title link date content content-type enclosures tags feed-id meta)
 
 (defun elfeed-entry-merge (a b)
-  "Merge B into A, preserving A's tags. Return true if an actual
-update occurred, not counting content."
+  "Merge B into A, preserving A's tags.
+Return non-nil if an actual update occurred, not counting content."
   (setf (elfeed-entry-tags b) (elfeed-entry-tags a)
         (elfeed-entry-content a) (elfeed-entry-content b))
   (cl-loop for (key value) on (elfeed-entry-meta b) by #'cddr
@@ -124,7 +123,7 @@ update occurred, not counting content."
   (gethash id elfeed-db-entries))
 
 (defun elfeed-db-compare (a b)
-  "Return true if entry A is newer than entry B."
+  "Return non-nil if entry A is newer than entry B."
   (let* ((entry-a (elfeed-db-get-entry a))
          (entry-b (elfeed-db-get-entry b))
          (date-a (elfeed-entry-date entry-a))
@@ -205,7 +204,7 @@ update occurred, not counting content."
     (cl-loop for entry in entries do (apply #'elfeed-untag-1 entry tags))))
 
 (defun elfeed-tagged-p (tag entry)
-  "Return true if ENTRY is tagged by TAG."
+  "Return non-nil if ENTRY is tagged by TAG."
   (memq tag (elfeed-entry-tags entry)))
 
 (defun elfeed-db-last-update ()
@@ -294,7 +293,7 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
   (ignore-errors (elfeed-db-save)))
 
 (defun elfeed-db-upgrade (db)
-  "Upgrade the database from a previous format."
+  "Upgrade the database DB from a previous format."
   (if (not (vectorp (plist-get db :index)))
       db  ; Database is already in record format
     (let* ((new-db (elfeed-db--empty))
@@ -425,7 +424,7 @@ Runs `elfeed-db-unload-hook' after unloading the database."
         (count-tree (avl-tree-size elfeed-db-index)))
     (if (= count-table count-tree)
         count-table
-      (error "Elfeed database error: entry count mismatch."))))
+      (error "Elfeed database error: entry count mismatch"))))
 
 ;; Metadata:
 
@@ -456,7 +455,7 @@ Runs `elfeed-db-unload-hook' after unloading the database."
 
 (defun elfeed-meta--put (thing key value)
   "Set metadata to VALUE on THING under KEY."
-  (when (not (elfeed-readable-p value)) (error "New value must be readable."))
+  (when (not (elfeed-readable-p value)) (error "New value must be readable"))
   (let ((new-plist (plist-put (elfeed-meta--plist thing) key value)))
     (prog1 value
       (elfeed-meta--set-plist thing (elfeed-db--plist-fixup new-plist)))))
@@ -483,7 +482,7 @@ Runs `elfeed-db-unload-hook' after unloading the database."
     (expand-file-name id subdir)))
 
 (cl-defun elfeed-ref-archive-filename (&optional (suffix ""))
-  "Return the base filename of the archive files."
+  "Return the base filename of the archive files with optional SUFFIX."
   (concat (expand-file-name "data/archive" elfeed-db-directory) suffix))
 
 (defun elfeed-ref-archive-load ()
@@ -500,14 +499,14 @@ Runs `elfeed-db-unload-hook' after unloading the database."
   (when (null elfeed-ref-archive) (elfeed-ref-archive-load)))
 
 (defun elfeed-ref-exists-p (ref)
-  "Return true if REF can be dereferenced."
+  "Return non-nil if REF can be dereferenced."
   (elfeed-ref-archive-ensure)
   (or (and (hash-table-p elfeed-ref-archive)
            (not (null (gethash (elfeed-ref-id ref) elfeed-ref-archive))))
       (file-exists-p (elfeed-ref--file ref))))
 
 (defun elfeed-deref (ref)
-  "Fetch the content behind the reference, or nil if non-existent."
+  "Fetch the content behind the reference REF, or nil if non-existent."
   (elfeed-ref-archive-ensure)
   (if (not (elfeed-ref-p ref))
       ref
@@ -548,7 +547,7 @@ Runs `elfeed-db-unload-hook' after unloading the database."
               (insert content))))))))
 
 (defun elfeed-deref-entry (entry)
-  "Move ENTRY's content to filesystem storage. Return the entry."
+  "Move ENTRY's content to filesystem storage and return the entry."
   (let ((content (elfeed-entry-content entry)))
     (prog1 entry
       (when (stringp content)
@@ -571,7 +570,7 @@ Runs `elfeed-db-unload-hook' after unloading the database."
 
 (defun elfeed-db-gc (&optional stats-p)
   "Clean up unused content from the content database.
-If STATS is true, return the space cleared in bytes."
+If STATS-P is true, return the space cleared in bytes."
   (elfeed-db-gc-empty-feeds)
   (let* ((data (expand-file-name "data" elfeed-db-directory))
          (dirs (directory-files data t "^[0-9a-z]\\{2\\}$"))
@@ -625,11 +624,11 @@ If STATS is true, return the space cleared in bytes."
 
 (defun elfeed-db-compact ()
   "Minimize the Elfeed database storage size on the filesystem.
-This requires that auto-compression-mode can handle
+This requires that `auto-compression-mode' can handle
 gzip-compressed files, so the gzip program must be in your PATH."
   (interactive)
   (unless (elfeed-gzip-supported-p)
-    (error "aborting compaction: gzip auto-compression-mode unsupported"))
+    (error "Aborting compaction: gzip auto-compression-mode unsupported"))
   (elfeed-db-pack)
   (elfeed-db-gc))
 
