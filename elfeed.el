@@ -57,16 +57,16 @@ when they are first discovered."
                          (cons string (repeat symbol)))))
 
 (defcustom elfeed-feed-functions
-  '(elfeed-get-link-at-point
-    elfeed-get-url-at-point
-    elfeed-clipboard-get)
+  (list #'elfeed-get-link-at-point
+        #'thing-at-point-url-at-point
+        #'elfeed-clipboard-get)
   "List of functions to use to get possible feeds for `elfeed-add-feed'.
 Each function should accept no arguments, and return a string or nil."
   :group 'elfeed
   :type 'hook
-  :options '(elfeed-get-link-at-point
-             elfeed-get-url-at-point
-             elfeed-clipboard-get))
+  :options (list #'elfeed-get-link-at-point
+                 #'thing-at-point-url-at-point
+                 #'elfeed-clipboard-get))
 
 (defcustom elfeed-use-curl
   (not (null (executable-find elfeed-curl-program-name)))

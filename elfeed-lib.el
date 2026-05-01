@@ -16,6 +16,9 @@
 (require 'url-util)
 (require 'xml)
 
+(define-obsolete-function-alias 'elfeed-get-url-at-point
+  #'thing-at-point-url-at-point "3.4.2")
+
 (defun elfeed-expose (function &rest args)
   "Return an interactive version of FUNCTION, \"exposing\" it to the user.
 ARGS are passed to FUNCTION."
@@ -273,13 +276,6 @@ systems."
       (and (fboundp 'eww-current-url)
            (funcall 'eww-current-url))
       (get-text-property (point) :nt-link)))
-
-(defun elfeed-get-url-at-point ()
-  "Try to get a plain URL at point."
-  (or (if (fboundp 'thing-at-point-url-at-point)
-          (thing-at-point-url-at-point)
-        (with-no-warnings (url-get-url-at-point)))
-      (thing-at-point 'url)))
 
 (defun elfeed-move-to-first-empty-line ()
   "Place point after first blank line, for use with `url-retrieve'.

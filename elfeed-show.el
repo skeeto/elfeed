@@ -464,7 +464,7 @@ Prompts for ENCLOSURE-INDEX when called interactively."
   "Get link URL at point and store in `kill-ring'."
   (interactive nil elfeed-show-mode)
   (let ((url (or (elfeed-get-link-at-point)
-                 (elfeed-get-url-at-point))))
+                 (thing-at-point-url-at-point))))
     (if url
         (progn (kill-new url) (message "%s" url))
       (call-interactively 'shr-copy-url))))
