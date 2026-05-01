@@ -210,7 +210,7 @@ When live editing the filter, it is bound to :live.")
 
 (define-derived-mode elfeed-search-mode special-mode "elfeed-search"
   "Major mode for listing elfeed feed entries."
-  :syntax-table nil :abbrev-table nil
+  :syntax-table nil :abbrev-table nil :interactive nil
   (setq-local truncate-lines t
               desktop-save-buffer #'elfeed-search-desktop-save
               ;; Provide format string via symbol value slot so that it will

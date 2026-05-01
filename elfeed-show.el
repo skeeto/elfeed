@@ -77,7 +77,7 @@ Called without arguments."
 
 (define-derived-mode elfeed-show-mode special-mode "elfeed-show"
   "Mode for displaying Elfeed feed entries."
-  :syntax-table nil :abbrev-table nil
+  :syntax-table nil :abbrev-table nil :interactive nil
   (buffer-disable-undo)
   (make-local-variable 'elfeed-show-entry)
   (setq-local bookmark-make-record-function
