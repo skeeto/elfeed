@@ -395,10 +395,11 @@ Sometimes displaying images can slow down or even crash Emacs. Set
 
 ## Web Interface
 
-Elfeed includes a demonstration/toy web interface for remote network
-access. It's a single-page web application that follows the database
-live as new entries arrive. It's packaged separately as `elfeed-web`.
-To fire it up, run `M-x elfeed-web-start` and visit
+A demonstration/toy web interface for remote network access to Elfeed
+exists in a [separate repository](https://github.com/emacs-elfeed/elfeed-web).
+It's a single-page web application that follows the database live as
+new entries arrive. It's packaged separately as `elfeed-web`. To fire
+it up, run `M-x elfeed-web-start` and visit
 http://localhost:8080/elfeed/ (check your `httpd-port`) with a
 browser. See the `elfeed-web.el` header for endpoint documentation if
 you'd like to access the Elfeed database through the web API.
