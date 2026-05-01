@@ -6,7 +6,7 @@
 ;; Maintainer: Karthik Chikmagalur <karthik.chikmagalur@gmail.com>, Ihor Radchenko <yantar92@posteo.net>, Daniel Mendler <mail@daniel-mendler.de>
 ;; URL: https://github.com/skeeto/elfeed
 ;; Version: 3.4.2
-;; Package-Requires: ((emacs "27.1") (elfeed "3.4.2") (simple-httpd "1.5.1"))
+;; Package-Requires: ((emacs "27.1") (compat "30") (elfeed "3.4.2") (simple-httpd "1.5.1"))
 ;; Keywords: network, hypermedia
 
 ;;; Commentary:

@@ -4,6 +4,7 @@
 
 ;;; Code:
 
+(require 'compat)
 (require 'cl-lib)
 (require 'browse-url)
 (require 'wid-edit) ; widget-inactive face
@@ -126,29 +127,26 @@ When live editing the filter, it is bound to :live.")
   (interactive)
   (goto-char (point-min)))
 
-(defvar elfeed-search-mode-map
-  (let ((map (make-sparse-keymap)))
-    (prog1 map
-      (suppress-keymap map)
-      (define-key map "h" #'describe-mode)
-      (define-key map "q" #'elfeed-search-quit-window)
-      (define-key map "g" #'elfeed-search-update--force)
-      (define-key map "G" #'elfeed-search-fetch)
-      (define-key map (kbd "RET") #'elfeed-search-show-entry)
-      (define-key map "s" #'elfeed-search-live-filter)
-      (define-key map "S" #'elfeed-search-set-filter)
-      (define-key map "c" #'elfeed-search-clear-filter)
-      (define-key map "b" #'elfeed-search-browse-url)
-      (define-key map "y" #'elfeed-search-yank)
-      (define-key map "u" #'elfeed-search-tag-all-unread)
-      (define-key map "r" #'elfeed-search-untag-all-unread)
-      (define-key map "n" #'next-line)
-      (define-key map "p" #'previous-line)
-      (define-key map "+" #'elfeed-search-tag-all)
-      (define-key map "-" #'elfeed-search-untag-all)
-      (define-key map "<" #'elfeed-search-first-entry)
-      (define-key map ">" #'elfeed-search-last-entry)))
-  "Keymap for `elfeed-search-mode'.")
+(defvar-keymap elfeed-search-mode-map
+  :doc "Keymap for `elfeed-search-mode'."
+  :parent special-mode-map
+  "q" #'elfeed-search-quit-window ;; TODO quit-window
+  "g" #'elfeed-search-update--force
+  "G" #'elfeed-search-fetch
+  "RET" #'elfeed-search-show-entry
+  "s" #'elfeed-search-live-filter
+  "S" #'elfeed-search-set-filter
+  "c" #'elfeed-search-clear-filter
+  "b" #'elfeed-search-browse-url
+  "y" #'elfeed-search-yank
+  "u" #'elfeed-search-tag-all-unread
+  "r" #'elfeed-search-untag-all-unread
+  "n" #'next-line
+  "p" #'previous-line
+  "+" #'elfeed-search-tag-all
+  "-" #'elfeed-search-untag-all
+  "<" #'elfeed-search-first-entry
+  ">" #'elfeed-search-last-entry)
 
 (defun elfeed-search--intro-header ()
   "Return the header shown to new users."

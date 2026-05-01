@@ -8,6 +8,7 @@
 
 ;;; Code:
 
+(require 'compat)
 (require 'cl-lib)
 (require 'shr)
 (require 'url-parse)
@@ -52,34 +53,27 @@ Called without arguments."
 (defvar elfeed-show-refresh-function #'elfeed-show-refresh--mail-style
   "Function called to refresh the `*elfeed-entry*' buffer.")
 
-(defvar elfeed-show-mode-map
-  (let ((map (make-sparse-keymap)))
-    (prog1 map
-      (suppress-keymap map)
-      (define-key map "h" #'describe-mode)
-      (define-key map "d" #'elfeed-show-save-enclosure)
-      (define-key map "q" #'elfeed-kill-buffer)
-      (define-key map "g" #'elfeed-show-refresh)
-      (define-key map "n" #'elfeed-show-next)
-      (define-key map "p" #'elfeed-show-prev)
-      (define-key map "s" #'elfeed-show-new-live-search)
-      (define-key map "b" #'elfeed-show-visit)
-      (define-key map "y" #'elfeed-show-yank)
-      (define-key map "u" #'elfeed-show-tag--unread)
-      (define-key map "+" #'elfeed-show-tag)
-      (define-key map "-" #'elfeed-show-untag)
-      (define-key map "<" #'beginning-of-buffer)
-      (define-key map ">" #'end-of-buffer)
-      (define-key map (kbd "SPC") #'scroll-up-command)
-      (define-key map (kbd "DEL") #'scroll-down-command)
-      (define-key map (kbd "TAB") #'elfeed-show-next-link)
-      (define-key map "\e\t" #'shr-previous-link)
-      (define-key map [backtab] #'shr-previous-link)
-      (define-key map "c" #'elfeed-kill-link-url-at-point)
-      (define-key map [mouse-2] #'shr-browse-url)
-      (define-key map "A" #'elfeed-show-add-enclosure-to-playlist)
-      (define-key map "P" #'elfeed-show-play-enclosure)))
-  "Keymap for `elfeed-show-mode'.")
+(defvar-keymap elfeed-show-mode-map
+  :doc"Keymap for `elfeed-show-mode'."
+  :parent special-mode-map
+  "d" #'elfeed-show-save-enclosure
+  "q" #'elfeed-kill-buffer ;; TODO standard quit-window?
+  "g" #'elfeed-show-refresh
+  "n" #'elfeed-show-next
+  "p" #'elfeed-show-prev
+  "s" #'elfeed-show-new-live-search
+  "b" #'elfeed-show-visit
+  "y" #'elfeed-show-yank
+  "u" #'elfeed-show-tag--unread
+  "+" #'elfeed-show-tag
+  "-" #'elfeed-show-untag
+  "TAB" #'elfeed-show-next-link
+  "M-TAB" #'shr-previous-link
+  "<backtab>" #'shr-previous-link
+  "c" #'elfeed-kill-link-url-at-point
+  "<mouse-2>" #'shr-browse-url
+  "A" #'elfeed-show-add-enclosure-to-playlist
+  "P" #'elfeed-show-play-enclosure)
 
 (define-derived-mode elfeed-show-mode special-mode "elfeed-show"
   "Mode for displaying Elfeed feed entries."
