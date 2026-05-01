@@ -28,6 +28,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(eval-when-compile (require 'subr-x))
 
 (defun xml-query-strip-ns (tag)
   "Remove the namespace, if any, from TAG."
@@ -157,9 +158,7 @@ See `xml-query-all' for the arguments QUERY and XML."
 
 (defun xml-query--compile-keyword (keyword subexp)
   (let ((attrib (intern (substring (symbol-name keyword) 1))))
-    `(let ((v (cdr (assq ',attrib (cadr v)))))
-       (when v
-         ,subexp))))
+    `(when-let* ((v (cdr (assq ',attrib (cadr v))))) ,subexp)))
 
 (defun xml-query--compile-star (subexp)
   `(when (and (stringp v) (string-match "[^ \t\r\n]" v))

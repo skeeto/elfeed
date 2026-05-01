@@ -60,13 +60,13 @@ use it as the current time (`float-time').  This is mostly useful for
 testing."
   (cond
    ((numberp time) time)
-   ((let ((iso-time (elfeed-parse-simple-iso-8601 time)))
-      (when iso-time (- (or now (float-time)) iso-time))))
+   ((when-let* ((iso-time (elfeed-parse-simple-iso-8601 time)))
+      (- (or now (float-time)) iso-time)))
    ((string-match-p "[[:alpha:]]" time)
-    (let* ((clean (replace-regexp-in-string "\\(ago\\|old\\|-\\)" " " time))
-           (duration (timer-duration clean)))
+    (let ((clean (replace-regexp-in-string "\\(ago\\|old\\|-\\)" " " time)))
+      (when-let* ((duration (timer-duration clean)))
       ;; convert to float since float-time is used elsewhere
-      (when duration (float duration))))))
+        (float duration))))))
 
 (defun elfeed-looks-like-url-p (string)
   "Return non-nil if STRING looks like it could be a URL."

@@ -16,6 +16,7 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'subr-x))
 (require 'cl-lib)
 (require 'xml)
 (require 'xml-query)
@@ -203,11 +204,10 @@ This is a workaround for issues in `url-queue-retrieve'."
   (if elfeed-use-curl
       (setf elfeed-curl-queue nil
             elfeed-curl-queue-active 0)
-    (let ((fails (mapcar #'url-queue-url url-queue)))
-      (when fails
-        (elfeed-log 'warn "Elfeed aborted feeds: %s"
-                    (mapconcat #'identity fails " ")))
-      (setf url-queue nil)))
+    (when-let* ((fails (mapcar #'url-queue-url url-queue)))
+      (elfeed-log 'warn "Elfeed aborted feeds: %s"
+                  (mapconcat #'identity fails " ")))
+    (setf url-queue nil))
   (run-hooks 'elfeed-update-init-hooks))
 
 ;; Parsing:
@@ -234,11 +234,10 @@ This is a workaround for issues in `url-queue-retrieve'."
                   (insert element)
                 (elfeed-xml-unparse element))))
           (buffer-string))
-      (let ((all-content
-             (or (xml-query-all* (content *) entry)
-                 (xml-query-all* (summary *) entry))))
-        (when all-content
-          (apply #'concat all-content))))))
+      (when-let* ((all-content
+                   (or (xml-query-all* (content *) entry)
+                       (xml-query-all* (summary *) entry))))
+        (apply #'concat all-content)))))
 
 (defvar elfeed-new-entry-parse-hook '()
   "Hook to be called after parsing a new entry.

@@ -8,6 +8,7 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'subr-x))
 (require 'compat)
 (require 'cl-lib)
 (require 'shr)
@@ -240,24 +241,22 @@ The result depends on the value of `elfeed-show-unique-buffers'."
 If there is a prefix argument USE-GENERIC-P, visit the current entry in
 the browser defined by `browse-url-generic-program'."
   (interactive "P" elfeed-show-mode)
-  (let ((link (elfeed-entry-link elfeed-show-entry)))
-    (when link
-      (message "Sent to browser: %s" link)
-      (if use-generic-p
-          (browse-url-generic link)
-        (browse-url link)))))
+  (when-let* ((link (elfeed-entry-link elfeed-show-entry)))
+    (message "Sent to browser: %s" link)
+    (if use-generic-p
+        (browse-url-generic link)
+      (browse-url link))))
 
 (defun elfeed-show-yank ()
   "Copy the current entry link URL to the clipboard."
   (interactive nil elfeed-show-mode)
-  (let ((link (elfeed-entry-link elfeed-show-entry)))
-    (when link
-      (kill-new link)
-      (if (fboundp 'gui-set-selection)
-          (gui-set-selection 'PRIMARY link)
-        (with-no-warnings
-          (x-set-selection 'PRIMARY link)))
-      (message "Yanked: %s" link))))
+  (when-let* ((link (elfeed-entry-link elfeed-show-entry)))
+    (kill-new link)
+    (if (fboundp 'gui-set-selection)
+        (gui-set-selection 'PRIMARY link)
+      (with-no-warnings
+        (x-set-selection 'PRIMARY link)))
+    (message "Yanked: %s" link)))
 
 (defun elfeed-show-tag (&rest tags)
   "Add TAGS to the displayed entry."

@@ -8,6 +8,7 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'subr-x))
 (require 'compat)
 (require 'cl-lib)
 (require 'browse-url)
@@ -747,15 +748,14 @@ Given a prefix, this function becomes `elfeed-search-fetch-visible'."
   (let ((inhibit-read-only t))
     (save-excursion
       (when n (elfeed-goto-line n))
-      (let ((entry (elfeed-search-selected :ignore-region)))
-        (when entry
-          (elfeed-kill-line)
-          (funcall elfeed-search-print-entry-function entry))))))
+      (when-let* ((entry (elfeed-search-selected :ignore-region)))
+        (elfeed-kill-line)
+        (funcall elfeed-search-print-entry-function entry)))))
 
 (defun elfeed-search-update-entry (entry)
   "Redraw ENTRY in the elfeed-search buffer."
-  (let ((n (cl-position entry elfeed-search-entries)))
-    (when n (elfeed-search-update-line (+ elfeed-search--offset n)))))
+  (when-let* ((n (cl-position entry elfeed-search-entries)))
+    (elfeed-search-update-line (+ elfeed-search--offset n))))
 
 (defun elfeed-search-selected (&optional ignore-region-p)
   "Return a list of the currently selected feeds.

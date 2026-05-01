@@ -48,6 +48,7 @@
 (require 'cl-lib)
 (require 'avl-tree)
 (require 'elfeed-lib)
+(eval-when-compile (require 'subr-x))
 
 (defcustom elfeed-db-directory "~/.elfeed"
   "Directory where elfeed will store its database."
@@ -417,7 +418,7 @@ Runs `elfeed-db-unload-hook' after unloading the database."
 
 (defun elfeed-db-ensure ()
   "Ensure that the database has been loaded."
-  (when (null elfeed-db) (elfeed-db-load)))
+  (unless elfeed-db (elfeed-db-load)))
 
 (defun elfeed-db-size ()
   "Return a count of the number of entries in the database."
@@ -457,7 +458,7 @@ Return DEFAULT if unavailable."
 
 (defun elfeed-meta--put (thing key value)
   "Set metadata to VALUE on THING under KEY."
-  (when (not (elfeed-readable-p value)) (error "New value must be readable"))
+  (unless (elfeed-readable-p value) (error "New value must be readable"))
   (let ((new-plist (plist-put (elfeed-meta--plist thing) key value)))
     (prog1 value
       (elfeed-meta--set-plist thing (elfeed-db--plist-fixup new-plist)))))
@@ -498,7 +499,7 @@ Return DEFAULT if unavailable."
 
 (defun elfeed-ref-archive-ensure ()
   "Ensure that the archive index is loaded."
-  (when (null elfeed-ref-archive) (elfeed-ref-archive-load)))
+  (unless elfeed-ref-archive (elfeed-ref-archive-load)))
 
 (defun elfeed-ref-exists-p (ref)
   "Return non-nil if REF can be dereferenced."
@@ -518,7 +519,7 @@ Return DEFAULT if unavailable."
           (coding-system-for-read 'utf-8))
       (if (and index (file-exists-p archive-file))
           (progn
-            (when (null elfeed-ref-cache)
+            (unless elfeed-ref-cache
               (with-temp-buffer
                 (insert-file-contents archive-file)
                 (setf elfeed-ref-cache (buffer-string)))
@@ -607,12 +608,11 @@ If STATS-P is true, return the space cleared in bytes."
         (let ((ref (elfeed-entry-content entry))
               (start (1- (point))))
           (when (elfeed-ref-p ref)
-            (let ((content (elfeed-deref ref)))
-              (when content
-                (push ref packed)
-                (insert content)
-                (setf (gethash (elfeed-ref-id ref) next-archive)
-                      (cons start (1- (point))))))))))
+            (when-let* ((content (elfeed-deref ref)))
+              (push ref packed)
+              (insert content)
+              (setf (gethash (elfeed-ref-id ref) next-archive)
+                    (cons start (1- (point)))))))))
     (with-temp-file (elfeed-ref-archive-filename ".index")
       (let ((standard-output (current-buffer))
             (print-level nil)

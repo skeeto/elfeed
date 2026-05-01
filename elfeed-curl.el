@@ -43,6 +43,7 @@
 (require 'cl-lib)
 (require 'elfeed-lib)
 (require 'elfeed-log)
+(eval-when-compile (require 'subr-x))
 
 (defcustom elfeed-curl-program-name "curl"
   "Name/path by which to invoke the curl program."
@@ -479,15 +480,14 @@ in the same curl invocation."
             (push key keys)
             (push entry (gethash key table nil))))))
     (dolist (key (nreverse keys))
-      (let ((entry (gethash key table)))
-        (when entry
-          (let ((rotated (list (nreverse (cl-mapcar #'car entry))
-                               (nreverse (cl-mapcar #'cadr entry))
-                               (cl-caddar entry)
-                               (elt (car entry) 3)
-                               (elt (car entry) 4))))
-            (push rotated queue-out)
-            (setf (gethash key table) nil)))))
+      (when-let* ((entry (gethash key table)))
+        (let ((rotated (list (nreverse (cl-mapcar #'car entry))
+                             (nreverse (cl-mapcar #'cadr entry))
+                             (cl-caddar entry)
+                             (elt (car entry) 3)
+                             (elt (car entry) 4))))
+          (push rotated queue-out)
+          (setf (gethash key table) nil))))
     (nreverse queue-out)))
 
 (defun elfeed-curl--queue-wrap (cb)
