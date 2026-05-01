@@ -15,9 +15,17 @@
 (require 'url-parse)
 (require 'url-util)
 (require 'xml)
+(eval-when-compile (require 'subr-x))
 
 (define-obsolete-function-alias 'elfeed-get-url-at-point
   #'thing-at-point-url-at-point "3.4.2")
+
+(defun elfeed-strip-properties (string)
+  "Return a copy of STRING with all properties removed.
+If STRING is nil, returns nil."
+  (when string
+    (substring-no-properties string)))
+(make-obsolete 'elfeed-strip-properties #'substring-no-properties "3.4.2")
 
 (defun elfeed-expose (function &rest args)
   "Return an interactive version of FUNCTION, \"exposing\" it to the user.
@@ -247,28 +255,20 @@ If LITERALLY is non-nil return the content literally."
       (prog1 t (read (prin1-to-string value)))
     (error nil)))
 
-(defun elfeed-strip-properties (string)
-  "Return a copy of STRING with all properties removed.
-If STRING is nil, returns nil."
-  (when string
-    (let ((copy (copy-sequence string)))
-      (prog1 copy
-        (set-text-properties 0 (length copy) nil copy)))))
-
 (defun elfeed-clipboard-get ()
   "Try to get a sensible value from the system clipboard.
 On systems running X, it will try to use the PRIMARY selection
 first, then fall back onto the standard clipboard like other
 systems."
-  (elfeed-strip-properties
-   (or (and (fboundp 'x-get-selection)
-            (funcall 'x-get-selection))
-       (and (functionp interprogram-paste-function)
-            (funcall interprogram-paste-function))
-       (and (fboundp 'w32-get-clipboard-data)
-            (funcall 'w32-get-clipboard-data))
-       (ignore-errors
-         (current-kill 0 :non-destructively)))))
+  (when-let* ((str (or (and (fboundp 'x-get-selection)
+                            (funcall 'x-get-selection))
+                       (and (functionp interprogram-paste-function)
+                            (funcall interprogram-paste-function))
+                       (and (fboundp 'w32-get-clipboard-data)
+                            (funcall 'w32-get-clipboard-data))
+                       (ignore-errors
+                         (current-kill 0 :non-destructively)))))
+    (substring-no-properties str)))
 
 (defun elfeed-get-link-at-point ()
   "Try to a link at point and return its URL."
