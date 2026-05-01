@@ -137,7 +137,7 @@ Used as `revert-buffer-function'."
 (defvar-keymap elfeed-search-mode-map
   :doc "Keymap for `elfeed-search-mode'."
   :parent special-mode-map
-  "q" #'elfeed-search-quit-window ;; TODO quit-window
+  "q" #'elfeed-search-quit-window
   "G" #'elfeed-search-fetch
   "RET" #'elfeed-search-show-entry
   "s" #'elfeed-search-live-filter

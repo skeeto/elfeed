@@ -42,13 +42,11 @@
                  (function-item pop-to-buffer)
                  function))
 
-(defcustom elfeed-show-entry-delete #'elfeed-kill-buffer
+(defcustom elfeed-show-entry-delete #'ignore
   "Function called when quitting from the elfeed-entry buffer.
 Called without arguments."
   :group 'elfeed
-  :type '(choice (function-item elfeed-kill-buffer)
-                 (function-item delete-window)
-                 function))
+  :type '(choice function))
 
 (defvar elfeed-show-refresh-function #'elfeed-show-refresh--mail-style
   "Function called to refresh the `*elfeed-entry*' buffer.")
@@ -57,7 +55,6 @@ Called without arguments."
   :doc "Keymap for `elfeed-show-mode'."
   :parent special-mode-map
   "d" #'elfeed-show-save-enclosure
-  "q" #'elfeed-kill-buffer ;; TODO standard quit-window?
   "n" #'elfeed-show-next
   "p" #'elfeed-show-prev
   "s" #'elfeed-show-new-live-search
