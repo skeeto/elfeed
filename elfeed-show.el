@@ -81,20 +81,13 @@ Called without arguments."
       (define-key map "P" #'elfeed-show-play-enclosure)))
   "Keymap for `elfeed-show-mode'.")
 
-(defun elfeed-show-mode ()
-  "Mode for displaying Elfeed feed entries.
-\\{elfeed-show-mode-map}"
-  (interactive)
-  (kill-all-local-variables)
-  (use-local-map elfeed-show-mode-map)
-  (setq major-mode 'elfeed-show-mode
-        mode-name "elfeed-show"
-        buffer-read-only t)
+(define-derived-mode elfeed-show-mode special-mode "elfeed-show"
+  "Mode for displaying Elfeed feed entries."
+  :syntax-table nil :abbrev-table nil
   (buffer-disable-undo)
   (make-local-variable 'elfeed-show-entry)
-  (set (make-local-variable 'bookmark-make-record-function)
-       #'elfeed-show-bookmark-make-record)
-  (run-mode-hooks 'elfeed-show-mode-hook))
+  (setq-local bookmark-make-record-function
+              #'elfeed-show-bookmark-make-record))
 
 (defalias 'elfeed-show-tag--unread
   (elfeed-expose #'elfeed-show-tag 'unread)

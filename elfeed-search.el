@@ -206,16 +206,10 @@ When live editing the filter, it is bound to :live.")
                                          'face 'elfeed-search-filter-face)))
                ("")))))))
 
-(defun elfeed-search-mode ()
-  "Major mode for listing elfeed feed entries.
-\\{elfeed-search-mode-map}"
-  (interactive)
-  (kill-all-local-variables)
-  (use-local-map elfeed-search-mode-map)
-  (setq major-mode 'elfeed-search-mode
-        mode-name "elfeed-search"
-        truncate-lines t
-        buffer-read-only t
+(define-derived-mode elfeed-search-mode special-mode "elfeed-search"
+  "Major mode for listing elfeed feed entries."
+  :syntax-table nil :abbrev-table nil
+  (setq truncate-lines t
         desktop-save-buffer #'elfeed-search-desktop-save
         ;; Provide format string via symbol value slot so that it will
         ;; not be %-construct interpolated. The symbol is uninterned
@@ -226,8 +220,8 @@ When live editing the filter, it is bound to :live.")
           `(:eval
             (prog1 ',symbol
               (set ',symbol (funcall elfeed-search-header-function))))))
-  (set (make-local-variable 'bookmark-make-record-function)
-       #'elfeed-search-bookmark-make-record)
+  (setq-local bookmark-make-record-function
+              #'elfeed-search-bookmark-make-record)
   (buffer-disable-undo)
   (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)
@@ -236,8 +230,7 @@ When live editing the filter, it is bound to :live.")
   (add-hook 'elfeed-update-init-hooks #'elfeed-search-update--force)
   (add-hook 'kill-buffer-hook #'elfeed-db-save t t)
   (add-hook 'elfeed-db-unload-hook #'elfeed-search--unload)
-  (elfeed-search-update :force)
-  (run-mode-hooks 'elfeed-search-mode-hook))
+  (elfeed-search-update :force))
 
 (defun elfeed-search-buffer ()
   (get-buffer-create "*elfeed-search*"))
