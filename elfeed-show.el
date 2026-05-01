@@ -58,13 +58,13 @@ Called without arguments."
   :parent special-mode-map
   "d" #'elfeed-show-save-enclosure
   "q" #'elfeed-kill-buffer ;; TODO standard quit-window?
-  "g" #'elfeed-show-refresh
+  "g" #'elfeed-show-refresh ;; TODO revert-buffer-function
   "n" #'elfeed-show-next
   "p" #'elfeed-show-prev
   "s" #'elfeed-show-new-live-search
   "b" #'elfeed-show-visit
   "y" #'elfeed-show-yank
-  "u" #'elfeed-show-tag--unread
+  "u" #'elfeed-show-tag-unread
   "+" #'elfeed-show-tag
   "-" #'elfeed-show-untag
   "TAB" #'elfeed-show-next-link
@@ -84,9 +84,10 @@ Called without arguments."
               #'elfeed-show-bookmark-make-record
               default-directory (elfeed-default-directory)))
 
-(defalias 'elfeed-show-tag--unread
-  (elfeed-expose #'elfeed-show-tag 'unread)
-  "Mark the current entry unread.")
+(defun elfeed-show-tag-unread ()
+  "Mark the current entry unread."
+  (interactive nil elfeed-show-mode)
+  (elfeed-show-tag 'unread))
 
 (defun elfeed-insert-html (html &optional base-url)
   "Converted HTML markup to a propertized string.

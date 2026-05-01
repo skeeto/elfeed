@@ -20,6 +20,7 @@
   "Return an interactive version of FUNCTION, \"exposing\" it to the user.
 ARGS are passed to FUNCTION."
   (lambda () (interactive) (apply function args)))
+(make-obsolete 'elfeed-expose "No replacement" "3.4.2")
 
 (defun elfeed-goto-line (n)
   "Like `goto-line' but for non-interactive use.

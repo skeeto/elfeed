@@ -102,17 +102,20 @@ When live editing the filter, it is bound to :live.")
 (defvar elfeed-search-print-entry-function #'elfeed-search-print-entry--default
   "Function to print entries into the *elfeed-search* buffer.")
 
-(defalias 'elfeed-search-tag-all-unread
-  (elfeed-expose #'elfeed-search-tag-all 'unread)
-  "Add the `unread' tag to all selected entries.")
+(defun elfeed-search-tag-all-unread ()
+  "Add the `unread' tag to all selected entries."
+  (interactive nil elfeed-search-mode)
+  (elfeed-search-tag-all 'unread))
 
-(defalias 'elfeed-search-untag-all-unread
-  (elfeed-expose #'elfeed-search-untag-all 'unread)
-  "Remove the `unread' tag from all selected entries.")
+(defun elfeed-search-untag-all-unread ()
+  "Remove the `unread' tag from all selected entries."
+  (interactive nil elfeed-search-mode)
+  (elfeed-search-untag-all 'unread))
 
-(defalias 'elfeed-search-update--force
-  (elfeed-expose #'elfeed-search-update :force)
-  "Force refresh view of the feed listing.")
+(defun elfeed-search-update--force ()
+  "Force refresh view of the feed listing."
+  (interactive nil elfeed-search-mode)
+  (elfeed-search-update :force))
 
 (defun elfeed-search-quit-window ()
   "Save the database, then `quit-window'."
@@ -135,7 +138,7 @@ When live editing the filter, it is bound to :live.")
   :doc "Keymap for `elfeed-search-mode'."
   :parent special-mode-map
   "q" #'elfeed-search-quit-window ;; TODO quit-window
-  "g" #'elfeed-search-update--force
+  "g" #'elfeed-search-update--force ;; TODO revert-buffer-function
   "G" #'elfeed-search-fetch
   "RET" #'elfeed-search-show-entry
   "s" #'elfeed-search-live-filter
