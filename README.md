@@ -374,8 +374,9 @@ key points without resorting to advice.
 * `elfeed-new-entry-parse-hook` : Called with each new entry and the
   full XML structure from which it was parsed, allowing for additional
   information to be drawn from the original feed XML.
-* `elfeed-http-error-hooks` : Allows for special behavior when HTTP
-  errors occur, beyond simply logging the error to `*elfeed-log*` .
+* `elfeed-http-error-hooks` : Allows for special behavior when HTTP errors
+  occur, beyond simply logging the error to the buffer named
+  `elfeed-log-buffer-name`.
 * `elfeed-parse-error-hooks` : Allows for special behavior when feed
   parsing fails, beyond logging.
 * `elfeed-db-update-hook` : Called any time the database has had a

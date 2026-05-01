@@ -35,7 +35,7 @@
   "Face for showing the `debug' log level in the elfeed log buffer."
   :group 'elfeed)
 
-(defvar elfeed-log-buffer-name "*elfeed-log*"
+(defvar elfeed-log-buffer-name " *elfeed-log*"
   "Name of buffer used for logging Elfeed events.")
 
 (defvar elfeed-log-level 'info
