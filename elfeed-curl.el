@@ -299,7 +299,9 @@ Use `elfeed-curl--narrow' to select a header."
 
 (defun elfeed-curl--args (url token &optional headers method data)
   "Build an argument list for curl for URL.
-URL can be a string or a list of URL strings."
+TOKEN is a unique token.  URL can be a string or a list of URL strings.
+HEADERS is an alist of HTTP headers, METHOD the HTTP method, and DATA
+is sent as the body of the request (POST)."
   (let* ((args ())
          (capabilities (elfeed-curl-get-capabilities)))
     (push "--disable" args)
@@ -454,7 +456,8 @@ results will not."
         (setf (process-sentinel process) #'elfeed-curl--sentinel)))))
 
 (defun elfeed-curl--request-key (url headers method data)
-  "Try to fetch URLs with matching keys at the same time."
+  "Compute request key for URL, HEADERS, METHOD and DATA.
+The goal is to fetch URLs with matching keys at the same time."
   (unless (listp url)
     (let* ((urlobj (url-generic-parse-url url)))
       (list (url-type urlobj)
