@@ -136,7 +136,7 @@ Links are relative to BASE-URL if non-nil."
 
 (defun elfeed-show-refresh--mail-style ()
   "Update the buffer to match the selected entry, using a mail-style."
-  (interactive)
+  (interactive nil elfeed-show-mode)
   (let* ((inhibit-read-only t)
          (title (elfeed-entry-title elfeed-show-entry))
          (date (seconds-to-time (elfeed-entry-date elfeed-show-entry)))
@@ -184,7 +184,7 @@ Links are relative to BASE-URL if non-nil."
 
 (defun elfeed-show-refresh ()
   "Update the buffer to match the selected entry."
-  (interactive)
+  (interactive nil elfeed-show-mode)
   (call-interactively elfeed-show-refresh-function))
 
 (defcustom elfeed-show-unique-buffers nil
@@ -214,7 +214,7 @@ The result depends on the value of `elfeed-show-unique-buffers'."
 
 (defun elfeed-show-next ()
   "Show the next item in the elfeed-search buffer."
-  (interactive)
+  (interactive nil elfeed-show-mode)
   (funcall elfeed-show-entry-delete)
   (with-current-buffer (elfeed-search-buffer)
     (when elfeed-search-remain-on-entry (forward-line 1))
@@ -222,7 +222,7 @@ The result depends on the value of `elfeed-show-unique-buffers'."
 
 (defun elfeed-show-prev ()
   "Show the previous item in the elfeed-search buffer."
-  (interactive)
+  (interactive nil elfeed-show-mode)
   (funcall elfeed-show-entry-delete)
   (with-current-buffer (elfeed-search-buffer)
     (when elfeed-search-remain-on-entry (forward-line 1))
@@ -231,7 +231,7 @@ The result depends on the value of `elfeed-show-unique-buffers'."
 
 (defun elfeed-show-new-live-search ()
   "Kill the current buffer, search again in *elfeed-search*."
-  (interactive)
+  (interactive nil elfeed-show-mode)
   (elfeed-kill-buffer)
   (elfeed)
   (elfeed-search-live-filter))
@@ -240,7 +240,7 @@ The result depends on the value of `elfeed-show-unique-buffers'."
   "Visit the current entry in your browser using `browse-url'.
 If there is a prefix argument USE-GENERIC-P, visit the current entry in
 the browser defined by `browse-url-generic-program'."
-  (interactive "P")
+  (interactive "P" elfeed-show-mode)
   (let ((link (elfeed-entry-link elfeed-show-entry)))
     (when link
       (message "Sent to browser: %s" link)
@@ -250,7 +250,7 @@ the browser defined by `browse-url-generic-program'."
 
 (defun elfeed-show-yank ()
   "Copy the current entry link URL to the clipboard."
-  (interactive)
+  (interactive nil elfeed-show-mode)
   (let ((link (elfeed-entry-link elfeed-show-entry)))
     (when link
       (kill-new link)
@@ -262,7 +262,7 @@ the browser defined by `browse-url-generic-program'."
 
 (defun elfeed-show-tag (&rest tags)
   "Add TAGS to the displayed entry."
-  (interactive (list (intern (read-from-minibuffer "Tag: "))))
+  (interactive (list (intern (read-from-minibuffer "Tag: "))) elfeed-show-mode)
   (let ((entry elfeed-show-entry))
     (apply #'elfeed-tag entry tags)
     (with-current-buffer (elfeed-search-buffer)
@@ -274,7 +274,8 @@ the browser defined by `browse-url-generic-program'."
   (interactive (let* ((tags (elfeed-entry-tags elfeed-show-entry))
                       (names (mapcar #'symbol-name tags))
                       (select (completing-read "Untag: " names nil :match)))
-                 (list (intern select))))
+                 (list (intern select)))
+               elfeed-show-mode)
   (let ((entry elfeed-show-entry))
     (apply #'elfeed-untag entry tags)
     (with-current-buffer (elfeed-search-buffer)
@@ -359,7 +360,7 @@ non-nil), accept ranges of enclosure numbers, as per
   "Save enclosure number ENCLOSURE-INDEX from ENTRY.
 If ENTRY is nil use the variable `elfeed-show-entry'.
 If ENCLOSURE-INDEX is nil ask for the enclosure number."
-  (interactive)
+  (interactive nil elfeed-show-mode)
   (let* ((path elfeed-enclosure-default-dir)
          (entry (or entry elfeed-show-entry))
          (enclosure-index (or enclosure-index
@@ -388,7 +389,7 @@ will save enclosures 1,3,4,5,6 and 8.
 
 Furthermore, there is a shortcut \"a\" which so means all
 enclosures, but as this is the default, you may not need it."
-  (interactive)
+  (interactive nil elfeed-show-mode)
   (let* ((entry (or entry elfeed-show-entry))
          (attachstr (elfeed--get-enclosure-num
                      "Enclosure number range (or 'a' for 'all')" entry t))
@@ -418,7 +419,7 @@ enclosures, but as this is the default, you may not need it."
   "Offer to save enclosure(s).
 If MULTI (prefix-argument) is nil, save a single one, otherwise,
 offer to save a range of enclosures."
-  (interactive "P")
+  (interactive "P" elfeed-show-mode)
   (if multi
       (elfeed-show-save-enclosure-multi)
     (elfeed-show-save-enclosure-single)))
@@ -432,7 +433,8 @@ offer to save a range of enclosures."
 (defun elfeed-show-play-enclosure (enclosure-index)
   "Play enclosure number ENCLOSURE-INDEX from current entry using EMMS.
 Prompts for ENCLOSURE-INDEX when called interactively."
-  (interactive (list (elfeed--enclosure-maybe-prompt-index elfeed-show-entry)))
+  (interactive (list (elfeed--enclosure-maybe-prompt-index elfeed-show-entry))
+               elfeed-show-mode)
   (elfeed-show-add-enclosure-to-playlist enclosure-index)
   (with-no-warnings
     (with-current-emms-playlist
@@ -444,7 +446,8 @@ Prompts for ENCLOSURE-INDEX when called interactively."
   "Add enclosure number ENCLOSURE-INDEX to current EMMS playlist.
 Prompts for ENCLOSURE-INDEX when called interactively."
 
-  (interactive (list (elfeed--enclosure-maybe-prompt-index elfeed-show-entry)))
+  (interactive (list (elfeed--enclosure-maybe-prompt-index elfeed-show-entry))
+               elfeed-show-mode)
   (require 'emms) ;; optional
   (with-no-warnings ;; due to lazy (require )
     (emms-add-url   (car (elt (elfeed-entry-enclosures elfeed-show-entry)
@@ -452,7 +455,7 @@ Prompts for ENCLOSURE-INDEX when called interactively."
 
 (defun elfeed-show-next-link ()
   "Skip to the next link, exclusive of the Link header."
-  (interactive)
+  (interactive nil elfeed-show-mode)
   (let ((properties (text-properties-at (line-beginning-position))))
     (when (memq 'message-header-name properties)
       (forward-paragraph))
@@ -460,7 +463,7 @@ Prompts for ENCLOSURE-INDEX when called interactively."
 
 (defun elfeed-kill-link-url-at-point ()
   "Get link URL at point and store in `kill-ring'."
-  (interactive)
+  (interactive nil elfeed-show-mode)
   (let ((url (or (elfeed-get-link-at-point)
                  (elfeed-get-url-at-point))))
     (if url

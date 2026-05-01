@@ -116,19 +116,19 @@ When live editing the filter, it is bound to :live.")
 
 (defun elfeed-search-quit-window ()
   "Save the database, then `quit-window'."
-  (interactive)
+  (interactive nil elfeed-search-mode)
   (elfeed-db-save)
   (quit-window))
 
 (defun elfeed-search-last-entry ()
   "Place point on last entry."
-  (interactive)
+  (interactive nil elfeed-search-mode)
   (goto-char (point-max))
   (forward-line -1))
 
 (defun elfeed-search-first-entry ()
   "Place point on first entry."
-  (interactive)
+  (interactive nil elfeed-search-mode)
   (goto-char (point-min)))
 
 (defvar-keymap elfeed-search-mode-map
@@ -605,7 +605,7 @@ Executing a filter in bytecode form is generally faster than
 
 (defun elfeed-search-clear-filter ()
   "Reset the search filter to the default value of `elfeed-search-filter'."
-  (interactive)
+  (interactive nil elfeed-search-mode)
   (setf elfeed-search-filter (default-value 'elfeed-search-filter))
   (elfeed-search-update--force))
 
@@ -644,7 +644,8 @@ expression, matching against entry link, title, and feed title."
   (interactive
    (let ((elfeed-search-filter-active :non-interactive))
      (list (elfeed-search--prompt
-            (if current-prefix-arg "" elfeed-search-filter)))))
+            (if current-prefix-arg "" elfeed-search-filter))))
+    elfeed-search-mode)
   (with-current-buffer (elfeed-search-buffer)
     (setf elfeed-search-filter
           (or new-filter (default-value 'elfeed-search-filter)))
@@ -698,7 +699,7 @@ expression, matching against entry link, title, and feed title."
 (defun elfeed-search-update (&optional force)
   "Update the elfeed-search buffer listing to match the database.
 When FORCE is non-nil, redraw even when the database hasn't changed."
-  (interactive)
+  (interactive nil elfeed-search-mode)
   (with-current-buffer (elfeed-search-buffer)
     (when (or force (and (not elfeed-search-filter-active)
                          (< elfeed-search-last-update (elfeed-db-last-update))))
@@ -720,14 +721,14 @@ When FORCE is non-nil, redraw even when the database hasn't changed."
 (defun elfeed-search-fetch (prefix)
   "Update all feeds via `elfeed-update', or only visible feeds with PREFIX.
 Given a prefix, this function becomes `elfeed-search-fetch-visible'."
-  (interactive "P")
+  (interactive "P" elfeed-search-mode)
   (if prefix
       (elfeed-search-fetch-visible)
     (elfeed-update)))
 
 (defun elfeed-search-fetch-visible ()
   "Update any feed with an entry currently displayed in the search buffer."
-  (interactive)
+  (interactive nil elfeed-search-mode)
   (cl-loop with seen = (make-hash-table :test 'equal)
            for entry in elfeed-search-entries
            for feed = (elfeed-entry-feed entry)
@@ -770,7 +771,7 @@ If IGNORE-REGION-P is non-nil, only return the entry under point."
   "Visit the current entry in your browser using `browse-url'.
 If there is a prefix argument USE-GENERIC-P, visit the current entry in
 the browser defined by `browse-url-generic-program'."
-  (interactive "P")
+  (interactive "P" elfeed-search-mode)
   (let ((buffer (current-buffer))
         (entries (elfeed-search-selected)))
     (cl-loop for entry in entries
@@ -789,7 +790,7 @@ the browser defined by `browse-url-generic-program'."
 
 (defun elfeed-search-yank ()
   "Copy the selected feed items to clipboard and kill-ring."
-  (interactive)
+  (interactive nil elfeed-search-mode)
   (let* ((entries (elfeed-search-selected))
          (links (mapcar #'elfeed-entry-link entries))
          (links-str (mapconcat #'identity links " ")))
@@ -807,7 +808,8 @@ the browser defined by `browse-url-generic-program'."
 
 (defun elfeed-search-tag-all (tag)
   "Apply TAG to all selected entries."
-  (interactive (list (intern (read-from-minibuffer "Tag: "))))
+  (interactive (list (intern (read-from-minibuffer "Tag: ")))
+               elfeed-search-mode)
   (let ((entries (elfeed-search-selected)))
     (elfeed-tag entries tag)
     (mapc #'elfeed-search-update-entry entries)
@@ -816,7 +818,8 @@ the browser defined by `browse-url-generic-program'."
 
 (defun elfeed-search-untag-all (tag)
   "Remove TAG from all selected entries."
-  (interactive (list (intern (read-from-minibuffer "Tag: "))))
+  (interactive (list (intern (read-from-minibuffer "Tag: ")))
+               elfeed-search-mode)
   (let ((entries (elfeed-search-selected)))
     (elfeed-untag entries tag)
     (mapc #'elfeed-search-update-entry entries)
@@ -825,7 +828,8 @@ the browser defined by `browse-url-generic-program'."
 
 (defun elfeed-search-toggle-all (tag)
   "Toggle TAG on all selected entries."
-  (interactive (list (intern (read-from-minibuffer "Tag: "))))
+  (interactive (list (intern (read-from-minibuffer "Tag: ")))
+               elfeed-search-mode)
   (let ((entries (elfeed-search-selected)) entries-tag entries-untag)
     (cl-loop for entry in entries
              when (elfeed-tagged-p tag entry)
@@ -839,7 +843,8 @@ the browser defined by `browse-url-generic-program'."
 
 (defun elfeed-search-show-entry (entry)
   "Display the currently selected item in a buffer."
-  (interactive (list (elfeed-search-selected :ignore-region)))
+  (interactive (list (elfeed-search-selected :ignore-region))
+               elfeed-search-mode)
   (require 'elfeed-show)
   (when (elfeed-entry-p entry)
     (elfeed-untag entry 'unread)
@@ -850,7 +855,7 @@ the browser defined by `browse-url-generic-program'."
 (defun elfeed-search-set-entry-title (title)
   "Manually set the title for the entry under point.
 Sets the :title key of the entry's metadata.  See `elfeed-meta'."
-  (interactive "sTitle: ")
+  (interactive "sTitle: "elfeed-search-mode)
   (let ((entry (elfeed-search-selected :ignore-region)))
     (unless entry
       (error "No entry selected!"))
@@ -860,7 +865,7 @@ Sets the :title key of the entry's metadata.  See `elfeed-meta'."
 (defun elfeed-search-set-feed-title (title)
   "Manually set the title for the feed belonging to the entry under point.
 Sets the :title key of the feed's metadata.  See `elfeed-meta'."
-  (interactive "sTitle: ")
+  (interactive "sTitle: " elfeed-search-mode)
   (let ((entry (elfeed-search-selected :ignore-region)))
     (unless entry
       (error "No entry selected!"))
@@ -909,7 +914,7 @@ Sets the :title key of the feed's metadata.  See `elfeed-meta'."
 
 (defun elfeed-search-live-filter ()
   "Filter the elfeed-search buffer as the filter is written."
-  (interactive)
+  (interactive nil elfeed-search-mode)
   (unwind-protect
       (let ((elfeed-search-filter-active :live))
         (setq elfeed-search-filter
