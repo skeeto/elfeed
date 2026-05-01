@@ -211,19 +211,20 @@ When live editing the filter, it is bound to :live.")
 (define-derived-mode elfeed-search-mode special-mode "elfeed-search"
   "Major mode for listing elfeed feed entries."
   :syntax-table nil :abbrev-table nil
-  (setq truncate-lines t
-        desktop-save-buffer #'elfeed-search-desktop-save
-        ;; Provide format string via symbol value slot so that it will
-        ;; not be %-construct interpolated. The symbol is uninterned
-        ;; so that it's not *really* a global variable.
-        header-line-format
-        (let ((symbol (make-symbol "dummy")))
-          (put symbol 'risky-local-variable t)
-          `(:eval
-            (prog1 ',symbol
-              (set ',symbol (funcall elfeed-search-header-function))))))
-  (setq-local bookmark-make-record-function
-              #'elfeed-search-bookmark-make-record)
+  (setq-local truncate-lines t
+              desktop-save-buffer #'elfeed-search-desktop-save
+              ;; Provide format string via symbol value slot so that it will
+              ;; not be %-construct interpolated. The symbol is uninterned
+              ;; so that it's not *really* a global variable.
+              header-line-format
+              (let ((symbol (make-symbol "dummy")))
+                (put symbol 'risky-local-variable t)
+                `(:eval
+                  (prog1 ',symbol
+                    (set ',symbol (funcall elfeed-search-header-function)))))
+              bookmark-make-record-function
+              #'elfeed-search-bookmark-make-record
+              default-directory (elfeed-default-directory))
   (buffer-disable-undo)
   (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)

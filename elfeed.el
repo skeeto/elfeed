@@ -84,6 +84,20 @@ Each function should accept no arguments, and return a string or nil."
   :group 'elfeed
   :type '(repeat symbol))
 
+(defcustom elfeed-default-directory nil
+  "Default directory for all Elfeed buffers."
+  :group 'elfeed
+  :type '(choice (const :tag "current" nil)
+                 (const :tag "user home" "~/")
+                 directory))
+
+(defun elfeed-default-directory ()
+  "Return default directory to be used by Elfeed buffers."
+  (if (and elfeed-default-directory
+           (file-exists-p elfeed-default-directory))
+      (file-name-as-directory (expand-file-name elfeed-default-directory))
+    default-directory))
+
 ;; Fetching:
 
 (defvar elfeed-http-error-hooks ()

@@ -81,7 +81,8 @@ Called without arguments."
   (buffer-disable-undo)
   (make-local-variable 'elfeed-show-entry)
   (setq-local bookmark-make-record-function
-              #'elfeed-show-bookmark-make-record))
+              #'elfeed-show-bookmark-make-record
+              default-directory (elfeed-default-directory)))
 
 (defalias 'elfeed-show-tag--unread
   (elfeed-expose #'elfeed-show-tag 'unread)
