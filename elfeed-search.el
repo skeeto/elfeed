@@ -112,9 +112,9 @@ When live editing the filter, it is bound to :live.")
   (interactive nil elfeed-search-mode)
   (elfeed-search-untag-all 'unread))
 
-(defun elfeed-search-update--force ()
-  "Force refresh view of the feed listing."
-  (interactive nil elfeed-search-mode)
+(defun elfeed-search-update--force (&rest _)
+  "Force refresh view of the feed listing.
+Used as `revert-buffer-function'."
   (elfeed-search-update :force))
 
 (defun elfeed-search-quit-window ()
@@ -138,7 +138,6 @@ When live editing the filter, it is bound to :live.")
   :doc "Keymap for `elfeed-search-mode'."
   :parent special-mode-map
   "q" #'elfeed-search-quit-window ;; TODO quit-window
-  "g" #'elfeed-search-update--force ;; TODO revert-buffer-function
   "G" #'elfeed-search-fetch
   "RET" #'elfeed-search-show-entry
   "s" #'elfeed-search-live-filter
@@ -227,6 +226,7 @@ When live editing the filter, it is bound to :live.")
                     (set ',symbol (funcall elfeed-search-header-function)))))
               bookmark-make-record-function
               #'elfeed-search-bookmark-make-record
+              revert-buffer-function #'elfeed-search-update--force
               default-directory (elfeed-default-directory))
   (buffer-disable-undo)
   (hl-line-mode)

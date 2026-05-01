@@ -58,7 +58,6 @@ Called without arguments."
   :parent special-mode-map
   "d" #'elfeed-show-save-enclosure
   "q" #'elfeed-kill-buffer ;; TODO standard quit-window?
-  "g" #'elfeed-show-refresh ;; TODO revert-buffer-function
   "n" #'elfeed-show-next
   "p" #'elfeed-show-prev
   "s" #'elfeed-show-new-live-search
@@ -82,6 +81,7 @@ Called without arguments."
   (make-local-variable 'elfeed-show-entry)
   (setq-local bookmark-make-record-function
               #'elfeed-show-bookmark-make-record
+              revert-buffer-function #'elfeed-show-refresh
               default-directory (elfeed-default-directory)))
 
 (defun elfeed-show-tag-unread ()
@@ -183,8 +183,9 @@ Links are relative to BASE-URL if non-nil."
       (insert (propertize "(empty)\n" 'face 'italic)))
     (goto-char (point-min))))
 
-(defun elfeed-show-refresh ()
-  "Update the buffer to match the selected entry."
+(defun elfeed-show-refresh (&rest _)
+  "Update the buffer to match the selected entry.
+Used as `revert-buffer-function'."
   (interactive nil elfeed-show-mode)
   (call-interactively elfeed-show-refresh-function))
 
