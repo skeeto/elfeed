@@ -323,7 +323,8 @@ is sent as the body of the request (POST)."
       (nreverse (cons url args)))))
 
 (defun elfeed-curl--prepare-response (url n protocol)
-  "Prepare response N for delivery to user."
+  "Prepare response N for delivery to the user.
+URL is the requested resource, and PROTOCOL the transfer protocol."
   (elfeed-curl--narrow :header n)
   (when (eq protocol 'http)
     (elfeed-curl--parse-http-headers))
@@ -355,7 +356,8 @@ DATA is the content to include in the request."
       (otherwise scheme))))
 
 (defun elfeed-curl--call-callback (buffer n url cb)
-  "Prepare the buffer for callback N and call it."
+  "Prepare BUFFER for response N and call callback CB.
+URL is the requested resource."
   (let ((result nil)
         (protocol (elfeed-curl--protocol-type url)))
     (with-current-buffer buffer
