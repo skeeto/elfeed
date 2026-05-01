@@ -229,9 +229,9 @@ The result depends on the value of `elfeed-show-unique-buffers'."
     (call-interactively #'elfeed-search-show-entry)))
 
 (defun elfeed-show-new-live-search ()
-  "Kill the current buffer, search again in *elfeed-search*."
+  "Quit the current window, search again in *elfeed-search*."
   (interactive nil elfeed-show-mode)
-  (elfeed-kill-buffer)
+  (quit-window)
   (elfeed)
   (elfeed-search-live-filter))
 
