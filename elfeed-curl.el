@@ -346,6 +346,7 @@ DATA is the content to include in the request."
     (elfeed-curl--prepare-response url 0 (elfeed-curl--protocol-type url))))
 
 (defun elfeed-curl--protocol-type (url)
+  "Get protocol type from URL."
   (let ((scheme (intern (or (url-type (url-generic-parse-url url)) "nil"))))
     (cl-case scheme
       ((https nil) 'http)
@@ -383,7 +384,8 @@ DATA is the content to include in the request."
             (kill-buffer)))))))
 
 (defun elfeed-curl--fail-callback (buffer cb)
-  "Inform the callback the request failed."
+  "Inform the callback CB that the request failed.
+The callback is run within BUFFER."
   (with-current-buffer buffer
     (unwind-protect
         (funcall cb nil)
@@ -391,7 +393,7 @@ DATA is the content to include in the request."
         (kill-buffer)))))
 
 (defun elfeed-curl--sentinel (process status)
-  "Manage the end of a curl process' life."
+  "Manage the end of life of curl PROCESS with STATUS."
   (let ((buffer (process-buffer process)))
     (with-current-buffer buffer
       ;; Fire off callbacks in separate interpreter turns so they can
@@ -463,10 +465,10 @@ results will not."
             data))))
 
 (defun elfeed-curl--queue-consolidate (queue-in)
-  "Group compatible requests together and return a new queue.
-Compatible means the requests have the same protocol, domain,
-port, headers, method, and body, allowing them to be used safely
-in the same curl invocation."
+  "Group compatible requests from QUEUE-IN together and return a new queue.
+Compatible means the requests have the same protocol, domain, port,
+headers, method, and body, allowing them to be used safely in the same
+curl invocation."
   (let ((table (make-hash-table :test 'equal))
         (keys ())
         (queue-out ()))
@@ -523,7 +525,9 @@ in the same curl invocation."
        :data data))))
 
 (cl-defun elfeed-curl-enqueue (url cb &key headers method data)
-  "Just like `elfeed-curl-retrieve', but restricts concurrent fetches."
+  "Just like `elfeed-curl-retrieve', but restricts concurrent fetches.
+See `elfeed-curl-retrieve' for the arguments URL, CB, HEADERS, METHOD
+and DATA."
   (unless (or (stringp url)
               (and (listp url) (cl-every #'stringp url)))
     ;; Signal error synchronously instead of asynchronously in the timer
