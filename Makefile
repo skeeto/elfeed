@@ -7,8 +7,6 @@ EL   = elfeed-csv.el elfeed-curl.el elfeed-db.el elfeed-lib.el	\
        elfeed-log.el elfeed-show.el elfeed.el xml-query.el	\
        elfeed-search.el elfeed-link.el
 DOC  = README.md NEWS.md UNLICENSE
-WEB  = web/elfeed-web.el web/elfeed.css	\
-       web/elfeed.js web/index.html
 TEST = tests/elfeed-db-tests.el tests/elfeed-lib-tests.el       \
        tests/elfeed-tests.el tests/elfeed-search-tests.el       \
        tests/elfeed-curl-tests.el tests/xml-query-tests.el
@@ -19,7 +17,7 @@ check: test
 test: $(EL:.el=.elc) $(TEST:.el=.elc)
 	$(BATCH) -l tests/elfeed-tests.elc -f ert-run-tests-batch
 
-package: elfeed-$(VERSION).tar elfeed-web-$(VERSION).tar
+package: elfeed-$(VERSION).tar
 
 clean:
 	rm -f *.tar $(EL:.el=.elc) $(TEST:.el=.elc)
@@ -36,13 +34,6 @@ elfeed-$(VERSION).tar: $(EL) $(DOC)
 	cp $(EL) $(DOC) elfeed-$(VERSION)/
 	tar cf $@ elfeed-$(VERSION)/
 	rm -rf elfeed-$(VERSION)/
-
-elfeed-web-$(VERSION).tar: $(WEB)
-	rm -rf elfeed-web-$(VERSION)/
-	mkdir elfeed-web-$(VERSION)/
-	cp $(WEB) elfeed-web-$(VERSION)/
-	tar cf $@ elfeed-web-$(VERSION)/
-	rm -rf elfeed-web-$(VERSION)/
 
 elfeed-csv.elc: elfeed-db.elc
 elfeed-curl.elc: elfeed-lib.elc elfeed-log.elc
