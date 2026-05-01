@@ -383,6 +383,22 @@ The relative URL algorithm is described in RFC 3986 §5.2.4."
         url
       host)))
 
+(defun elfeed-entry-other-window ()
+  "In elfeed-search mode, open elfeed entry in the other window
+if other window is present, else sensibly splits the frame if
+there is only a single window and opens the elfeed entry in the
+other window."
+
+  (interactive)
+  (if (get-buffer "*elfeed-search*")
+      (progn
+	(split-window-sensibly (selected-window))
+	(switch-to-buffer-other-window "*elfeed-search*")
+	(call-interactively #'elfeed-search-show-entry)
+	(other-window 1)
+	(forward-line))
+    (message "Start elfeed first!")))
+
 (provide 'elfeed-lib)
 
 ;;; elfeed-lib.el ends here
