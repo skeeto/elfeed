@@ -55,6 +55,7 @@ These projects extend Elfeed with additional features:
   ([Google Play](https://play.google.com/store/apps/details?id=com.elfeedcljsrn))
 * [elfeed-dashboard](https://github.com/Manoj321/elfeed-dashboard)
 * [elfeed-tube](https://github.com/karthink/elfeed-tube)
+* [elfeed-ai](https://github.com/benthamite/elfeed-ai)
 
 ## Getting Started
 
