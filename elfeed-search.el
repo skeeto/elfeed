@@ -11,6 +11,7 @@
 (require 'compat)
 (require 'cl-lib)
 (require 'browse-url)
+(require 'hl-line)
 (require 'wid-edit) ; widget-inactive face
 (require 'bookmark)
 (bookmark-maybe-load-default-file)
@@ -852,7 +853,9 @@ the browser defined by `browse-url-generic-program'."
   (when (elfeed-entry-p entry)
     (elfeed-untag entry 'unread)
     (elfeed-search-update-entry entry)
-    (unless elfeed-search-remain-on-entry (forward-line))
+    (unless elfeed-search-remain-on-entry
+      (forward-line)
+      (hl-line-highlight))
     (elfeed-show-entry entry)))
 
 (defun elfeed-search-set-entry-title (title)
