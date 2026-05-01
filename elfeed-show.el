@@ -282,7 +282,7 @@ the browser defined by `browse-url-generic-program'."
 
 ;; Enclosures:
 
-(defcustom elfeed-enclosure-default-dir (expand-file-name "~")
+(defcustom elfeed-enclosure-default-dir "~/"
   "Default directory for saving enclosures.
 This can be either a string (a file system path), or a function
 that takes a filename and the mime-type as arguments, and returns
@@ -359,7 +359,7 @@ non-nil), accept ranges of enclosure numbers, as per
 If ENTRY is nil use the variable `elfeed-show-entry'.
 If ENCLOSURE-INDEX is nil ask for the enclosure number."
   (interactive nil elfeed-show-mode)
-  (let* ((path elfeed-enclosure-default-dir)
+  (let* ((path (expand-file-name elfeed-enclosure-default-dir))
          (entry (or entry elfeed-show-entry))
          (enclosure-index (or enclosure-index
                               (elfeed--get-enclosure-num
@@ -393,7 +393,7 @@ enclosures, but as this is the default, you may not need it."
                      "Enclosure number range (or 'a' for 'all')" entry t))
          (count (length (elfeed-entry-enclosures entry)))
          (attachnums (elfeed-split-ranges-to-numbers attachstr count))
-         (path elfeed-enclosure-default-dir)
+         (path (expand-file-name elfeed-enclosure-default-dir))
          (fpath))
     (if elfeed-save-multiple-enclosures-without-asking
         (let ((attachdir (elfeed--request-enclosures-dir path)))
