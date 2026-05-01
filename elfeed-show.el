@@ -54,7 +54,7 @@ Called without arguments."
   "Function called to refresh the `*elfeed-entry*' buffer.")
 
 (defvar-keymap elfeed-show-mode-map
-  :doc"Keymap for `elfeed-show-mode'."
+  :doc "Keymap for `elfeed-show-mode'."
   :parent special-mode-map
   "d" #'elfeed-show-save-enclosure
   "q" #'elfeed-kill-buffer ;; TODO standard quit-window?

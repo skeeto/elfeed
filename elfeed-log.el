@@ -1,6 +1,10 @@
 ;;; elfeed-log.el --- Elfeed's logging system -*- lexical-binding: t; -*-
 
+;; This is free and unencumbered software released into the public domain.
+
 ;;; Commentary:
+
+;; Elfeed's logging system.
 
 ;;; Code:
 

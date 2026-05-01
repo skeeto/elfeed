@@ -2,6 +2,10 @@
 
 ;; This is free and unencumbered software released into the public domain.
 
+;;; Commentary:
+
+;; Code to list feed entries.
+
 ;;; Code:
 
 (require 'compat)

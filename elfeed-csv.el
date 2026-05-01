@@ -1,5 +1,7 @@
 ;;; elfeed-csv.el --- export database to CSV files -*- lexical-binding: t; -*-
 
+;; This is free and unencumbered software released into the public domain.
+
 ;;; Commentary:
 
 ;; The `elfeed-csv-export' docstring has a SQL schema recommendation.
