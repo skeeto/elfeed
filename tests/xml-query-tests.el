@@ -1,4 +1,4 @@
-;;; xml-query-tests.el -- tests for xml-query
+;;; xml-query-tests.el -- tests for xml-query -*- lexical-binding: t -*-
 
 (require 'ert)
 (require 'xml-query)

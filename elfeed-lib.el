@@ -4,31 +4,49 @@
 
 ;;; Commentary:
 
-;; These are general functions that aren't specific to web feeds. It's
+;; These are general functions that aren't specific to web feeds.  It's
 ;; a library of useful functions to Elfeed.
 
 ;;; Code:
 
+(eval-when-compile (require 'subr-x))
+(require 'compat)
 (require 'cl-lib)
 (require 'thingatpt)
 (require 'time-date)
-(require 'url-parse)
-(require 'url-util)
+(require 'url)
 (require 'xml)
 
-(defun elfeed-expose (function &rest args)
-  "Return an interactive version of FUNCTION, \"exposing\" it to the user."
-  (lambda () (interactive) (apply function args)))
+(define-obsolete-function-alias 'elfeed-libxml-supported-p
+  #'libxml-available-p "3.4.2")
 
-(defun elfeed-goto-line (n)
-  "Like `goto-line' but for non-interactive use."
-  (goto-char (point-min))
-  (forward-line (1- n)))
+(define-obsolete-function-alias 'elfeed-get-url-at-point
+  #'thing-at-point-url-at-point "3.4.2")
+
+(defun elfeed-strip-properties (string)
+  "Return a copy of STRING with all properties removed.
+If STRING is nil, returns nil."
+  (when string
+    (substring-no-properties string)))
+(make-obsolete 'elfeed-strip-properties #'substring-no-properties "3.4.2")
+
+(defun elfeed-expose (function &rest args)
+  "Return an interactive version of FUNCTION, \"exposing\" it to the user.
+ARGS are passed to FUNCTION."
+  (lambda () (interactive) (apply function args)))
+(make-obsolete 'elfeed-expose "No replacement" "3.4.2")
 
 (defun elfeed-kill-buffer ()
   "Kill the current buffer."
   (interactive)
   (kill-buffer (current-buffer)))
+(make-obsolete 'elfeed-kill-buffer 'kill-current-buffer "3.4.2")
+
+(defun elfeed-goto-line (n)
+  "Like `goto-line' but for non-interactive use.
+N is the destination line."
+  (goto-char (point-min))
+  (forward-line (1- n)))
 
 (defun elfeed-kill-line ()
   "Clear out the current line without touching anything else."
@@ -38,37 +56,37 @@
     (delete-region start (point))))
 
 (defun elfeed-time-duration (time &optional now)
-  "Turn a time expression into a number of seconds. Uses
-`timer-duration' but allows a bit more flair.
+  "Turn a TIME expression into a number of seconds.
 
-If `now' is non-nil, use it as the current time (`float-time'). This
-is mostly useful for testing."
+Uses `timer-duration' but allows a bit more flair.  If NOW is non-nil,
+use it as the current time (`float-time').  This is mostly useful for
+testing."
   (cond
    ((numberp time) time)
-   ((let ((iso-time (elfeed-parse-simple-iso-8601 time)))
-      (when iso-time (- (or now (float-time)) iso-time))))
+   ((when-let* ((iso-time (elfeed-parse-simple-iso-8601 time)))
+      (- (or now (float-time)) iso-time)))
    ((string-match-p "[[:alpha:]]" time)
-    (let* ((clean (replace-regexp-in-string "\\(ago\\|old\\|-\\)" " " time))
-           (duration (timer-duration clean)))
+    (let ((clean (replace-regexp-in-string "\\(ago\\|old\\|-\\)" " " time)))
+      (when-let* ((duration (timer-duration clean)))
       ;; convert to float since float-time is used elsewhere
-      (when duration (float duration))))))
+        (float duration))))))
 
 (defun elfeed-looks-like-url-p (string)
-  "Return true if STRING looks like it could be a URL."
+  "Return non-nil if STRING looks like it could be a URL."
   (and (stringp string)
        (not (string-match-p "[ \n\t\r]" string))
        (not (null (url-type (url-generic-parse-url string))))))
 
 (defun elfeed-format-column (string width &optional align)
-  "Return STRING truncated or padded to WIDTH following ALIGNment.
-Align should be a keyword :left or :right."
+  "Return STRING truncated or padded to WIDTH following alignment.
+ALIGN should be a keyword :left or :right."
   (if (<= width 0)
       ""
     (format (format "%%%s%d.%ds" (if (eq align :left) "-" "") width width)
             string)))
 
 (defun elfeed-clamp (min value max)
-  "Clamp a value between two values."
+  "Clamp VALUE between MIN and MAX."
   (min max (max min value)))
 
 (defun elfeed-valid-regexp-p (regexp)
@@ -78,7 +96,7 @@ Align should be a keyword :left or :right."
       (string-match-p regexp ""))))
 
 (defun elfeed-cleanup (name)
-  "Trim trailing and leading spaces and collapse multiple spaces."
+  "Trim trailing and leading spaces and collapse multiple spaces in NAME string."
   (let ((trim (replace-regexp-in-string "[\f\n\r\t\v ]+" " " (or name ""))))
     (replace-regexp-in-string "^ +\\| +$" "" trim)))
 
@@ -104,9 +122,9 @@ Examples: 2015-02-22, 2015-02, 20150222"
                                  (or day 1) month year t))))))
 
 (defun elfeed-new-date-for-entry (old-date new-date)
-  "Decide entry date, given an existing date (nil for new) and a new date.
+  "Decide entry date, given an existing OLD-DATE (nil for new) and a NEW-DATE.
 Existing entries' dates are unchanged if the new date is not
-parseable. New entries with unparseable dates default to the
+parseable.  New entries with unparseable dates default to the
 current time."
   (or (elfeed-float-time new-date)
       old-date
@@ -114,7 +132,7 @@ current time."
 
 (defun elfeed-float-time (date)
   "Like `float-time' but accept anything reasonable for DATE.
-Defaults to nil if DATE could not be parsed. Date is allowed to
+Defaults to nil if DATE could not be parsed.  Date is allowed to
 be relative to now (`elfeed-time-duration')."
   (cl-typecase date
     (string
@@ -131,9 +149,9 @@ be relative to now (`elfeed-time-duration')."
     (integer date)
     (otherwise nil)))
 
-(defun elfeed-xml-parse-region (&optional beg end buffer parse-dtd _parse-ns)
-  "Decode (if needed) and parse XML file. Uses coding system from
-XML encoding declaration."
+(defun elfeed-xml-parse-region (&optional beg end)
+  "Decode (if needed) and parse XML between BEG and END.
+Uses coding system from XML encoding declaration."
   (unless beg (setq beg (point-min)))
   (unless end (setq end (point-max)))
   (goto-char beg)
@@ -150,11 +168,25 @@ XML encoding declaration."
           (recode-region mark-beg mark-end coding-system 'raw-text)
           (setf beg (marker-position mark-beg)
                 end (marker-position mark-end))))))
-  (let ((xml-default-ns ()))
-    (xml-parse-region beg end buffer parse-dtd 'symbol-qnames)))
+  (if (and (bound-and-true-p elfeed-use-libxml) (libxml-available-p))
+      (when-let* ((root (libxml-parse-xml-region beg end)))
+        (list
+         (if (eq (car root) 'top)
+             (cl-loop for node in (cddr root)
+                      if (and (consp node) (not (eq (car-safe node) 'comment)))
+                      return node)
+           root)))
+    (let ((xml-default-ns ()))
+      (xml-parse-region beg end nil nil 'symbol-qnames))))
+
+(defun elfeed-xml-parse-file (file)
+  "Parse XML from FILE."
+  (with-temp-buffer
+    (insert-file-contents file)
+    (elfeed-xml-parse-region)))
 
 (defun elfeed-xml-unparse (element)
-  "Inverse of `elfeed-xml-parse-region', writing XML to the buffer."
+  "Inverse of `elfeed-xml-parse-region', writing XML ELEMENT to the buffer."
   (cl-destructuring-bind (tag attrs . body) element
     (insert (format "<%s" tag))
     (dolist (attr attrs)
@@ -174,7 +206,8 @@ XML encoding declaration."
   (null (cddr (directory-files dir))))
 
 (defun elfeed-slurp (file &optional literally)
-  "Return the contents of FILE as a string."
+  "Return the contents of FILE as a string.
+If LITERALLY is non-nil return the content literally."
   (with-temp-buffer
     (if literally
         (insert-file-contents-literally file)
@@ -212,13 +245,6 @@ XML encoding declaration."
                                 (not (string= data (elfeed-slurp file t)))))
                        (delete-file file)))))))))
 
-(defun elfeed-libxml-supported-p ()
-  "Return non-nil if `libxml-parse-html-region' is available."
-  (with-temp-buffer
-    (insert "<html></html>")
-    (and (fboundp 'libxml-parse-html-region)
-         (not (null (libxml-parse-html-region (point-min) (point-max)))))))
-
 (defun elfeed-keyword->symbol (keyword)
   "If a keyword, convert KEYWORD into a plain symbol (remove the colon)."
   (if (keywordp keyword)
@@ -238,28 +264,20 @@ XML encoding declaration."
       (prog1 t (read (prin1-to-string value)))
     (error nil)))
 
-(defun elfeed-strip-properties (string)
-  "Return a copy of STRING with all properties removed.
-If STRING is nil, returns nil."
-  (when string
-    (let ((copy (copy-sequence string)))
-      (prog1 copy
-        (set-text-properties 0 (length copy) nil copy)))))
-
 (defun elfeed-clipboard-get ()
   "Try to get a sensible value from the system clipboard.
 On systems running X, it will try to use the PRIMARY selection
 first, then fall back onto the standard clipboard like other
 systems."
-  (elfeed-strip-properties
-   (or (and (fboundp 'x-get-selection)
-            (funcall 'x-get-selection))
-       (and (functionp interprogram-paste-function)
-            (funcall interprogram-paste-function))
-       (and (fboundp 'w32-get-clipboard-data)
-            (funcall 'w32-get-clipboard-data))
-       (ignore-errors
-         (current-kill 0 :non-destructively)))))
+  (when-let* ((str (or (and (fboundp 'x-get-selection)
+                            (funcall 'x-get-selection))
+                       (and (functionp interprogram-paste-function)
+                            (funcall interprogram-paste-function))
+                       (and (fboundp 'w32-get-clipboard-data)
+                            (funcall 'w32-get-clipboard-data))
+                       (ignore-errors
+                         (current-kill 0 :non-destructively)))))
+    (substring-no-properties str)))
 
 (defun elfeed-get-link-at-point ()
   "Try to a link at point and return its URL."
@@ -267,13 +285,6 @@ systems."
       (and (fboundp 'eww-current-url)
            (funcall 'eww-current-url))
       (get-text-property (point) :nt-link)))
-
-(defun elfeed-get-url-at-point ()
-  "Try to get a plain URL at point."
-  (or (if (fboundp 'thing-at-point-url-at-point)
-          (thing-at-point-url-at-point)
-        (with-no-warnings (url-get-url-at-point)))
-      (thing-at-point 'url)))
 
 (defun elfeed-move-to-first-empty-line ()
   "Place point after first blank line, for use with `url-retrieve'.
@@ -314,7 +325,8 @@ This includes expanding e.g. 3-5 into 3,4,5.  If the letter
         (push (string-to-number elem) list)))))
 
 (defun elfeed-remove-dot-segments (input)
-  "Relative URL algorithm as described in RFC 3986 §5.2.4."
+  "Remove dots from INPUT path.
+The relative URL algorithm is described in RFC 3986 §5.2.4."
   (cl-loop
    with output = ""
    for s = input
@@ -381,5 +393,4 @@ This includes expanding e.g. 3-5 into 3,4,5.  If the letter
       host)))
 
 (provide 'elfeed-lib)
-
 ;;; elfeed-lib.el ends here

@@ -1,10 +1,15 @@
 ;;; elfeed-log.el --- Elfeed's logging system -*- lexical-binding: t; -*-
 
+;; This is free and unencumbered software released into the public domain.
+
 ;;; Commentary:
+
+;; Elfeed's logging system.
 
 ;;; Code:
 
 (require 'cl-lib)
+(require 'compat)
 
 (defface elfeed-log-date-face
   '((t :inherit font-lock-type-face))
@@ -31,7 +36,7 @@
   "Face for showing the `debug' log level in the elfeed log buffer."
   :group 'elfeed)
 
-(defvar elfeed-log-buffer-name "*elfeed-log*"
+(defvar elfeed-log-buffer-name " *elfeed-log*"
   "Name of buffer used for logging Elfeed events.")
 
 (defvar elfeed-log-level 'info
@@ -80,5 +85,4 @@ FMT must be a string suitable for `format' given OBJECTS as arguments."
           (apply #'format fmt objects)))))))
 
 (provide 'elfeed-log)
-
 ;;; elfeed-log.el ends here

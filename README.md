@@ -1,8 +1,8 @@
 # Elfeed Emacs Web Feed Reader
 
 Elfeed is an extensible web feed reader for Emacs, supporting both
-Atom and RSS. It requires Emacs 24.3 and is available for download
-from [MELPA](http://melpa.milkbox.net/) or
+Atom and RSS. It requires Emacs 28.1 and is available for download
+from [MELPA](http://melpa.org/) or
 [el-get](https://github.com/dimitri/el-get). Elfeed was inspired by
 [notmuch](http://notmuchmail.org/).
 
@@ -11,7 +11,7 @@ For a longer overview,
  * [Introducing Elfeed, an Emacs Web Feed Reader](http://nullprogram.com/blog/2013/09/04/).
  * [Tips and Tricks](http://nullprogram.com/blog/2013/11/26/)
  * [Read your RSS feeds in Emacs with Elfeed
-](http://pragmaticemacs.com/emacs/read-your-rss-feeds-in-emacs-with-elfeed/)
+](http://pragmaticemacs.wordpress.com/emacs/read-your-rss-feeds-in-emacs-with-elfeed/)
  * [Scoring Elfeed articles](http://kitchingroup.cheme.cmu.edu/blog/2017/01/05/Scoring-elfeed-articles/)
  * [Using Emacs 29](https://www.youtube.com/watch?v=pOFqzK1Ymr4),
    [30](https://www.youtube.com/watch?v=tjnK1rkO7RU),
@@ -20,12 +20,12 @@ For a longer overview,
  * [Elfeed Rules!](https://noonker.github.io/posts/2020-04-22-elfeed/) ([reddit](https://old.reddit.com/r/emacs/comments/g6oowz/elfeed_rules/))
  * [Elfeed with Tiny Tiny RSS](https://codingquark.com/emacs/2020/04/19/elfeed-protocol-ttrss.html) ([hn](https://news.ycombinator.com/item?id=22915200))
  * [Open Emacs elfeed links in the background](http://xenodium.com/open-emacs-elfeed-links-in-background/)
- * [Using Emacs 72](https://cestlaz.github.io/post/using-emacs-72-customizing-elfeed/)
+ * [Using Emacs 72](https://web.archive.org/web/20241126185125/https://cestlaz.github.io/post/using-emacs-72-customizing-elfeed/)
  * [Lazy Elfeed](https://karthinks.com/blog/lazy-elfeed/)
- * [Using Elfeed to View Videos](https://joshrollinswrites.com/help-desk-head-desk/20200611/)
+ * [Using Elfeed to View Videos](https://medium.com/emacs/using-elfeed-to-view-videos-6dfc798e51e6)
  * [Manage podcasts in Emacs with Elfeed and Bongo](https://protesilaos.com/codelog/2020-09-11-emacs-elfeed-bongo/)
  * [... more ...](http://nullprogram.com/tags/elfeed/)
- * [... and more ...](http://pragmaticemacs.com/category/elfeed/)
+ * [... and more ...](http://pragmaticemacs.wordpress.com/category/elfeed/)
 
 [![](http://i.imgur.com/kxgF5AH.png)](http://i.imgur.com/kxgF5AH.png)
 
@@ -54,6 +54,8 @@ These projects extend Elfeed with additional features:
 * [Elfeed Android interface](https://github.com/areina/elfeed-cljsrn)
   ([Google Play](https://play.google.com/store/apps/details?id=com.elfeedcljsrn))
 * [elfeed-dashboard](https://github.com/Manoj321/elfeed-dashboard)
+* [elfeed-tube](https://github.com/karthink/elfeed-tube)
+* [elfeed-ai](https://github.com/benthamite/elfeed-ai)
 
 ## Getting Started
 
@@ -104,7 +106,7 @@ much for you, reduce the number of concurrent fetches via
 If you're getting many "Queue timeout exceeded" errors, increase the
 fetch timeout via `elfeed-set-timeout`.
 
-~~~el
+~~~emacs-lisp
 (setf url-queue-timeout 30)
 ~~~
 
@@ -260,7 +262,7 @@ entry's appearance by customizing `elfeed-search-face-alist`. For
 example, this configuration makes entries tagged `important` stand out
 in red.
 
-~~~el
+~~~emacs-lisp
 (defface important-elfeed-entry
   '((t :foreground "#f77"))
   "Marks an important Elfeed entry.")
@@ -332,9 +334,15 @@ Org-mode HTML quote.
 All feed and entry objects have plist where you can store your own
 arbitrary, [readable values][rd]. These values are automatically
 persisted in the database. This metadata is accessed using the
-polymorphic `elfeed-meta` function. It's setf-able.
+polymorphic `elfeed-meta` function. The function is a generalized
+variable, such that it is setf-able. The macro `setf` must have access
+to the definition of `elfeed-meta` at compile time. Therefore you must
+add a `(require 'elfeed)` at the top level, such that the Elisp byte
+compiler loads the definition.
 
-~~~el
+~~~emacs-lisp
+(require 'elfeed) ;; Necessary for macro expansion of (setf (elfeed-meta ...) ...)
+
 (setf (elfeed-meta entry :rating) 4)
 (elfeed-meta entry :rating)
 ;; => 4
@@ -372,8 +380,9 @@ key points without resorting to advice.
 * `elfeed-new-entry-parse-hook` : Called with each new entry and the
   full XML structure from which it was parsed, allowing for additional
   information to be drawn from the original feed XML.
-* `elfeed-http-error-hooks` : Allows for special behavior when HTTP
-  errors occur, beyond simply logging the error to `*elfeed-log*` .
+* `elfeed-http-error-hooks` : Allows for special behavior when HTTP errors
+  occur, beyond simply logging the error to the buffer named
+  `elfeed-log-buffer-name`.
 * `elfeed-parse-error-hooks` : Allows for special behavior when feed
   parsing fails, beyond logging.
 * `elfeed-db-update-hook` : Called any time the database has had a
@@ -392,10 +401,11 @@ Sometimes displaying images can slow down or even crash Emacs. Set
 
 ## Web Interface
 
-Elfeed includes a demonstration/toy web interface for remote network
-access. It's a single-page web application that follows the database
-live as new entries arrive. It's packaged separately as `elfeed-web`.
-To fire it up, run `M-x elfeed-web-start` and visit
+A demonstration/toy web interface for remote network access to Elfeed
+exists in a [separate repository](https://github.com/emacs-elfeed/elfeed-web).
+It's a single-page web application that follows the database live as
+new entries arrive. It's packaged separately as `elfeed-web`. To fire
+it up, run `M-x elfeed-web-start` and visit
 http://localhost:8080/elfeed/ (check your `httpd-port`) with a
 browser. See the `elfeed-web.el` header for endpoint documentation if
 you'd like to access the Elfeed database through the web API.

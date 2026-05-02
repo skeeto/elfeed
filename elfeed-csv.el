@@ -1,5 +1,7 @@
 ;;; elfeed-csv.el --- export database to CSV files -*- lexical-binding: t; -*-
 
+;; This is free and unencumbered software released into the public domain.
+
 ;;; Commentary:
 
 ;; The `elfeed-csv-export' docstring has a SQL schema recommendation.
@@ -72,7 +74,6 @@
 
 ;;; Code:
 
-(require 'cl-lib)
 (require 'elfeed-db)
 
 (defvar elfeed-csv-nil ""
@@ -89,9 +90,10 @@ Consider let-binding this around your `elfeed-csv-quote' call.")
          (concat "\"" (replace-regexp-in-string "\"" "\"\"" sexp) "\""))
         (sexp)))
 
-(defun elfeed-csv-insert (seq)
-  "Insert a row of CSV data to the current buffer."
-  (cl-loop for value being the elements of seq
+(defun elfeed-csv-insert (row)
+  "Insert a ROW of CSV data to the current buffer.
+ROW is a sequence (list or vector)."
+  (cl-loop for value being the elements of row
            for column upfrom 0
            when (> column 0)
            do (insert ",")
@@ -101,9 +103,12 @@ Consider let-binding this around your `elfeed-csv-quote' call.")
 (cl-defun elfeed-csv-export (feeds-file entries-file tags-file &key headers-p)
   "Create separate CSV files for feeds, entries, and tags.
 
+The files are FEEDS-FILE, ENTRIES-FILE and TAGS-FILE respectively.
+Headers are added optionally if HEADERS-P is non-nil.
+
 These CSV files are intended for an analysis of an Elfeed
-database. They are suitable for importing as tables into a
-relational database such as SQLite. Here's the recommended SQL
+database.  They are suitable for importing as tables into a
+relational database such as SQLite.  Here's the recommended SQL
 schema, reflecting the structure of the data.
 
 CREATE TABLE feeds (
@@ -172,5 +177,4 @@ CREATE TABLE tags (
       (kill-buffer))))
 
 (provide 'elfeed-csv)
-
 ;;; elfeed-csv.el ends here

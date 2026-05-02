@@ -10,18 +10,17 @@
 
 ;;; Code:
 
-(require 'org)
-(require 'cl-lib)
 (require 'elfeed-db)
-(require 'elfeed-show)
 (require 'elfeed-search)
+(require 'elfeed-show)
+(require 'org)
 
 ;;;###autoload
 (defun elfeed-link-store-link ()
   "Store a link to an elfeed search or entry buffer.
 
 When storing a link to an entry, automatically extract all the
-entry metadata. These can be used in the capture templates as
+entry metadata.  These can be used in the capture templates as
 `%:keyword` expansion.
 
 List of available keywords, when store from an Elfeed search:
@@ -140,5 +139,4 @@ search buffer or show a concrete entry."
              :store #'elfeed-link-store-link))))))
 
 (provide 'elfeed-link)
-
 ;;; elfeed-link.el ends here

@@ -1,31 +1,29 @@
-;;; elfeed.el --- an Emacs Atom/RSS feed reader -*- lexical-binding: t; -*-
+;;; elfeed.el --- An Emacs Atom/RSS feed reader -*- lexical-binding: t; -*-
 
 ;; This is free and unencumbered software released into the public domain.
 
 ;; Author: Christopher Wellons <wellons@nullprogram.com>
-;; URL: https://github.com/skeeto/elfeed
+;; Maintainer: Karthik Chikmagalur <karthik.chikmagalur@gmail.com>, Ihor Radchenko <yantar92@posteo.net>, Daniel Mendler <mail@daniel-mendler.de>
+;; URL: https://github.com/emacs-elfeed/elfeed
+;; Version: 3.4.2
+;; Package-Requires: ((emacs "28.1") (compat "31"))
+;; Keywords: network, hypermedia
 
 ;;; Commentary:
 
-;; Elfeed is a web feed client for Emacs, inspired by notmuch. See
+;; Elfeed is a web feed client for Emacs, inspired by notmuch.  See
 ;; the README for full documentation.
 
 ;;; Code:
 
-(require 'cl-lib)
-(require 'xml)
+(eval-when-compile (require 'subr-x))
 (require 'xml-query)
-(require 'url-parse)
 (require 'url-queue)
 
 (require 'elfeed-db)
 (require 'elfeed-lib)
 (require 'elfeed-log)
 (require 'elfeed-curl)
-
-;; Interface to elfeed-search (lazy required)
-(declare-function elfeed-search-buffer 'elfeed-search ())
-(declare-function elfeed-search-mode   'elfeed-search ())
 
 (defgroup elfeed ()
   "An Emacs web feed reader."
@@ -40,7 +38,7 @@ You must add your feeds to this list.
 In its simplest form this will be a list of strings of feed URLs.
 Items in this list can also be list whose car is the feed URL
 and cdr is a list of symbols to be applied to all discovered
-entries as tags (\"autotags\"). For example,
+entries as tags (\"autotags\").  For example,
 
   (setq elfeed-feeds \\='(\"http://foo/\"
                        \"http://bar/\"
@@ -53,20 +51,28 @@ when they are first discovered."
                          (cons string (repeat symbol)))))
 
 (defcustom elfeed-feed-functions
-  '(elfeed-get-link-at-point
-    elfeed-get-url-at-point
-    elfeed-clipboard-get)
+  (list #'elfeed-get-link-at-point
+        #'thing-at-point-url-at-point
+        #'elfeed-clipboard-get)
   "List of functions to use to get possible feeds for `elfeed-add-feed'.
 Each function should accept no arguments, and return a string or nil."
   :group 'elfeed
   :type 'hook
-  :options '(elfeed-get-link-at-point
-             elfeed-get-url-at-point
-             elfeed-clipboard-get))
+  :options (list #'elfeed-get-link-at-point
+                 #'thing-at-point-url-at-point
+                 #'elfeed-clipboard-get))
 
 (defcustom elfeed-use-curl
   (not (null (executable-find elfeed-curl-program-name)))
   "If non-nil, fetch feeds using curl instead of `url-retrieve'."
+  :group 'elfeed
+  :type 'boolean)
+
+(defcustom elfeed-use-libxml nil
+  "Use faster libxml2 for parsing.
+This setting is experimental, and disabled for now.  It may lead to
+subtle differences to the usual xml.el parser, which renders certain
+feeds unreadable.  Enabling may yield a performance boost."
   :group 'elfeed
   :type 'boolean)
 
@@ -80,22 +86,36 @@ Each function should accept no arguments, and return a string or nil."
   :group 'elfeed
   :type '(repeat symbol))
 
+(defcustom elfeed-default-directory nil
+  "Default directory for all Elfeed buffers."
+  :group 'elfeed
+  :type '(choice (const :tag "current" nil)
+                 (const :tag "user home" "~/")
+                 directory))
+
+(defun elfeed-default-directory ()
+  "Return default directory to be used by Elfeed buffers."
+  (if (and elfeed-default-directory
+           (file-exists-p elfeed-default-directory))
+      (file-name-as-directory (expand-file-name elfeed-default-directory))
+    default-directory))
+
 ;; Fetching:
 
 (defvar elfeed-http-error-hooks ()
   "Hooks to run when an http connection error occurs.
-It is called with 2 arguments. The first argument is the url of
-the failing feed. The second argument is the http status code.")
+It is called with 2 arguments.  The first argument is the url of
+the failing feed.  The second argument is the http status code.")
 
 (defvar elfeed-parse-error-hooks ()
   "Hooks to run when an error occurs during the parsing of a feed.
-It is called with 2 arguments. The first argument is the url of
-the failing feed. The second argument is the error message .")
+It is called with 2 arguments.  The first argument is the url of
+the failing feed.  The second argument is the error message .")
 
 (defvar elfeed-update-hooks ()
   "Hooks to run any time a feed update has completed a request.
 It is called with 1 argument: the URL of the feed that was just
-updated. The hook is called even when no new entries were
+updated.  The hook is called even when no new entries were
 found.")
 
 (defvar elfeed-update-init-hooks ()
@@ -105,13 +125,13 @@ updates are pending.")
 
 (defvar elfeed-tag-hooks ()
   "Hooks called when one or more entries add tags.
-It is called with 2 arguments. The first argument is the entry
-list. The second argument is the tag list.")
+It is called with 2 arguments.  The first argument is the entry
+list.  The second argument is the tag list.")
 
 (defvar elfeed-untag-hooks ()
   "Hooks called when one or more entries remove tags.
-It is called with 2 arguments. The first argument is the entry
-list. The second argument is the tag list.")
+It is called with 2 arguments.  The first argument is the entry
+list.  The second argument is the tag list.")
 
 (defvar elfeed--inhibit-update-init-hooks nil
   "When non-nil, don't run `elfeed-update-init-hooks'.")
@@ -153,7 +173,8 @@ list. The second argument is the tag list.")
     url-queue-timeout))
 
 (defun elfeed-is-status-error (status use-curl)
-  "Check if HTTP request returned status means a error."
+  "Check if HTTP request returned STATUS means a error.
+USE-CURL is needed since the interpretation depends on if curl is used."
   (or (and use-curl (null status)) ; nil = error
       (and (not use-curl) (eq (car status) :error))))
 
@@ -184,17 +205,16 @@ This is a workaround for issues in `url-queue-retrieve'."
   (if elfeed-use-curl
       (setf elfeed-curl-queue nil
             elfeed-curl-queue-active 0)
-    (let ((fails (mapcar #'url-queue-url url-queue)))
-      (when fails
-        (elfeed-log 'warn "Elfeed aborted feeds: %s"
-                    (mapconcat #'identity fails " ")))
-      (setf url-queue nil)))
+    (when-let* ((fails (mapcar #'url-queue-url url-queue)))
+      (elfeed-log 'warn "Elfeed aborted feeds: %s"
+                  (mapconcat #'identity fails " ")))
+    (setf url-queue nil))
   (run-hooks 'elfeed-update-init-hooks))
 
 ;; Parsing:
 
 (defun elfeed-feed-type (content)
-  "Return the feed type (:atom, :rss, :rss1.0) or nil for unknown."
+  "Obtain the feed type (:atom, :rss, :rss1.0) or nil for unknown from CONTENT."
   (let ((top (xml-query-strip-ns (caar content))))
     (cadr (assoc top '((feed :atom)
                        (rss :rss)
@@ -215,17 +235,16 @@ This is a workaround for issues in `url-queue-retrieve'."
                   (insert element)
                 (elfeed-xml-unparse element))))
           (buffer-string))
-      (let ((all-content
-             (or (xml-query-all* (content *) entry)
-                 (xml-query-all* (summary *) entry))))
-        (when all-content
-          (apply #'concat all-content))))))
+      (when-let* ((all-content
+                   (or (xml-query-all* (content *) entry)
+                       (xml-query-all* (summary *) entry))))
+        (apply #'concat all-content)))))
 
 (defvar elfeed-new-entry-parse-hook '()
   "Hook to be called after parsing a new entry.
 
 Take three arguments: the feed TYPE, the XML structure for the
-entry, and the Elfeed ENTRY object. Return value is ignored, and
+entry, and the Elfeed ENTRY object.  Return value is ignored, and
 is called for side-effects on the ENTRY object.")
 
 (defsubst elfeed--fixup-protocol (protocol url)
@@ -236,7 +255,7 @@ If PROTOCOL is nil, returns URL."
     url))
 
 (defsubst elfeed--atom-authors-to-plist (authors)
-  "Parse list of author XML tags into list of plists."
+  "Parse list of AUTHORS as XML tags into list of plists."
   (let ((result ()))
     (dolist (author authors)
       (let ((plist ())
@@ -253,12 +272,13 @@ If PROTOCOL is nil, returns URL."
     (nreverse result)))
 
 (defsubst elfeed--creators-to-plist (creators)
-  "Convert Dublin Core list of creators into an authors plist."
+  "Convert Dublin Core list of CREATORS into an authors plist."
   (cl-loop for creator in creators
            collect (list :name creator)))
 
 (defun elfeed-entries-from-atom (url xml)
-  "Turn parsed Atom content into a list of elfeed-entry structs."
+  "Turn parsed Atom content into a list of elfeed-entry structs.
+URL identifies the feed and XML is the parsed content."
   (let* ((feed-id url)
          (protocol (url-type (url-generic-parse-url url)))
          (namespace (elfeed-url-to-namespace url))
@@ -326,7 +346,7 @@ If PROTOCOL is nil, returns URL."
                db-entry))))
 
 (defsubst elfeed--rss-author-to-plist (author)
-  "Parse an RSS author element into an authors plist."
+  "Parse an RSS AUTHOR element into an authors plist."
   (when author
     (let ((clean (elfeed-cleanup author)))
       (if (string-match "^\\(.*\\) (\\([^)]+\\))$" clean)
@@ -335,7 +355,8 @@ If PROTOCOL is nil, returns URL."
         (list (list :email clean))))))
 
 (defun elfeed-entries-from-rss (url xml)
-  "Turn parsed RSS content into a list of elfeed-entry structs."
+  "Turn parsed RSS content into a list of elfeed-entry structs.
+URL identifies the feed and XML is the parsed content."
   (let* ((feed-id url)
          (protocol (url-type (url-generic-parse-url url)))
          (namespace (elfeed-url-to-namespace url))
@@ -394,7 +415,8 @@ If PROTOCOL is nil, returns URL."
                db-entry))))
 
 (defun elfeed-entries-from-rss1.0 (url xml)
-  "Turn parsed RSS 1.0 content into a list of elfeed-entry structs."
+  "Turn parsed RSS 1.0 content into a list of elfeed-entry structs.
+URL identifies the feed and XML is the parsed content."
   (let* ((feed-id url)
          (namespace (elfeed-url-to-namespace url))
          (feed (elfeed-db-get-feed feed-id))
@@ -458,18 +480,18 @@ Only a list of strings will be returned."
 
 (defun elfeed-handle-http-error (url status)
   "Handle an http error during retrieval of URL with STATUS code."
-  (cl-incf (elfeed-meta (elfeed-db-get-feed url) :failures 0))
+  (incf (elfeed-meta (elfeed-db-get-feed url) :failures 0))
   (run-hook-with-args 'elfeed-http-error-hooks url status)
   (elfeed-log 'error "%s: %S" url status))
 
 (defun elfeed-handle-parse-error (url error)
   "Handle parse error during parsing of URL with ERROR message."
-  (cl-incf (elfeed-meta (elfeed-db-get-feed url) :failures 0))
+  (incf (elfeed-meta (elfeed-db-get-feed url) :failures 0))
   (run-hook-with-args 'elfeed-parse-error-hooks url error)
   (elfeed-log 'error "%s: %s" url error))
 
 (defun elfeed-update-feed (url)
-  "Update a specific feed."
+  "Update a specific feed identified by URL."
   (interactive (list (completing-read "Feed: " (elfeed-feed-list))))
   (unless elfeed--inhibit-update-init-hooks
     (run-hooks 'elfeed-update-init-hooks))
@@ -520,7 +542,7 @@ Only a list of strings will be returned."
     (nreverse res)))
 
 (cl-defun elfeed-add-feed (url &key save)
-  "Manually add a feed to the database.
+  "Manually add a feed at URL to the database.
 If SAVE is non-nil the new value of ‘elfeed-feeds’ is saved.  When
 called interactively, SAVE is set to t."
   (interactive
@@ -554,6 +576,9 @@ called interactively, SAVE is set to t."
 (defun elfeed ()
   "Enter elfeed."
   (interactive)
+  ;; elfeed-search.el is required at runtime.
+  (declare-function elfeed-search-buffer "elfeed-search")
+  (declare-function elfeed-search-mode   "elfeed-search")
   (switch-to-buffer (elfeed-search-buffer))
   (unless (eq major-mode 'elfeed-search-mode)
     (elfeed-search-mode)))
@@ -567,10 +592,10 @@ called interactively, SAVE is set to t."
 
 FEED-TITLE, FEED-URL, ENTRY-TITLE, and ENTRY-LINK are regular
 expressions or a list (not <regex>), which indicates a negative
-match. AFTER and BEFORE are relative times (see
-`elfeed-time-duration'). Entries must match all provided
-expressions. If an entry matches, add tags ADD and remove tags
-REMOVE.
+match.  AFTER and BEFORE are relative times (see
+`elfeed-time-duration').  Entries must match all provided
+expressions.  If an entry matches, add tags ADD and remove tags
+REMOVE.  Call CALLBACK for each entry.
 
 Examples,
 
@@ -624,11 +649,11 @@ The returned function should be added to `elfeed-new-entry-hook'."
 
 ;;;###autoload
 (defun elfeed-load-opml (file)
-  "Load feeds from an OPML file into `elfeed-feeds'.
+  "Load feeds from FILE in OPML format into `elfeed-feeds'.
 When called interactively, the changes to `elfeed-feeds' are
 saved to your customization file."
   (interactive "fOPML file: ")
-  (let* ((xml (xml-parse-file file))
+  (let* ((xml (elfeed-xml-parse-file file))
          (feeds (elfeed--parse-opml xml))
          (full (append feeds elfeed-feeds)))
     (prog1 (setf elfeed-feeds (cl-delete-duplicates full :test #'string=))
