@@ -237,6 +237,7 @@ Used as `revert-buffer-function'."
   (add-hook 'elfeed-update-hooks #'elfeed-search-update)
   (add-hook 'elfeed-update-init-hooks #'elfeed-search-update--force)
   (add-hook 'kill-buffer-hook #'elfeed-db-save t t)
+  (add-hook 'window-size-change-functions #'elfeed-search-update)
   (add-hook 'elfeed-db-unload-hook #'elfeed-search--unload)
   (elfeed-search-update :force))
 
