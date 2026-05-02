@@ -87,18 +87,35 @@ Called without arguments."
   (interactive nil elfeed-show-mode)
   (elfeed-show-tag 'unread))
 
+(defvar-local elfeed--insert-html-tick 0
+  "Insert counter for the current buffer.
+This counter helps protecting against inserting outdated images.")
+
 (defun elfeed-insert-html (html &optional base-url)
   "Converted HTML markup to a propertized string.
 Links are relative to BASE-URL if non-nil."
-  (shr-insert-document
-   (if (libxml-available-p)
-       (with-temp-buffer
-         ;; insert <base> to work around libxml-parse-html-region bug
-         (when base-url
-           (insert (format "<base href=\"%s\">" base-url)))
-         (insert html)
-         (libxml-parse-html-region (point-min) (point-max) base-url))
-     '(i () "Elfeed: libxml2 functionality is unavailable"))))
+  ;; HACK: Ensure that inserted images are not outdated, if the buffer content
+  ;; has changed in the meantime.  There should be a better solution in Emacs.
+  ;; See Emacs bug#80945 and https://github.com/emacs-elfeed/elfeed/issues/550.
+  (cl-letf* ((doc (if (libxml-available-p)
+                      (with-temp-buffer
+                        ;; insert <base> to work around libxml-parse-html-region bug
+                        (when base-url
+                          (insert (format "<base href=\"%s\">" base-url)))
+                        (insert html)
+                        (libxml-parse-html-region (point-min) (point-max) base-url))
+                    '(i () "Elfeed: libxml2 functionality is unavailable")))
+             (tick (cl-incf elfeed--insert-html-tick))
+             (orig (symbol-function 'url-queue-retrieve))
+             ((symbol-function 'url-queue-retrieve)
+              (lambda (url cb &rest args)
+                (let ((cb (if (eq cb #'shr-image-fetched)
+                              (lambda (&rest args)
+                                (when (= elfeed--insert-html-tick tick)
+                                  (apply #'shr-image-fetched orig args)))
+                            cb)))
+                  (apply orig url cb args)))))
+    (shr-insert-document doc)))
 
 (cl-defun elfeed-insert-link (url &optional (content url))
   "Insert a clickable hyperlink to URL titled CONTENT."
