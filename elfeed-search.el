@@ -21,9 +21,6 @@
 (require 'elfeed-db)
 (require 'elfeed-lib)
 
-;; Interface to elfeed-show (lazy required)
-(declare-function elfeed-show-entry 'elfeed-show (entry))
-
 (defvar elfeed-search-entries ()
   "List of the entries currently on display.")
 
@@ -857,13 +854,14 @@ the browser defined by `browse-url-generic-program'."
   "Display the currently selected ENTRY in a buffer."
   (interactive (list (elfeed-search-selected :ignore-region))
                elfeed-search-mode)
-  (require 'elfeed-show)
   (when (elfeed-entry-p entry)
     (elfeed-untag entry 'unread)
     (elfeed-search-update-entry entry)
     (unless elfeed-search-remain-on-entry
       (forward-line)
       (hl-line-highlight))
+    ;; elfeed-show.el is required by elfeed.el at runtime.
+    (declare-function elfeed-show-entry "elfeed-show")
     (elfeed-show-entry entry)))
 
 (defun elfeed-search-set-entry-title (title)

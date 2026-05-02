@@ -28,10 +28,6 @@
 (require 'elfeed-log)
 (require 'elfeed-curl)
 
-;; Interface to elfeed-search (lazy required)
-(declare-function elfeed-search-buffer 'elfeed-search ())
-(declare-function elfeed-search-mode   'elfeed-search ())
-
 (defgroup elfeed ()
   "An Emacs web feed reader."
   :group 'comm)
@@ -583,6 +579,9 @@ called interactively, SAVE is set to t."
 (defun elfeed ()
   "Enter elfeed."
   (interactive)
+  ;; elfeed-search.el is required at runtime.
+  (declare-function elfeed-search-buffer "elfeed-search")
+  (declare-function elfeed-search-mode   "elfeed-search")
   (switch-to-buffer (elfeed-search-buffer))
   (unless (eq major-mode 'elfeed-search-mode)
     (elfeed-search-mode)))
