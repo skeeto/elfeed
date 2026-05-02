@@ -21,27 +21,27 @@
   "Face for showing headers in the elfeed-entry buffer."
   :group 'elfeed)
 
-(defface elfeed-show-entry-body-title-face
+(defface elfeed-show-entry-title-face
   '((t :weight bold :inherit font-lock-string-face))
   "Face for showing the title name in the elfeed-entry buffer."
   :group 'elfeed)
 
-(defface elfeed-show-entry-body-author-face
+(defface elfeed-show-entry-author-face
   '((t :weight bold :inherit font-lock-string-face))
   "Face for showing the author name in the elfeed-entry buffer."
   :group 'elfeed)
 
-(defface elfeed-show-entry-body-date-face
+(defface elfeed-show-entry-date-face
   '((t :inherit font-lock-string-face))
   "Face for showing the date in the elfeed-entry buffer."
   :group 'elfeed)
 
-(defface elfeed-show-entry-body-feed-face
+(defface elfeed-show-entry-feed-face
   '((t :inherit font-lock-string-face))
   "Face for showing the feed name in the elfeed-entry buffer."
   :group 'elfeed)
 
-(defface elfeed-show-entry-body-tags-face
+(defface elfeed-show-entry-tags-face
   '((t :inherit font-lock-string-face))
   "Face for showing the tag names in the elfeed-entry buffer."
   :group 'elfeed)
@@ -196,20 +196,20 @@ Links are relative to BASE-URL if non-nil."
     (setq list-buffers-directory title)
     (erase-buffer)
     (insert (format (propertize "Title: %s\n" 'face 'elfeed-show-entry-header-face)
-                    (propertize title 'face 'elfeed-show-entry-body-title-face)))
+                    (propertize title 'face 'elfeed-show-entry-title-face)))
     (when elfeed-show-entry-author
       (dolist (author authors)
         (let ((formatted (elfeed--show-format-author author)))
           (insert
            (format (propertize "Author: %s\n" 'face 'elfeed-show-entry-header-face)
-                   (propertize formatted 'face 'elfeed-show-entry-body-author-face))))))
+                   (propertize formatted 'face 'elfeed-show-entry-author-face))))))
     (insert (format (propertize "Date: %s\n" 'face 'elfeed-show-entry-header-face)
-                    (propertize nicedate 'face 'elfeed-show-entry-body-date-face)))
+                    (propertize nicedate 'face 'elfeed-show-entry-date-face)))
     (insert (format (propertize "Feed: %s\n" 'face 'elfeed-show-entry-header-face)
-                    (propertize feed-title 'face 'elfeed-show-entry-body-feed-face)))
+                    (propertize feed-title 'face 'elfeed-show-entry-feed-face)))
     (when tags
       (insert (format (propertize "Tags: %s\n" 'face 'elfeed-show-entry-header-face)
-                      (propertize tagsstr 'face 'elfeed-show-entry-body-tags-face))))
+                      (propertize tagsstr 'face 'elfeed-show-entry-tags-face))))
     (insert (propertize "Link: " 'face 'elfeed-show-entry-header-face))
     (elfeed-insert-link link link)
     (insert "\n")
