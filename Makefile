@@ -35,25 +35,18 @@ elfeed-$(VERSION).tar: $(EL) $(DOC)
 	tar cf $@ elfeed-$(VERSION)/
 	rm -rf elfeed-$(VERSION)/
 
-elfeed-csv.elc: elfeed-db.elc
-elfeed-curl.elc: elfeed-lib.elc elfeed-log.elc
-elfeed-db.elc: elfeed-lib.elc
-elfeed-show.elc: elfeed.elc elfeed-db.elc elfeed-lib.elc elfeed-search.elc
-elfeed-link.elc: elfeed.elc elfeed-search.elc elfeed-show.elc
-elfeed.elc: elfeed-lib.elc elfeed-log.elc elfeed-curl.elc elfeed-db.elc \
-    xml-query.elc
-elfeed-search.elc: elfeed.elc elfeed-db.elc elfeed-lib.elc
-tests/elfeed-curl-tests.elc: elfeed-lib.elc elfeed-curl.elc
-tests/elfeed-db-tests.elc: elfeed.elc elfeed-db.elc elfeed-lib.elc
-tests/elfeed-lib-tests.elc: elfeed-lib.elc
-tests/elfeed-tests.elc: elfeed.elc elfeed-lib.elc elfeed-curl.elc \
-    tests/xml-query-tests.elc tests/elfeed-db-tests.elc \
-    tests/elfeed-lib-tests.elc tests/elfeed-search-tests.elc \
-    tests/elfeed-curl-tests.elc
-tests/elfeed-search-tests.elc: elfeed-search.elc
-tests/xml-query-tests.elc: xml-query.elc
-
 .SUFFIXES: .el .elc
 
 .el.elc:
 	$(BATCH) -f batch-byte-compile $<
+
+deps:
+	@for i in *.el tests/*.el; do \
+		echo -n "$${i%.el}.elc:"; \
+		grep -P "^ *\(require 'elfeed" $$i | tr "\n" " " | \
+		sed "s#))* *#.el#g" | sed "s# *(require '# #g" | \
+		sed "s#elfeed-[a-z-]*-tests.el#tests/\0#g"; \
+		echo; \
+	done > Makefile.deps
+
+-include Makefile.deps
