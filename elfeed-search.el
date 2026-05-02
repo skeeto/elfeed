@@ -237,17 +237,14 @@ Used as `revert-buffer-function'."
   (add-hook 'elfeed-update-hooks #'elfeed-search-update)
   (add-hook 'elfeed-update-init-hooks #'elfeed-search-update--force)
   (add-hook 'kill-buffer-hook #'elfeed-db-save t 'local)
-  (add-hook 'window-size-change-functions
-            ;; On Emacs 31 `window-size-change-functions' run in current buffer
-            (static-if (>= emacs-major-version 31)
-                #'elfeed-search-update--force
-              (let ((buf (current-buffer)))
-                (lambda (_)
-                  (with-current-buffer buf
-                    (elfeed-search-update--force)))))
-            nil 'local)
+  (add-hook 'window-size-change-functions #'elfeed-search--resize nil 'local)
   (add-hook 'elfeed-db-unload-hook #'elfeed-search--unload)
   (elfeed-search-update :force))
+
+(defun elfeed-search--resize (win)
+  "Resize search window WIN."
+  (with-selected-window win
+    (elfeed-search-update--force)))
 
 (defun elfeed-search-buffer ()
   "Create and return search buffer."
