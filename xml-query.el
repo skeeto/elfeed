@@ -27,8 +27,9 @@
 
 ;;; Code:
 
-(require 'cl-lib)
 (eval-when-compile (require 'subr-x))
+(require 'cl-lib)
+(require 'compat)
 
 (defun xml-query-strip-ns (tag)
   "Remove the namespace, if any, from TAG."
@@ -226,5 +227,4 @@ QUERY is *not* evaluated, so it should not be quoted."
   (xml-query-all--compile query sexp))
 
 (provide 'xml-query)
-
 ;;; xml-query.el ends here

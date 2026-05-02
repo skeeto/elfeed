@@ -10,11 +10,10 @@
 
 ;;; Code:
 
-(require 'org)
-(require 'cl-lib)
 (require 'elfeed-db)
-(require 'elfeed-show)
 (require 'elfeed-search)
+(require 'elfeed-show)
+(require 'org)
 
 ;;;###autoload
 (defun elfeed-link-store-link ()
@@ -140,5 +139,4 @@ search buffer or show a concrete entry."
              :store #'elfeed-link-store-link))))))
 
 (provide 'elfeed-link)
-
 ;;; elfeed-link.el ends here

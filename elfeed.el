@@ -17,10 +17,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'subr-x))
-(require 'cl-lib)
-(require 'xml)
 (require 'xml-query)
-(require 'url-parse)
 (require 'url-queue)
 
 (require 'elfeed-db)

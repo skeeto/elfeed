@@ -9,14 +9,8 @@
 ;;; Code:
 
 (eval-when-compile (require 'subr-x))
-(require 'compat)
-(require 'cl-lib)
 (require 'shr)
-(require 'url-parse)
-(require 'browse-url)
 (require 'message) ; faces
-(require 'bookmark)
-(bookmark-maybe-load-default-file)
 
 (require 'elfeed)
 (require 'elfeed-db)
@@ -508,5 +502,4 @@ Prompts for ENCLOSURE-INDEX when called interactively."
       (handler . elfeed-show-bookmark-handler))))
 
 (provide 'elfeed-show)
-
 ;;; elfeed-show.el ends here

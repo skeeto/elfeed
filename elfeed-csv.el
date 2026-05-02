@@ -74,7 +74,6 @@
 
 ;;; Code:
 
-(require 'cl-lib)
 (require 'elfeed-db)
 
 (defvar elfeed-csv-nil ""
@@ -178,5 +177,4 @@ CREATE TABLE tags (
       (kill-buffer))))
 
 (provide 'elfeed-csv)
-
 ;;; elfeed-csv.el ends here

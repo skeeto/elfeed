@@ -9,13 +9,13 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'subr-x))
+(require 'compat)
 (require 'cl-lib)
 (require 'thingatpt)
 (require 'time-date)
-(require 'url-parse)
-(require 'url-util)
+(require 'url)
 (require 'xml)
-(eval-when-compile (require 'subr-x))
 
 (define-obsolete-function-alias 'elfeed-libxml-supported-p
   #'libxml-available-p "3.4.2")
@@ -393,5 +393,4 @@ The relative URL algorithm is described in RFC 3986 §5.2.4."
       host)))
 
 (provide 'elfeed-lib)
-
 ;;; elfeed-lib.el ends here

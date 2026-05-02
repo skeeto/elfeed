@@ -45,10 +45,11 @@
 
 ;;; Code:
 
-(require 'cl-lib)
-(require 'avl-tree)
-(require 'elfeed-lib)
 (eval-when-compile (require 'subr-x))
+(require 'avl-tree)
+(require 'cl-lib)
+
+(require 'elfeed-lib)
 
 (defcustom elfeed-db-directory "~/.elfeed"
   "Directory where elfeed will store its database."
@@ -643,5 +644,4 @@ gzip-compressed files, so the gzip program must be in your PATH."
   (add-hook 'kill-emacs-hook #'elfeed-db-save-safe))
 
 (provide 'elfeed-db)
-
 ;;; elfeed-db.el ends here

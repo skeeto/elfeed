@@ -39,11 +39,10 @@
 
 ;;; Code:
 
-(require 'url)
-(require 'cl-lib)
+(eval-when-compile (require 'subr-x))
+
 (require 'elfeed-lib)
 (require 'elfeed-log)
-(eval-when-compile (require 'subr-x))
 
 (defcustom elfeed-curl-program-name "curl"
   "Name/path by which to invoke the curl program."
@@ -544,5 +543,4 @@ and DATA."
       (setf elfeed-curl--run-queue-queued t))))
 
 (provide 'elfeed-curl)
-
 ;;; elfeed-curl.el ends here

@@ -9,11 +9,10 @@
 ;;; Code:
 
 (eval-when-compile (require 'subr-x))
-(require 'compat)
-(require 'cl-lib)
 (require 'browse-url)
 (require 'hl-line)
 (require 'wid-edit) ; widget-inactive face
+
 (require 'bookmark)
 (bookmark-maybe-load-default-file)
 
@@ -971,5 +970,4 @@ state of the db for when `desktop-auto-save-timeout' is enabled."
              '(elfeed-search-mode . elfeed-search-desktop-restore))
 
 (provide 'elfeed-search)
-
 ;;; elfeed-search.el ends here

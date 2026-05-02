@@ -9,6 +9,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'compat)
 
 (defface elfeed-log-date-face
   '((t :inherit font-lock-type-face))
@@ -84,5 +85,4 @@ FMT must be a string suitable for `format' given OBJECTS as arguments."
           (apply #'format fmt objects)))))))
 
 (provide 'elfeed-log)
-
 ;;; elfeed-log.el ends here
