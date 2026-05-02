@@ -99,7 +99,7 @@ Links are relative to BASE-URL if non-nil."
                         (insert html)
                         (libxml-parse-html-region (point-min) (point-max) base-url))
                     '(i () "Elfeed: libxml2 functionality is unavailable")))
-             (tick (cl-incf elfeed--insert-html-tick))
+             (tick (incf elfeed--insert-html-tick))
              (orig (symbol-function 'url-queue-retrieve))
              ((symbol-function 'url-queue-retrieve)
               (lambda (url cb &rest args)
