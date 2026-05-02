@@ -10,7 +10,6 @@
 
 (eval-when-compile (require 'subr-x))
 (require 'shr)
-(require 'font-lock) ; faces
 
 (require 'elfeed)
 (require 'elfeed-db)
