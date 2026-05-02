@@ -334,7 +334,11 @@ Org-mode HTML quote.
 All feed and entry objects have plist where you can store your own
 arbitrary, [readable values][rd]. These values are automatically
 persisted in the database. This metadata is accessed using the
-polymorphic `elfeed-meta` function. It's setf-able.
+polymorphic `elfeed-meta` function. The function is a generalized
+variable, such that it is setf-able. The macro `setf` must have access
+to the definition of `elfeed-meta` at compile time. Therefore you must
+add a `(require 'elfeed)` at the top level, such that the Elisp byte
+compiler loads the definition.
 
 ~~~emacs-lisp
 (require 'elfeed) ;; Necessary for macro expansion of (setf (elfeed-meta ...) ...)
