@@ -26,21 +26,11 @@
 (defvar elfeed-search-filter-history nil
   "Filter history for `completing-read'.")
 
-(defvar elfeed-search--update-timer nil
-  "Timer to debounce search buffer updates.")
-
-(defvar elfeed-search-last-update -1
-  "The last time the buffer was redrawn in epoch seconds.
-If the value is negative, the next redraw will be forced.")
+(defvar elfeed-search-last-update 0
+  "The last time the buffer was redrawn in epoch seconds.")
 
 (defvar elfeed-search-update-hook ()
   "List of functions to run immediately following a search buffer update.")
-
-(defcustom elfeed-search-update-delay 0.5
-  "Delay search buffer updates to avoid redundant redraws.
-The delay is in seconds."
-  :group 'elfeed
-  :type 'number)
 
 (defcustom elfeed-search-filter "@6-months-ago +unread"
   "Query string filtering shown entries."
@@ -119,6 +109,11 @@ When live editing the filter, it is bound to :live.")
   "Remove the `unread' tag from all selected entries."
   (interactive nil elfeed-search-mode)
   (elfeed-search-untag-all 'unread))
+
+(defun elfeed-search-update--force (&rest _)
+  "Force refresh view of the feed listing.
+Used as `revert-buffer-function'."
+  (elfeed-search-update :force))
 
 (defun elfeed-search-quit-window ()
   "Save the database, then `quit-window'."
@@ -229,18 +224,23 @@ When live editing the filter, it is bound to :live.")
                     (set ',symbol (funcall elfeed-search-header-function)))))
               bookmark-make-record-function
               #'elfeed-search-bookmark-make-record
-              revert-buffer-function #'elfeed-search--update-force
+              revert-buffer-function #'elfeed-search-update--force
               default-directory (elfeed-default-directory))
   (buffer-disable-undo)
   (hl-line-mode)
   (make-local-variable 'elfeed-search-entries)
   (make-local-variable 'elfeed-search-filter)
-  (add-hook 'elfeed-update-hooks #'elfeed-search--update-debounce)
-  (add-hook 'elfeed-update-init-hooks #'elfeed-search--update-force)
+  (add-hook 'elfeed-update-hooks #'elfeed-search-update)
+  (add-hook 'elfeed-update-init-hooks #'elfeed-search-update--force)
   (add-hook 'kill-buffer-hook #'elfeed-db-save t 'local)
   (add-hook 'window-size-change-functions #'elfeed-search--resize nil 'local)
   (add-hook 'elfeed-db-unload-hook #'elfeed-search--unload)
   (elfeed-search-update :force))
+
+(defun elfeed-search--resize (win)
+  "Resize search window WIN."
+  (with-selected-window win
+    (elfeed-search-update--force)))
 
 (defun elfeed-search-buffer ()
   "Create and return search buffer."
@@ -248,9 +248,6 @@ When live editing the filter, it is bound to :live.")
 
 (defun elfeed-search--unload ()
   "Hook function for `elfeed-db-unload-hook'."
-  (when elfeed-search--update-timer
-    (cancel-timer elfeed-search--update-timer)
-    (setf elfeed-search--update-timer nil))
   (with-current-buffer (elfeed-search-buffer)
     ;; don't try to save the database in this case
     (remove-hook 'kill-buffer-hook #'elfeed-db-save t)
@@ -619,7 +616,7 @@ Executing a filter in bytecode form is generally faster than
 Use the default value of the variable `elfeed-search-filter'."
   (interactive nil elfeed-search-mode)
   (setf elfeed-search-filter (default-value 'elfeed-search-filter))
-  (elfeed-search-update :force))
+  (elfeed-search-update--force))
 
 (defun elfeed-search-set-filter (new-filter)
   "Set a new search filter for the elfeed-search buffer.
@@ -708,65 +705,27 @@ expression, matching against entry link, title, and feed title."
                              line))
          (move-to-column column)))))
 
-(defun elfeed-search-update (&optional force debounce)
+(defun elfeed-search-update (&optional force)
   "Update the elfeed-search buffer listing to match the database.
-When FORCE is non-nil, redraw even when the database hasn't changed.
-When DEBOUNCE is non-nil, delay the update according to
-`elfeed-search-update-delay'."
+When FORCE is non-nil, redraw even when the database hasn't changed."
   (interactive nil elfeed-search-mode)
-  (when elfeed-search--update-timer
-    (cancel-timer elfeed-search--update-timer)
-    (setq elfeed-search--update-timer nil))
-  (when force
-    (setq elfeed-search-last-update -1))
-  (if debounce
-      (setf elfeed-search--update-timer
-            (run-at-time elfeed-search-update-delay nil
-                         #'elfeed-search--update-immediately))
-    (elfeed-search--update-immediately)))
-
-(defun elfeed-search--update-immediately ()
-  "Immediately update the elfeed-search buffer.
-Do not use this function directly.  Instead use `elfeed-search-update'."
   (with-current-buffer (elfeed-search-buffer)
-    (with-selected-window (or (get-buffer-window) (selected-window))
-      (when (or (< elfeed-search-last-update 0)
-                (and (not elfeed-search-filter-active)
-                     (< elfeed-search-last-update (elfeed-db-last-update))))
-        (elfeed-save-excursion
-          (let ((inhibit-read-only t)
-                (standard-output (current-buffer)))
-            (erase-buffer)
-            (elfeed-search--update-list)
-            (dolist (entry elfeed-search-entries)
-              (funcall elfeed-search-print-entry-function entry)
-              (insert "\n"))
-            (setf elfeed-search-last-update (float-time))))
-        (when (zerop (buffer-size))
-          ;; If nothing changed, force a header line update
-          (force-mode-line-update))
-        (setq list-buffers-directory elfeed-search-filter)
-        (run-hooks 'elfeed-search-update-hook)))))
-
-(defun elfeed-search--update-force (&rest _)
-  "Call `elfeed-search-update' with argument :force.
-The function is used as hook.  Instead of this function, you usually
-want to use `elfeed-search-update'."
-  (elfeed-search-update :force))
-
-(defun elfeed-search--update-debounce (&rest _)
-  "Call `elfeed-search-update' with argument :debounce.
-The function is used as hook.  Instead of this function, you usually
-want to use `elfeed-search-update'."
-  (elfeed-search-update nil :debounce))
-
-(defun elfeed-search--resize (win)
-  "Resize search window WIN.
-The function is used as hook."
-  (with-selected-window win
-    ;; Move point to the beginning of the line to avoid scrolling.
-    (beginning-of-line)
-    (elfeed-search-update :force :debounce)))
+    (when (or force (and (not elfeed-search-filter-active)
+                         (< elfeed-search-last-update (elfeed-db-last-update))))
+      (elfeed-save-excursion
+        (let ((inhibit-read-only t)
+              (standard-output (current-buffer)))
+          (erase-buffer)
+          (elfeed-search--update-list)
+          (dolist (entry elfeed-search-entries)
+            (funcall elfeed-search-print-entry-function entry)
+            (insert "\n"))
+          (setf elfeed-search-last-update (float-time))))
+      (when (zerop (buffer-size))
+        ;; If nothing changed, force a header line update
+        (force-mode-line-update))
+      (setq list-buffers-directory elfeed-search-filter)
+      (run-hooks 'elfeed-search-update-hook))))
 
 (defun elfeed-search-fetch (prefix)
   "Update all feeds via `elfeed-update', or only visible feeds with PREFIX.
