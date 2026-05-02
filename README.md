@@ -106,7 +106,7 @@ much for you, reduce the number of concurrent fetches via
 If you're getting many "Queue timeout exceeded" errors, increase the
 fetch timeout via `elfeed-set-timeout`.
 
-~~~el
+~~~emacs-lisp
 (setf url-queue-timeout 30)
 ~~~
 
@@ -262,7 +262,7 @@ entry's appearance by customizing `elfeed-search-face-alist`. For
 example, this configuration makes entries tagged `important` stand out
 in red.
 
-~~~el
+~~~emacs-lisp
 (defface important-elfeed-entry
   '((t :foreground "#f77"))
   "Marks an important Elfeed entry.")
@@ -336,7 +336,9 @@ arbitrary, [readable values][rd]. These values are automatically
 persisted in the database. This metadata is accessed using the
 polymorphic `elfeed-meta` function. It's setf-able.
 
-~~~el
+~~~emacs-lisp
+(require 'elfeed) ;; Necessary for macro expansion of (setf (elfeed-meta ...) ...)
+
 (setf (elfeed-meta entry :rating) 4)
 (elfeed-meta entry :rating)
 ;; => 4
