@@ -91,7 +91,7 @@ Called without arguments."
   "Converted HTML markup to a propertized string.
 Links are relative to BASE-URL if non-nil."
   (shr-insert-document
-   (if (elfeed-libxml-supported-p)
+   (if (libxml-available-p)
        (with-temp-buffer
          ;; insert <base> to work around libxml-parse-html-region bug
          (when base-url

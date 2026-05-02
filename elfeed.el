@@ -75,6 +75,14 @@ Each function should accept no arguments, and return a string or nil."
   :group 'elfeed
   :type 'boolean)
 
+(defcustom elfeed-use-libxml nil
+  "Use faster libxml2 for parsing.
+This setting is experimental, and disabled for now.  It may lead to
+subtle differences to the usual xml.el parser, which renders certain
+feeds unreadable.  Enabling may yield a performance boost."
+  :group 'elfeed
+  :type 'boolean)
+
 (defcustom elfeed-user-agent (format "Emacs Elfeed %s" elfeed-version)
   "User agent string to use for Elfeed (requires `elfeed-use-curl')."
   :group 'elfeed
@@ -649,7 +657,7 @@ The returned function should be added to `elfeed-new-entry-hook'."
 When called interactively, the changes to `elfeed-feeds' are
 saved to your customization file."
   (interactive "fOPML file: ")
-  (let* ((xml (xml-parse-file file))
+  (let* ((xml (elfeed-xml-parse-file file))
          (feeds (elfeed--parse-opml xml))
          (full (append feeds elfeed-feeds)))
     (prog1 (setf elfeed-feeds (cl-delete-duplicates full :test #'string=))

@@ -17,6 +17,9 @@
 (require 'xml)
 (eval-when-compile (require 'subr-x))
 
+(define-obsolete-function-alias 'elfeed-libxml-supported-p
+  #'libxml-available-p "3.4.2")
+
 (define-obsolete-function-alias 'elfeed-get-url-at-point
   #'thing-at-point-url-at-point "3.4.2")
 
@@ -146,10 +149,9 @@ be relative to now (`elfeed-time-duration')."
     (integer date)
     (otherwise nil)))
 
-(defun elfeed-xml-parse-region (&optional beg end buffer parse-dtd _parse-ns)
-  "Decode (if needed) and parse XML file.
-Uses coding system from XML encoding declaration.  See
-`xml-parse-region' for the arguments BEG, END, BUFFER, PARSE-DTD."
+(defun elfeed-xml-parse-region (&optional beg end)
+  "Decode (if needed) and parse XML between BEG and END.
+Uses coding system from XML encoding declaration."
   (unless beg (setq beg (point-min)))
   (unless end (setq end (point-max)))
   (goto-char beg)
@@ -166,8 +168,22 @@ Uses coding system from XML encoding declaration.  See
           (recode-region mark-beg mark-end coding-system 'raw-text)
           (setf beg (marker-position mark-beg)
                 end (marker-position mark-end))))))
-  (let ((xml-default-ns ()))
-    (xml-parse-region beg end buffer parse-dtd 'symbol-qnames)))
+  (if (and (bound-and-true-p elfeed-use-libxml) (libxml-available-p))
+      (when-let* ((root (libxml-parse-xml-region beg end)))
+        (list
+         (if (eq (car root) 'top)
+             (cl-loop for node in (cddr root)
+                      if (and (consp node) (not (eq (car-safe node) 'comment)))
+                      return node)
+           root)))
+    (let ((xml-default-ns ()))
+      (xml-parse-region beg end nil nil 'symbol-qnames))))
+
+(defun elfeed-xml-parse-file (file)
+  "Parse XML from FILE."
+  (with-temp-buffer
+    (insert-file-contents file)
+    (elfeed-xml-parse-region)))
 
 (defun elfeed-xml-unparse (element)
   "Inverse of `elfeed-xml-parse-region', writing XML ELEMENT to the buffer."
@@ -228,13 +244,6 @@ If LITERALLY is non-nil return the content literally."
                            (and (string= data (elfeed-slurp file))
                                 (not (string= data (elfeed-slurp file t)))))
                        (delete-file file)))))))))
-
-(defun elfeed-libxml-supported-p ()
-  "Return non-nil if `libxml-parse-html-region' is available."
-  (with-temp-buffer
-    (insert "<html></html>")
-    (and (fboundp 'libxml-parse-html-region)
-         (not (null (libxml-parse-html-region (point-min) (point-max)))))))
 
 (defun elfeed-keyword->symbol (keyword)
   "If a keyword, convert KEYWORD into a plain symbol (remove the colon)."
