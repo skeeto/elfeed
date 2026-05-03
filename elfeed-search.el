@@ -28,14 +28,16 @@
 (defvar elfeed-search--update-timer nil
   "Timer to debounce search buffer updates.")
 
-(defvar elfeed-search-last-update -1
-  "The last time the buffer was redrawn in epoch seconds.
-If the value is negative, the next redraw will be forced.")
+(defvar elfeed-search--resize-timer nil
+  "Timer to debounce search window resizing.")
+
+(defvar elfeed-search-last-update 0
+  "The last time the buffer was redrawn in epoch seconds.")
 
 (defvar elfeed-search-update-hook ()
   "List of functions to run immediately following a search buffer update.")
 
-(defcustom elfeed-search-update-delay 0.5
+(defcustom elfeed-search-update-delay 0.2
   "Delay search buffer updates to avoid redundant redraws.
 The delay is in seconds."
   :group 'elfeed
@@ -251,10 +253,13 @@ When live editing the filter, it is bound to :live.")
   (when elfeed-search--update-timer
     (cancel-timer elfeed-search--update-timer)
     (setf elfeed-search--update-timer nil))
+  (when elfeed-search--resize-timer
+    (cancel-timer elfeed-search--resize-timer)
+    (setf elfeed-search--resize-timer nil))
   (with-current-buffer (elfeed-search-buffer)
     ;; don't try to save the database in this case
     (remove-hook 'kill-buffer-hook #'elfeed-db-save t)
-    (kill-buffer )))
+    (kill-buffer)))
 
 (defun elfeed-search-format-date (date)
   "Format DATE for printing in `elfeed-search-mode'.
@@ -729,39 +734,41 @@ But keep entry, line and column instead of only point."
                              (copy-marker (point)))))
        (save-mark-and-excursion--restore ,mark-pos)))))
 
-(defun elfeed-search-update (&optional force debounce)
+(defun elfeed-search-update (&optional force)
   "Update the elfeed-search buffer listing to match the database.
 When FORCE is non-nil, redraw even when the database hasn't changed.
-When DEBOUNCE is non-nil, delay the update according to
-`elfeed-search-update-delay'."
+Otherwise debounce by `elfeed-search-update-delay' and only redraw when
+there are changes."
   (interactive nil elfeed-search-mode)
   (when elfeed-search--update-timer
     (cancel-timer elfeed-search--update-timer)
     (setq elfeed-search--update-timer nil))
-  (when force
-    (setq elfeed-search-last-update -1))
-  (if debounce
-      (setf elfeed-search--update-timer
-            (run-at-time elfeed-search-update-delay nil
-                         #'elfeed-search--update-immediately))
-    (elfeed-search--update-immediately)))
+  (if force
+      (elfeed-search--update-immediately :force)
+    (setf elfeed-search--update-timer
+          (run-at-time elfeed-search-update-delay nil
+                       #'elfeed-search--update-immediately))))
 
-(defun elfeed-search--update-immediately ()
+(defun elfeed-search--update-immediately (&optional method)
   "Immediately update the elfeed-search buffer.
-Do not use this function directly.  Instead use `elfeed-search-update'."
+METHOD can be nil, :force to force a full entry update and redraw or
+:preserve to preserve the entries and redraw.  Do not use this function
+directly.  Instead use `elfeed-search-update'."
   ;; Run inside window such that save excursion moves the window point.
   (with-selected-window (or (get-buffer-window (elfeed-search-buffer))
                             (selected-window))
     ;; If no window is found, we still have to execute in the buffer.
     (with-current-buffer (elfeed-search-buffer)
-      (when (or (< elfeed-search-last-update 0)
+      (when (or (eq method :force)
+                (eq method :preserve)
                 (and (not elfeed-search-filter-active)
                      (< elfeed-search-last-update (elfeed-db-last-update))))
         (elfeed-save-excursion
           (let ((inhibit-read-only t)
                 (standard-output (current-buffer)))
             (erase-buffer)
-            (elfeed-search--update-list)
+            (unless (eq method :preserve)
+              (elfeed-search--update-list))
             (dolist (entry elfeed-search-entries)
               (funcall elfeed-search-print-entry-function entry)
               (insert "\n"))
@@ -788,20 +795,21 @@ want to use `elfeed-search-update'."
 (make-obsolete 'elfeed-search-update--force #'revert-buffer "3.4.2")
 
 (defun elfeed-search--update-debounce (&rest _)
-  "Call `elfeed-search-update' with argument :debounce.
+  "Call `elfeed-search-update' with debouncing.
 The function is used as hook.  Instead of this function, you usually
 want to use `elfeed-search-update'."
-  (elfeed-search-update nil :debounce))
+  (elfeed-search-update))
 
-(defun elfeed-search--resize (win)
-  "Resize search window WIN.
+(defun elfeed-search--resize (_win)
+  "Resize search window.
 The function is used as hook."
-  (with-selected-window win
-    ;; TODO: Move point to the beginning of the line to avoid scrolling?
-    ;; However this has the bad side effect that point jumps unexpectedly, e.g.,
-    ;; when a larger minibuffer/echo area opens.
-    ;; (beginning-of-line)
-    (elfeed-search-update :force :debounce)))
+  (when elfeed-search--resize-timer
+    (cancel-timer elfeed-search--resize-timer)
+    (setq elfeed-search--resize-timer nil))
+  (setf elfeed-search--resize-timer
+        (run-at-time elfeed-search-update-delay nil
+                     #'elfeed-search--update-immediately
+                     :preserve)))
 
 (defun elfeed-search-fetch (prefix)
   "Update all feeds via `elfeed-update', or only visible feeds with PREFIX.
