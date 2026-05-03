@@ -748,6 +748,8 @@ Do not use this function directly.  Instead use `elfeed-search-update'."
         ;; If nothing changed, force a header line update
         (force-mode-line-update))
       (setq list-buffers-directory elfeed-search-filter)
+      ;; Highlighting gets lost due to debouncing.
+      (hl-line-highlight)
       (run-hooks 'elfeed-search-update-hook))))
 
 (defun elfeed-search--update-force (&rest _)
