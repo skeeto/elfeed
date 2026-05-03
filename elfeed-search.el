@@ -147,6 +147,7 @@ When live editing the filter, it is bound to :live.")
   "S" #'elfeed-search-set-filter
   "c" #'elfeed-search-clear-filter
   "b" #'elfeed-search-browse-url
+  "B" #'elfeed-search-browse-url-secondary
   "y" #'elfeed-search-yank
   "u" #'elfeed-search-tag-all-unread
   "r" #'elfeed-search-untag-all-unread
@@ -818,19 +819,21 @@ If IGNORE-REGION-P is non-nil, only return the entry under point."
                                    (car selected)
                                  selected))))))
 
-(defun elfeed-search-browse-url (&optional use-generic-p)
+(defun elfeed-search-browse-url (&optional secondary)
   "Visit the current entry in your browser using `browse-url'.
-If there is a prefix argument USE-GENERIC-P, visit the current entry in
-the browser defined by `browse-url-generic-program'."
+If there is a prefix argument SECONDARY, visit the current entry in
+the browser defined by `browse-url-secondary-browser-function'."
   (interactive "P" elfeed-search-mode)
   (let ((buffer (current-buffer))
-        (entries (elfeed-search-selected)))
+        (entries (elfeed-search-selected))
+        (browse-url-browser-function
+         (if secondary
+             browse-url-secondary-browser-function
+           browse-url-browser-function)))
     (cl-loop for entry in entries
              do (elfeed-untag entry 'unread)
              when (elfeed-entry-link entry)
-             do (if use-generic-p
-                    (browse-url-generic it)
-                  (browse-url it)))
+             do (browse-url it))
     ;; `browse-url' could have switched to another buffer if eww or another
     ;; internal browser is used, but the remainder of the functions needs to
     ;; run in the elfeed buffer.
@@ -838,6 +841,11 @@ the browser defined by `browse-url-generic-program'."
       (mapc #'elfeed-search-update-entry entries)
       (unless (or elfeed-search-remain-on-entry (use-region-p))
         (forward-line)))))
+
+(defun elfeed-search-browse-url-secondary ()
+  "Visit the current entry in your browser using the secondary browser."
+  (interactive nil elfeed-search-mode)
+  (elfeed-search-browse-url t))
 
 (defun elfeed-search-yank ()
   "Copy the selected feed items to clipboard and `kill-ring'."

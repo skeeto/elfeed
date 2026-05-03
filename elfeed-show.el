@@ -83,6 +83,7 @@ Called without arguments."
   "p" #'elfeed-show-prev
   "s" #'elfeed-show-new-live-search
   "b" #'elfeed-show-visit
+  "B" #'elfeed-show-visit-secondary
   "y" #'elfeed-show-yank
   "u" #'elfeed-show-tag-unread
   "+" #'elfeed-show-tag
@@ -280,16 +281,23 @@ The result depends on the value of `elfeed-show-unique-buffers'."
   (elfeed)
   (elfeed-search-live-filter))
 
-(defun elfeed-show-visit (&optional use-generic-p)
+(defun elfeed-show-visit (&optional secondary)
   "Visit the current entry in your browser using `browse-url'.
-If there is a prefix argument USE-GENERIC-P, visit the current entry in
-the browser defined by `browse-url-generic-program'."
+If there is a prefix argument SECONDARY, visit the current entry in
+the browser defined by `browse-url-secondary-browser-function'."
   (interactive "P" elfeed-show-mode)
   (when-let* ((link (elfeed-entry-link elfeed-show-entry)))
     (message "Sent to browser: %s" link)
-    (if use-generic-p
-        (browse-url-generic link)
+    (let ((browse-url-browser-function
+           (if secondary
+               browse-url-secondary-browser-function
+             browse-url-browser-function)))
       (browse-url link))))
+
+(defun elfeed-show-visit-secondary ()
+  "Visit the current entry in your browser using the secondary browser."
+  (interactive nil elfeed-show-mode)
+  (elfeed-show-visit t))
 
 (defun elfeed-show-yank ()
   "Copy the current entry link URL to the clipboard."
