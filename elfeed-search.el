@@ -857,8 +857,7 @@ If IGNORE-REGION-P is non-nil, only return the entry under point."
 If there is a prefix argument SECONDARY, visit the current entry in
 the browser defined by `browse-url-secondary-browser-function'."
   (interactive "P" elfeed-search-mode)
-  (let ((buffer (current-buffer))
-        (entries (elfeed-search-selected)))
+  (let ((entries (elfeed-search-selected)))
     (cl-loop for entry in entries
              do (elfeed-untag entry 'unread)
              when (elfeed-entry-link entry)
@@ -866,7 +865,7 @@ the browser defined by `browse-url-secondary-browser-function'."
     ;; `browse-url' could have switched to another buffer if eww or another
     ;; internal browser is used, but the remainder of the functions needs to
     ;; run in the elfeed buffer.
-    (with-current-buffer buffer
+    (with-current-buffer (elfeed-search-buffer)
       (mapc #'elfeed-search-update-entry entries)
       (unless (or elfeed-search-remain-on-entry (use-region-p))
         (forward-line)))))
