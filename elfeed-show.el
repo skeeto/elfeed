@@ -180,7 +180,6 @@ Links are relative to BASE-URL if non-nil."
 
 (defun elfeed-show-refresh--mail-style ()
   "Update the buffer to match the selected entry, using a mail-style."
-  (interactive nil elfeed-show-mode)
   (let* ((inhibit-read-only t)
          (title (elfeed-entry-title elfeed-show-entry))
          (date (seconds-to-time (elfeed-entry-date elfeed-show-entry)))
@@ -230,7 +229,7 @@ Links are relative to BASE-URL if non-nil."
   "Update the buffer to match the selected entry.
 Used as `revert-buffer-function'."
   (interactive nil elfeed-show-mode)
-  (call-interactively elfeed-show-refresh-function))
+  (funcall elfeed-show-refresh-function))
 
 (defcustom elfeed-show-unique-buffers nil
   "When non-nil, every entry buffer gets a unique name.
@@ -514,7 +513,7 @@ Prompts for ENCLOSURE-INDEX when called interactively."
                  (thing-at-point-url-at-point))))
     (if url
         (progn (kill-new url) (message "%s" url))
-      (call-interactively 'shr-copy-url))))
+      (call-interactively #'shr-copy-url))))
 
 ;; Bookmarks
 
