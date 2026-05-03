@@ -731,26 +731,30 @@ When DEBOUNCE is non-nil, delay the update according to
 (defun elfeed-search--update-immediately ()
   "Immediately update the elfeed-search buffer.
 Do not use this function directly.  Instead use `elfeed-search-update'."
-  (with-current-buffer (elfeed-search-buffer)
-    (when (or (< elfeed-search-last-update 0)
-              (and (not elfeed-search-filter-active)
-                   (< elfeed-search-last-update (elfeed-db-last-update))))
-      (elfeed-save-excursion
-        (let ((inhibit-read-only t)
-              (standard-output (current-buffer)))
-          (erase-buffer)
-          (elfeed-search--update-list)
-          (dolist (entry elfeed-search-entries)
-            (funcall elfeed-search-print-entry-function entry)
-            (insert "\n"))
-          (setf elfeed-search-last-update (float-time))))
-      (when (zerop (buffer-size))
-        ;; If nothing changed, force a header line update
-        (force-mode-line-update))
-      (setq list-buffers-directory elfeed-search-filter)
-      ;; Highlighting gets lost due to debouncing.
-      (hl-line-highlight)
-      (run-hooks 'elfeed-search-update-hook))))
+  ;; Run inside window such that save excursion moves the window point.
+  (with-selected-window (or (get-buffer-window (elfeed-search-buffer))
+                            (selected-window))
+    ;; If no window is found, we still have to execute in the buffer.
+    (with-current-buffer (elfeed-search-buffer)
+      (when (or (< elfeed-search-last-update 0)
+                (and (not elfeed-search-filter-active)
+                     (< elfeed-search-last-update (elfeed-db-last-update))))
+        (elfeed-save-excursion
+          (let ((inhibit-read-only t)
+                (standard-output (current-buffer)))
+            (erase-buffer)
+            (elfeed-search--update-list)
+            (dolist (entry elfeed-search-entries)
+              (funcall elfeed-search-print-entry-function entry)
+              (insert "\n"))
+            (setf elfeed-search-last-update (float-time))))
+        (when (zerop (buffer-size))
+          ;; If nothing changed, force a header line update
+          (force-mode-line-update))
+        (setq list-buffers-directory elfeed-search-filter)
+        ;; Highlighting gets lost due to debouncing.
+        (hl-line-highlight)
+        (run-hooks 'elfeed-search-update-hook)))))
 
 (defun elfeed-search--update-force (&rest _)
   "Call `elfeed-search-update' with argument :force.
