@@ -275,8 +275,14 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
   (elfeed-db-ensure)
   (setf elfeed-db (plist-put elfeed-db :version elfeed-db-version))
   (mkdir elfeed-db-directory t)
-  (let ((coding-system-for-write 'utf-8))
-    (with-temp-file (expand-file-name "index" elfeed-db-directory)
+  (let* ((coding-system-for-write 'utf-8)
+         (dest (expand-file-name "index" elfeed-db-directory))
+         (temp (concat dest "-tmp"))
+         (write-region-inhibit-fsync nil))
+    ;; We write to a temporary file and rename to avoid corrupting the database
+    ;; on crash. `file-precious-flag' is insufficient as it only works for
+    ;; `save-buffer'.
+    (with-temp-file temp
       (let ((standard-output (current-buffer))
             (print-level nil)
             (print-length nil)
@@ -288,8 +294,9 @@ The FEED-OR-ID may be a feed struct or a feed ID (url)."
           (princ ";; Dummy index for backwards compatablity:\n")
           (prin1 (elfeed-db--dummy))
           (princ "\n\n;; Real index:\n"))
-        (prin1 elfeed-db)
-        :success))))
+        (prin1 elfeed-db)))
+    (rename-file temp dest t)
+    :success))
 
 (defun elfeed-db-save-safe ()
   "Run `elfeed-db-save' without triggering any errors, for use as a safe hook."
