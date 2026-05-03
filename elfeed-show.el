@@ -288,11 +288,7 @@ the browser defined by `browse-url-secondary-browser-function'."
   (interactive "P" elfeed-show-mode)
   (when-let* ((link (elfeed-entry-link elfeed-show-entry)))
     (message "Sent to browser: %s" link)
-    (let ((browse-url-browser-function
-           (if secondary
-               browse-url-secondary-browser-function
-             browse-url-browser-function)))
-      (browse-url link))))
+    (elfeed-browse-url link secondary)))
 
 (defun elfeed-show-visit-secondary ()
   "Visit the current entry in your browser using the secondary browser."

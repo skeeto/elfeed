@@ -14,8 +14,8 @@
 (require 'cl-lib)
 (require 'thingatpt)
 (require 'time-date)
-(require 'url)
 (require 'xml)
+(require 'browse-url)
 
 (define-obsolete-function-alias 'elfeed-libxml-supported-p
   #'libxml-available-p "3.4.2")
@@ -391,6 +391,15 @@ The relative URL algorithm is described in RFC 3986 §5.2.4."
     (if (= 0 (length host))
         url
       host)))
+
+(defun elfeed-browse-url (url secondary)
+  "Browse URL with `browse-url'.
+If SECONDARY is non-nil, use the `browse-url-secondary-browser-function'."
+  (let ((browse-url-browser-function
+         (if secondary
+             browse-url-secondary-browser-function
+           browse-url-browser-function)))
+    (browse-url url)))
 
 (provide 'elfeed-lib)
 ;;; elfeed-lib.el ends here

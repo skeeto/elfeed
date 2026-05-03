@@ -9,7 +9,6 @@
 ;;; Code:
 
 (eval-when-compile (require 'subr-x))
-(require 'browse-url)
 (require 'hl-line)
 (require 'wid-edit) ; widget-inactive face
 
@@ -825,15 +824,11 @@ If there is a prefix argument SECONDARY, visit the current entry in
 the browser defined by `browse-url-secondary-browser-function'."
   (interactive "P" elfeed-search-mode)
   (let ((buffer (current-buffer))
-        (entries (elfeed-search-selected))
-        (browse-url-browser-function
-         (if secondary
-             browse-url-secondary-browser-function
-           browse-url-browser-function)))
+        (entries (elfeed-search-selected)))
     (cl-loop for entry in entries
              do (elfeed-untag entry 'unread)
              when (elfeed-entry-link entry)
-             do (browse-url it))
+             do (elfeed-browse-url it secondary))
     ;; `browse-url' could have switched to another buffer if eww or another
     ;; internal browser is used, but the remainder of the functions needs to
     ;; run in the elfeed buffer.
