@@ -360,9 +360,8 @@ The customization `elfeed-search-date-format' sets the formatting."
          (tags-str (mapconcat
                     (lambda (s) (propertize s 'face 'elfeed-search-tag-face))
                     tags ","))
-         (title-width (- (if-let* ((win (get-buffer-window)))
-                             (window-width win)
-                           (frame-width))
+         (window (get-buffer-window))
+         (title-width (- (if window (window-width window) (frame-width))
                          10 elfeed-search-trailing-width))
          (title-column (elfeed-format-column
                         title (elfeed-clamp
