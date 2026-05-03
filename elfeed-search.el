@@ -772,8 +772,10 @@ want to use `elfeed-search-update'."
   "Resize search window WIN.
 The function is used as hook."
   (with-selected-window win
-    ;; Move point to the beginning of the line to avoid scrolling.
-    (beginning-of-line)
+    ;; TODO: Move point to the beginning of the line to avoid scrolling?
+    ;; However this has the bad side effect that point jumps unexpectedly, e.g.,
+    ;; when a larger minibuffer/echo area opens.
+    ;; (beginning-of-line)
     (elfeed-search-update :force :debounce)))
 
 (defun elfeed-search-fetch (prefix)
