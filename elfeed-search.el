@@ -697,19 +697,38 @@ expression, matching against entry link, title, and feed title."
       (setf elfeed-search-entries
             entries))))
 
+(defun elfeed--save-position ()
+  "Save entry, line and column."
+  (list (elfeed-search-selected :single)
+        (line-number-at-pos)
+        (current-column)))
+
+(defun elfeed--restore-position (pos)
+  "Restore entry, line and column from saved POS."
+  (pcase-let* ((`(,entry ,line ,column) pos)
+               (pos (cl-position entry elfeed-search-entries)))
+    (elfeed-goto-line (if pos (1+ pos) line))
+    (move-to-column column)))
+
 (defmacro elfeed-save-excursion (&rest body)
-  "Like `save-excursion' around BODY, but by entry/line/column instead of point."
+  "Like `save-mark-and-excursion' around BODY.
+But keep entry, line and column instead of only point."
   (declare (indent defun))
-  `(let ((entry (elfeed-search-selected :single))
-         (line (line-number-at-pos))
-         (column (current-column)))
+  (cl-with-gensyms (point-pos mark-pos)
+    `(let* ((,point-pos (elfeed--save-position))
+            (,mark-pos (cons (when-let* ((m (marker-position (mark-marker))))
+                               (save-excursion
+                                 (goto-char m)
+                                 (elfeed--save-position)))
+                             mark-active)))
      (unwind-protect
-         (progn ,@body)
-       (let ((entry-position (cl-position entry elfeed-search-entries)))
-         (elfeed-goto-line (if entry-position
-                               (+ elfeed-search--offset entry-position)
-                             line))
-         (move-to-column column)))))
+         ,@body
+       (elfeed--restore-position ,point-pos)
+       (when-let* ((m (car ,mark-pos)))
+         (setcar ,mark-pos (save-excursion
+                             (elfeed--restore-position m)
+                             (copy-marker (point)))))
+       (save-mark-and-excursion--restore ,mark-pos)))))
 
 (defun elfeed-search-update (&optional force debounce)
   "Update the elfeed-search buffer listing to match the database.
