@@ -782,8 +782,11 @@ want to use `elfeed-search-update'."
   (elfeed-search-update :force))
 
 ;; Keep old name to avoid breakage.
-(define-obsolete-function-alias 'elfeed-search-update--force
-  #'elfeed-search--update-force "3.4.2")
+(defun elfeed-search-update--force (&rest _)
+  "Obsolete command, which calls `elfeed-search-update' with argument :force."
+  (interactive)
+  (elfeed-search-update :force))
+(make-obsolete 'elfeed-search-update--force #'revert-buffer "3.4.2")
 
 (defun elfeed-search--update-debounce (&rest _)
   "Call `elfeed-search-update' with argument :debounce.
