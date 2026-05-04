@@ -263,10 +263,9 @@ The result depends on the value of `elfeed-show-unique-buffers'."
   (with-selected-window (or (get-buffer-window (elfeed-search-buffer))
                             (selected-window))
     (with-current-buffer (elfeed-search-buffer)
-      (forward-line (or n 1))
+      (forward-line (- (or n 1) (if elfeed-search-remain-on-entry 0 1)))
       (hl-line-highlight)
-      (let ((elfeed-search-remain-on-entry t))
-        (call-interactively #'elfeed-search-show-entry)))))
+      (call-interactively #'elfeed-search-show-entry))))
 
 (defun elfeed-show-prev (&optional n)
   "Show the Nth previous item in the elfeed-search buffer."
