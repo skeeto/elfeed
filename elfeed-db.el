@@ -68,11 +68,7 @@
 (defvar elfeed-db-index nil
   "Collection of all entries sorted by date, part of `elfeed-db'.")
 
-(defvar elfeed-db-version
-  ;; If records are avaiable (Emacs 26), use the newer database format
-  (if (functionp 'record)
-      4
-    "0.0.3")
+(defvar elfeed-db-version 4
   "The database version this version of Elfeed expects to use.")
 
 (defvar elfeed-new-entry-hook ()
