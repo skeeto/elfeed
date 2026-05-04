@@ -256,21 +256,28 @@ The result depends on the value of `elfeed-show-unique-buffers'."
       (elfeed-show-refresh))
     (funcall elfeed-show-entry-switch buff)))
 
-(defun elfeed-show-next (&optional n)
-  "Show the Nth next item in the elfeed-search buffer."
-  (interactive "p" elfeed-show-mode)
+(defun elfeed-show-next ()
+  "Show the next entry in the elfeed-search buffer."
+  (interactive nil elfeed-show-mode)
   (funcall elfeed-show-entry-delete)
   (with-selected-window (or (get-buffer-window (elfeed-search-buffer))
                             (selected-window))
     (with-current-buffer (elfeed-search-buffer)
-      (forward-line (- (or n 1) (if elfeed-search-remain-on-entry 0 1)))
+      (when elfeed-search-remain-on-entry (forward-line 1))
       (hl-line-highlight)
       (call-interactively #'elfeed-search-show-entry))))
 
-(defun elfeed-show-prev (&optional n)
-  "Show the Nth previous item in the elfeed-search buffer."
+(defun elfeed-show-prev ()
+  "Show the previous entry in the elfeed-search buffer."
   (interactive nil elfeed-show-mode)
-  (elfeed-show-next (- (or n 1))))
+  (funcall elfeed-show-entry-delete)
+  (with-selected-window (or (get-buffer-window (elfeed-search-buffer))
+                            (selected-window))
+    (with-current-buffer (elfeed-search-buffer)
+      (when elfeed-search-remain-on-entry (forward-line 1))
+      (forward-line -2)
+      (hl-line-highlight)
+      (call-interactively #'elfeed-search-show-entry))))
 
 (defun elfeed-show-new-live-search ()
   "Quit the current window, search again in *elfeed-search*."
