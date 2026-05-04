@@ -48,7 +48,10 @@ The delay is in seconds."
   :group 'elfeed
   :type 'string)
 
-(defcustom elfeed-sort-order 'descending
+(define-obsolete-variable-alias 'elfeed-sort-order
+  'elfeed-search-sort-order "3.4.2")
+
+(defcustom elfeed-search-sort-order 'descending
   "The order in which entries should be displayed.
 
 Changing this from the default will lead to misleading results
@@ -696,7 +699,7 @@ expression, matching against entry link, title, and feed title."
     (let ((entries (cdr head)))
       (when elfeed-search-sort-function
         (setf entries (sort entries elfeed-search-sort-function)))
-      (when (eq elfeed-sort-order 'ascending)
+      (when (eq elfeed-search-sort-order 'ascending)
         (setf entries (nreverse entries)))
       (setf elfeed-search-entries
             entries))))
