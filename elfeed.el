@@ -86,6 +86,23 @@ feeds unreadable.  Enabling may yield a performance boost."
   :group 'elfeed
   :type '(repeat symbol))
 
+(defcustom elfeed-confirm-browse-url 2
+  "Confirm `browse-url' when opening this many or more URLs."
+  :group 'elfeed
+  :type '(choice (const :tag "No confirmation" nil)
+                 (const :tag "Always confirm" t)
+                 natnum))
+
+(defun elfeed--confirm-browse-url-p (&optional count)
+  "Confirm browsing COUNT URLs, with COUNT defaulting to 1."
+  (let ((confirm elfeed-confirm-browse-url)
+        (count (or count 1)))
+    (or (not confirm)
+        (and (numberp confirm) (< count confirm))
+        (y-or-n-p (if (= count 1)
+                      "Browse URL? "
+                    (format "Browse %d URLs? " count))))))
+
 (defcustom elfeed-default-directory nil
   "Default directory for all Elfeed buffers."
   :group 'elfeed
