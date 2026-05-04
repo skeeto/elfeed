@@ -55,16 +55,12 @@ List of available keywords, when store from an Elfeed entry:
 If `content` type is HTML, it is automatically embedded into an
 Org-mode HTML quote."
   (cond ((derived-mode-p 'elfeed-search-mode)
-         (funcall (if (fboundp 'org-link-store-props)
-                      #'org-link-store-props
-                    (with-no-warnings #'org-store-link-props))
+         (org-link-store-props
           :type "elfeed"
           :link (format "elfeed:%s" elfeed-search-filter)
           :description elfeed-search-filter))
         ((derived-mode-p 'elfeed-show-mode)
-         (funcall (if (fboundp 'org-link-store-props)
-                      #'org-link-store-props
-                    (with-no-warnings #'org-store-link-props))
+         (org-link-store-props
           :type "elfeed"
           :link (format "elfeed:%s#%s"
                         (car (elfeed-entry-id elfeed-show-entry))
@@ -128,15 +124,10 @@ search buffer or show a concrete entry."
     ;; do not evaluate to themselves. The quote is harmless for
     ;; byte-compiled function objects.
     ',(lambda ()
-        (if (version< (org-version) "9.0")
-            (with-no-warnings
-              (org-add-link-type "elfeed" #'elfeed-link-open)
-              (add-hook 'org-store-link-functions #'elfeed-link-store-link))
-          (with-no-warnings
-            (org-link-set-parameters
-             "elfeed"
-             :follow #'elfeed-link-open
-             :store #'elfeed-link-store-link))))))
+        (org-link-set-parameters
+         "elfeed"
+         :follow #'elfeed-link-open
+         :store #'elfeed-link-store-link))))
 
 (provide 'elfeed-link)
 ;;; elfeed-link.el ends here
